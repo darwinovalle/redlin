@@ -11,6 +11,7 @@ import { FlashcardProvider } from '../../context/FlashcardContext';
 import Flashcard from '../../components/Flashcard/Flashcard';
 import QuizView from '../../components/Flashcard/QuizView';
 import { documentService } from '../../services/api';
+import Summary from '../../components/Summary';
 import { useAuth } from '../../context/AuthContext';
 
 function TabPanel(props) {
@@ -160,7 +161,7 @@ const Dashboard = ({ user }) => {
               <QuizView documentId={selectedDocumentId} />
             </TabPanel>
             <TabPanel value={activeTab} index={2} sx={{ p: 0, flexGrow: 1 }}>
-              <Typography sx={{ p: 2 }}>Summary Content Placeholder</Typography>
+              <Summary documentId={selectedDocumentId} />
             </TabPanel>
           </Box>
         </Box>
