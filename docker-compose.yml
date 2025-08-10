@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: ./redlin_web
+      dockerfile: Dockerfile
+    container_name: redlin-backend
+    volumes:
+      - ./redlin_web:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./redlin_web/.env
+    entrypoint: ["sh", "-c", "./entrypoint.sh"]
+
+  frontend:
+    build:
+      context: ./redlin-front/redlin-front
+      dockerfile: Dockerfile
+    container_name: redlin-frontend
+    volumes:
+      - ./redlin-front/redlin-front:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./redlin-front/redlin-front/.env
+    depends_on:
+      - backend

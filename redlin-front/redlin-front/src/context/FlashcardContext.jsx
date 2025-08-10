@@ -1,0 +1,181 @@
+import { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+
+const FlashcardContext = createContext();
+
+export const FlashcardProvider = ({ children }) => {
+  const [flashcards, setFlashcards] = useState([]);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [quizMode, setQuizMode] = useState(false);
+  const [pdfSummary, setPdfSummary] = useState('');
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [userAnswers, setUserAnswers] = useState({}); 
+  const [showResults, setShowResults] = useState(false);
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+
+  const placeholderFlashcards = [
+    {
+      id: 'placeholder-1',
+      question: 'How many valves in the human heart?',
+      answer: 'There are four valves: tricuspid, pulmonary, mitral, and aortic.',
+      options: ['Two', 'Three', 'Four', 'Five'], 
+      correctOption: 2, 
+      image: 'https://via.placeholder.com/150/FFFFFF/000000?text=Heart+Image', 
+    },
+    {
+      id: 'placeholder-2',
+      question: 'What is the powerhouse of the cell?',
+      answer: 'Mitochondria',
+      options: [],
+      correctOption: 0,
+      image: null,
+    },
+    {
+      id: 'placeholder-3',
+      question: 'What is H2O?',
+      answer: 'Water',
+      options: [],
+      correctOption: 0,
+      image: null,
+    },
+  ];
+
+  const displayFlashcards = flashcards.length > 0 ? flashcards : placeholderFlashcards;
+
+  const createFlashcard = async (cardData) => {
+    try {
+      const response = await axios.post('/api/flashcards', cardData);
+      setFlashcards(prev => [...prev, response.data]);
+    } catch (error) {
+      console.error('Error creating flashcard:', error);
+      throw error;
+    }
+  };
+
+  const updateFlashcard = async (id, updatedData) => {
+    try {
+      const response = await axios.put(`/api/flashcards/${id}`, updatedData);
+      setFlashcards(prev => 
+        prev.map(card => card.id === id ? response.data : card)
+      );
+    } catch (error) {
+      console.error('Error updating flashcard:', error);
+      throw error;
+    }
+  };
+
+  const deleteFlashcard = async (id) => {
+    try {
+      await axios.delete(`/api/flashcards/${id}`);
+      setFlashcards(prev => prev.filter(card => card.id !== id));
+    } catch (error) {
+      console.error('Error deleting flashcard:', error);
+      throw error;
+    }
+  };
+
+  const startQuiz = () => {
+    // Check displayFlashcards to be consistent with UI logic
+    if (displayFlashcards.length === 0) { 
+      alert("Please add some flashcards before starting the quiz.");
+      return;
+    }
+    setQuizMode(true);
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setShowResults(false);
+  };
+
+  const submitAnswer = (questionId, selectedOptionIndex) => {
+    setUserAnswers(prev => ({ ...prev, [questionId]: selectedOptionIndex }));
+  };
+
+  const nextQuestion = () => {
+    if (currentQuestionIndex < flashcards.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
+  };
+
+  const previousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    }
+  };
+
+  const finishQuiz = () => {
+    setQuizMode(false);
+    setShowResults(true);
+  };
+
+  const endQuiz = () => { 
+    setQuizMode(false);
+    setShowResults(false);
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+  }
+
+  const nextCard = () => {
+    setCurrentCardIndex((prevIndex) =>
+      prevIndex < displayFlashcards.length - 1 ? prevIndex + 1 : prevIndex
+    );
+  };
+
+  const previousCard = () => {
+    setCurrentCardIndex((prevIndex) =>
+      prevIndex > 0 ? prevIndex - 1 : prevIndex
+    );
+  };
+
+  const importPDF = async (file) => {
+    const formData = new FormData();
+    formData.append('pdf', file);
+    try {
+      const response = await axios.post('/api/pdf/import', formData);
+      setFlashcards(response.data.flashcards);
+      setPdfSummary(response.data.summary);
+    } catch (error) {
+      console.error('Error importing PDF:', error);
+      throw error;
+    }
+  };
+
+  return (
+    <FlashcardContext.Provider
+      value={{
+        flashcards,
+        selectedCard,
+        setSelectedCard,
+        quizMode,
+        setQuizMode,
+        pdfSummary,
+        currentQuestionIndex,
+        userAnswers,
+        showResults,
+        currentCardIndex,
+        displayFlashcards,
+        createFlashcard,
+        updateFlashcard,
+        deleteFlashcard,
+        startQuiz,
+        submitAnswer,
+        nextQuestion,
+        previousQuestion,
+        finishQuiz, 
+        endQuiz, 
+        nextCard,
+        previousCard,
+        importPDF
+      }}
+    >
+      {children}
+    </FlashcardContext.Provider>
+  );
+};
+
+export const useFlashcard = () => {
+  const context = useContext(FlashcardContext);
+  if (context === undefined) {
+    throw new Error('useFlashcard must be used within a FlashcardProvider');
+  }
+  return context;
+};

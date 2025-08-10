@@ -1,0 +1,24 @@
+# Sensibles
+.env
+key.txt
+redlin_web/.env
+redlin-front/redlin-front/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+redlin_web/db.sqlite3
+redlin_web/documents/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Entornos / IDE
+.venv/
+venv/
+.vscode/
+.idea/
+.DS_Store

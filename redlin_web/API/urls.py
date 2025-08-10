@@ -1,0 +1,18 @@
+from rest_framework.routers import DefaultRouter
+from .views import UserViewSet, DocumentViewSet, SummaryViewSet, FlashcardViewSet, MCQViewSet
+from django.urls import path, include
+from .views import login, register, get_user_documents
+
+router = DefaultRouter()
+router.register(r'users', UserViewSet, basename='user')
+router.register(r'documents', DocumentViewSet, basename='document')
+router.register(r'summaries', SummaryViewSet, basename='summary')
+router.register(r'flashcards', FlashcardViewSet, basename='flashcard')
+router.register(r'mcqs', MCQViewSet, basename='mcq')
+
+urlpatterns = [
+    path('documents/user/<int:user_id>/', get_user_documents, name='user-documents'),
+    path('auth/login/', login, name='login'),
+    path('auth/register/', register, name='register'),
+    path('', include(router.urls)),
+]
