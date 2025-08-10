@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-c5qy0%-s5m%t$14@p4_7a=@q5#zjzg-75fxo0&1(4fk1w_f20j'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-c5qy0%-s5m%t$14@p4_7a=@q5#zjzg-75fxo0&1(4fk1w_f20j')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -68,6 +68,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
 CORS_ALLOW_METHODS = [
@@ -155,6 +156,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # DRF & Schema
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'API.jwt_auth.JWTAuthentication',
+    ],
+    # Enforce authentication by default
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 
 SPECTACULAR_SETTINGS = {
@@ -162,4 +170,31 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Documentación de la API del backend de Redlin.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    # Allow public access to the interactive docs endpoints
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    'SERVE_AUTHENTICATION': [],
+    # Expose Bearer/JWT in Swagger "Authorize"
+    'COMPONENTS': {
+        'securitySchemes': {
+            'bearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    },
+    # Apply Bearer security globally by default
+    'SECURITY': [
+        {'bearerAuth': []}
+    ],
+    # Keep auth between page reloads in Swagger UI
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,
+    },
 }
+
+# CSRF trusted origins for cross-site POSTs from the frontend dev server
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+]

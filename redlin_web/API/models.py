@@ -12,6 +12,11 @@ class User(models.Model):
     def __str__(self):
         return self.username
     
+    @property
+    def is_authenticated(self) -> bool:
+        # DRF expects this attribute to exist on request.user
+        return True
+    
 class Document(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='documents')
     title = models.CharField(max_length=255)

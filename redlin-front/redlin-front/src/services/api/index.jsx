@@ -10,6 +10,58 @@ const api = axios.create({
   // }
 });
 
+// Attach token automatically
+api.interceptors.request.use((config) => {
+  try {
+    const stored = localStorage.getItem('auth');
+    if (stored) {
+      const { access } = JSON.parse(stored);
+      if (access) config.headers.Authorization = `Bearer ${access}`;
+    }
+  } catch {}
+  return config;
+});
+
+// On 401, try refresh once
+let isRefreshing = false;
+let pending = [];
+
+function onRefreshed(token) { pending.forEach(cb => cb(token)); pending = []; }
+
+api.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const original = error.config;
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true;
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          pending.push((token) => {
+            original.headers.Authorization = `Bearer ${token}`;
+            resolve(api(original));
+          });
+        });
+      }
+      isRefreshing = true;
+      try {
+        const stored = JSON.parse(localStorage.getItem('auth') || '{}');
+        const resp = await axios.post(`${API_URL}/auth/refresh/`, { refresh: stored.refresh });
+        const { access, refresh } = resp.data || {};
+        const updated = { ...(stored || {}), access, refresh };
+        localStorage.setItem('auth', JSON.stringify(updated));
+        isRefreshing = false; onRefreshed(access);
+        original.headers.Authorization = `Bearer ${access}`;
+        return api(original);
+      } catch (e) {
+        isRefreshing = false; pending = [];
+        try { localStorage.removeItem('auth'); } catch {}
+        return Promise.reject(e);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authService = {
   login: async (username, password) => {
     try {
