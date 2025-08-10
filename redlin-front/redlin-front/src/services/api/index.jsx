@@ -60,6 +60,24 @@ export const documentService = {
     }
   },
 
+  async getSummaryForDocument(documentId) {
+    if (!documentId) {
+      return null;
+    }
+    try {
+      // Prefer the document action endpoint that returns the linked summary
+      const response = await api.get(`/documents/${documentId}/summary/`);
+      return response.data; // { id, content, document }
+    } catch (error) {
+      console.error(`Error fetching summary for document ${documentId}:`, error.response?.data || error.message);
+      throw {
+        message: 'Failed to fetch summary',
+        status: error.response?.status,
+        details: error.response?.data,
+      };
+    }
+  },
+
   async getUserDocuments(userId) {
     try {
       // Try accessing the endpoint that was previously working
