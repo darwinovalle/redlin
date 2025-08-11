@@ -18,6 +18,7 @@ const FlashcardCard = ({
   size = 'md',
   sx = {},
   showHint = false,
+  accentColor = '#00ff81',
 }) => {
   const heights = { sm: 240, md: 300, lg: 380 };
   const height = heights[size] || heights.md;
@@ -26,6 +27,7 @@ const FlashcardCard = ({
     <Card
       onClick={onToggleFlip}
       sx={{
+        position: 'relative',
         width: '100%',
         height,
         cursor: 'pointer',
@@ -44,17 +46,59 @@ const FlashcardCard = ({
           transform: 'scale(1.02)',
           boxShadow: 6,
         },
+        // Accent bars
+        '&::before, &::after': {
+          content: '""',
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '70%',
+          height: 16,
+          borderRadius: 999,
+          backgroundColor: accentColor,
+          boxShadow: '0 0 18px rgba(0,255,129,0.35)',
+          pointerEvents: 'none',
+          zIndex: 0,
+          '@media (min-width:600px)': { width: '60%' },
+          '@media (min-width:900px)': { width: '55%' },
+        },
+        '&::before': { top: 10 },
+        '&::after': { bottom: 10 },
         ...sx,
       }}
     >
       {isFlipped ? (
-        <CardContent sx={{ width: '100%', height: '100%' }}>
+        <CardContent
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+          }}
+        >
           <Typography variant="body1" sx={{ color: 'text.primary' }}>
             {card?.definition || 'N/A'}
           </Typography>
         </CardContent>
       ) : (
-        <CardContent sx={{ width: '100%', height: '100%' }}>
+        <CardContent
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+          }}
+        >
           {card?.image && (
             <Box
               component="img"
