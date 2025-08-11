@@ -1,5 +1,6 @@
 import { Route, Routes, BrowserRouter , Link} from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
+import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProtectRoute from "./components/ProtectRoute";
@@ -21,6 +22,7 @@ const RouterContent = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
+  <Route path="/pricing" element={<Pricing />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={
           <ProtectRoute user={user}>
