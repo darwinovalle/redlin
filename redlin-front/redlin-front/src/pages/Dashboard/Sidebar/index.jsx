@@ -38,6 +38,8 @@ import { useRef, useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { documentService } from '../../../services/api';
 import AddSpaceModal from '../../../components/common/AddSpaceModal';
+import LoaderOverlay from '../../../components/common/LoaderOverlay';
+import SuccessAlert from '../../../components/common/SuccessAlert';
 
 const drawerWidth = 480;
 
@@ -55,6 +57,9 @@ const Drawer = styled(MuiDrawer)(({ theme }) => ({
 }));
 
 export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDocumentDelete, onLogout, onOpenSettings, onUpgradeToPro }) {
+  // ...existing code...
+  const [loading, setLoading] = useState(false);
+  const [successAlertOpen, setSuccessAlertOpen] = useState(false);
   const theme = useTheme();
   const { user } = useAuth(); 
 
@@ -107,16 +112,19 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       return;
     }
     setError(null);
+    setLoading(true);
     setUploading(true);
     try {
       const result = await documentService.uploadDocument(file, currentUserId);
       console.log('Upload successful:', result);
       await fetchUserDocuments();
+      setSuccessAlertOpen(true);
     } catch (err) {
       console.error('Upload failed:', err);
       setError(err.error || 'Upload failed. Please try again.');
     } finally {
       setUploading(false);
+      setLoading(false);
     }
   };
 
@@ -134,28 +142,16 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
 
   return (
     <ThemeProvider theme={darkTheme}>
+      <LoaderOverlay open={loading} text="Uploading..." />
+      <SuccessAlert
+        open={successAlertOpen}
+        message="Your file was successfully processed."
+        onClose={() => setSuccessAlertOpen(false)}
+        autoHideDuration={5000}
+      />
       <Box sx={{ display: 'flex' }}>
         <CssBaseline />
         <Drawer variant="permanent">
-          <Box sx={{ p: 2 }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              fullWidth
-              onClick={handleAddContent}
-              sx={{
-                color: 'common.white', 
-                justifyContent: 'flex-start',
-                textTransform: 'none',
-                backgroundColor: theme.palette.grey[800],
-                '&:hover': {
-                  backgroundColor: theme.palette.grey[700],
-                },
-              }}
-            >
-              Add Document 
-            </Button>
-          </Box>
           <Box sx={{ p: 2 }}>
             <Button
               variant="contained"
