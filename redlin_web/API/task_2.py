@@ -3,12 +3,57 @@ from .models import Document, Summary, Flashcard, MCQ
 from PyPDF2 import PdfReader
 import google.generativeai as genai
 import os
+import re
+import time
+import random
+from django.db import transaction
 # Configure the Gemini API
 load_dotenv()
 
 # Configure Gemini
 genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
 model = genai.GenerativeModel("gemini-1.5-flash")
+
+
+def _parse_retry_delay_seconds(error_message: str) -> int | None:
+    """Try to extract retry_delay seconds from Gemini error string."""
+    try:
+        m = re.search(r"retry_delay\s*\{\s*seconds:\s*(\d+)", error_message)
+        if m:
+            return int(m.group(1))
+    except Exception:
+        pass
+    return None
+
+
+def generate_with_retry(prompt: str, *, max_attempts: int = 3, base_wait: int = 5):
+    """
+    Call Gemini generate_content with simple backoff for 429/quota errors.
+    - Respects retry_delay seconds from the error if present.
+    - Exponential backoff with jitter otherwise.
+    """
+    last_exc = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return model.generate_content(prompt)
+        except Exception as e:
+            msg = str(e)
+            # Heuristics for quota/rate-limit
+            if "429" in msg or "quota" in msg.lower() or "rate" in msg.lower():
+                suggested = _parse_retry_delay_seconds(msg)
+                wait = suggested if suggested is not None else min(60, base_wait * (2 ** (attempt - 1)))
+                # small jitter to avoid thundering herd
+                wait = int(wait + random.uniform(0, 0.2) * wait)
+                print(f"[RateLimit] Attempt {attempt}/{max_attempts} failed. Waiting {wait}s before retry.")
+                time.sleep(wait)
+                last_exc = e
+                continue
+            # Other errors: re-raise immediately
+            raise
+    # Exhausted retries
+    if last_exc:
+        raise last_exc
+    raise RuntimeError("Generation failed without exception detail")
 
 def process_pdf(document_id):
     document = Document.objects.get(id=document_id)
@@ -34,7 +79,7 @@ def process_pdf(document_id):
         print("Generating summary...")
         summary_prompt = f"Provide a comprehensive and detailed summary of the following text, capturing the main points, key arguments, and important details. Aim for a thorough overview suitable for someone wanting to understand the core content without reading the entire document:\n\n{text}"
         try:
-            summary_response = model.generate_content(summary_prompt)
+            summary_response = generate_with_retry(summary_prompt, max_attempts=3)
             summary_content = summary_response.text
             Summary.objects.update_or_create(
                 document=document,
@@ -49,15 +94,12 @@ def process_pdf(document_id):
         print("Generating flashcards...")
         flashcard_prompt = f"Generate as many relevant flashcards as possible based on the key terms, concepts, and definitions in the following text. Focus on the most important information. Format each flashcard strictly as: Term: [key term]\nDefinition: [definition]\n\nSeparate each flashcard block (Term and Definition) with exactly one blank line.\n\n{text}"
         try:
-            flashcard_response = model.generate_content(flashcard_prompt)
+            flashcard_response = generate_with_retry(flashcard_prompt, max_attempts=3)
             flashcards_raw = flashcard_response.text
-            flashcard_blocks = flashcards_raw.strip().split('\n\n') # Split by blank lines
+            flashcard_blocks = flashcards_raw.strip().split('\n\n')  # Split by blank lines
 
-            # Clear existing flashcards for this document before adding new ones
-            Flashcard.objects.filter(document=document).delete()
-            print(f"Cleared existing flashcards for document {document.id}")
-
-            created_flashcards = 0
+            # Parse first into in-memory objects
+            new_flashcards = []
             for block in flashcard_blocks:
                 lines = block.strip().split('\n')
                 if len(lines) == 2:
@@ -67,15 +109,22 @@ def process_pdf(document_id):
                         term = term_line.replace('Term:', '').strip()
                         definition = def_line.replace('Definition:', '').strip()
                         if term and definition:
-                            Flashcard.objects.create(document=document, key_term=term, definition=definition)
-                            created_flashcards += 1
+                            new_flashcards.append(Flashcard(document=document, key_term=term, definition=definition))
                         else:
                             print(f"[Data Info] Skipping flashcard block due to empty term/definition after parsing: {block}")
                     else:
                         print(f"[Parsing Error] Skipping flashcard block, incorrect line prefixes: {block}")
-                elif block.strip(): # Log non-empty blocks that don't have 2 lines
+                elif block.strip():
                     print(f"[Parsing Error] Skipping flashcard block, expected 2 lines but got {len(lines)}: {block}")
-            print(f"Created {created_flashcards} flashcards.")
+
+            # Replace only if we have new content
+            if new_flashcards:
+                with transaction.atomic():
+                    Flashcard.objects.filter(document=document).delete()
+                    Flashcard.objects.bulk_create(new_flashcards)
+                print(f"Created {len(new_flashcards)} flashcards.")
+            else:
+                print("[Info] No valid flashcards parsed. Keeping existing ones.")
 
         except Exception as e:
             print(f"[Error] Failed to generate or parse flashcards: {e}")
@@ -85,48 +134,46 @@ def process_pdf(document_id):
         print("Generating MCQs...")
         mcq_prompt = f"Generate as many relevant multiple choice questions as possible based on the key concepts in the provided text. Focus on important information.\nFor each question, provide the question, the single correct answer, and three distinct incorrect distractors.\nFormat each question strictly as follows, with each part on a new line:\nQ: [Question text]\nA: [Correct Answer]\nB: [Incorrect Option 1]\nC: [Incorrect Option 2]\nD: [Incorrect Option 3]\n\nSeparate each complete question block (Q, A, B, C, D) with exactly one blank line.\n\n{text}"
         try:
-            mcq_response = model.generate_content(mcq_prompt)
+            mcq_response = generate_with_retry(mcq_prompt, max_attempts=3)
             mcqs_raw = mcq_response.text
             mcq_blocks = mcqs_raw.strip().split('\n\n')
 
-            # Clear existing MCQs for this document before adding new ones
-            MCQ.objects.filter(document=document).delete()
-            print(f"Cleared existing MCQs for document {document.id}")
-
-            created_mcqs = 0
+            new_mcqs = []
             for block in mcq_blocks:
                 lines = block.strip().split('\n')
-                if len(lines) == 5: # Expecting Q, A, B, C, D
-                    q_line = lines[0]
-                    a_line = lines[1]
-                    b_line = lines[2]
-                    c_line = lines[3]
-                    d_line = lines[4]
+                if len(lines) == 5:  # Expecting Q, A, B, C, D
+                    q_line, a_line, b_line, c_line, d_line = lines
 
                     if q_line.startswith('Q:') and a_line.startswith('A:') and b_line.startswith('B:') and c_line.startswith('C:') and d_line.startswith('D:'):
                         question = q_line.replace('Q:', '').strip()
                         correct_answer = a_line.replace('A:', '').strip()
-                        option_1 = b_line.replace('B:', '').strip() # Map B to option_1
-                        option_2 = c_line.replace('C:', '').strip() # Map C to option_2
-                        option_3 = d_line.replace('D:', '').strip() # Map D to option_3
+                        option_1 = b_line.replace('B:', '').strip()  # Map B to option_1
+                        option_2 = c_line.replace('C:', '').strip()  # Map C to option_2
+                        option_3 = d_line.replace('D:', '').strip()  # Map D to option_3
 
                         if question and correct_answer and option_1 and option_2 and option_3:
-                            MCQ.objects.create(
+                            new_mcqs.append(MCQ(
                                 document=document,
                                 question=question,
                                 correct_answer=correct_answer,
-                                option_1=option_1, 
+                                option_1=option_1,
                                 option_2=option_2,
                                 option_3=option_3
-                            )
-                            created_mcqs += 1
+                            ))
                         else:
-                             print(f"[Data Info] Skipping MCQ block due to missing parts after parsing: {block}")
+                            print(f"[Data Info] Skipping MCQ block due to missing parts after parsing: {block}")
                     else:
                         print(f"[Parsing Error] Skipping MCQ block, incorrect line prefixes: {block}")
                 elif block.strip():
                     print(f"[Parsing Error] Skipping MCQ block, expected 5 lines but got {len(lines)}: {block}")
-            print(f"Created {created_mcqs} MCQs.")
+
+            if new_mcqs:
+                with transaction.atomic():
+                    MCQ.objects.filter(document=document).delete()
+                    MCQ.objects.bulk_create(new_mcqs)
+                print(f"Created {len(new_mcqs)} MCQs.")
+            else:
+                print("[Info] No valid MCQs parsed. Keeping existing ones.")
 
         except Exception as e:
             print(f"[Error] Failed to generate or parse MCQs: {e}")
