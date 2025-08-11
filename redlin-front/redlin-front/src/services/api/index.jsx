@@ -111,6 +111,17 @@ export const documentService = {
       throw error.response?.data || { error: 'Document upload failed' };
     }
   },
+  
+  // Rename a document's title
+  renameDocument: async (documentId, newTitle) => {
+    try {
+      const response = await api.patch(`/documents/${documentId}/`, { title: newTitle });
+      return response.data;
+    } catch (error) {
+      console.error('Error renaming document:', error.response?.data || error.message);
+      throw error.response?.data || { error: 'Failed to rename document' };
+    }
+  },
 
   async getSummaryForDocument(documentId) {
     if (!documentId) {
