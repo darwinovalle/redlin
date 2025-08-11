@@ -14,4 +14,7 @@ export const darkTheme = createTheme({
       paper: '#1e1e1e',
     },
   },
+  typography: {
+    fontFamily: '"Titillium Web", "Poppins", Arial, sans-serif',
+  },
 });

@@ -138,7 +138,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 },
               }}
             >
-              Add content
+              Add Document 
             </Button>
           </Box>
           <input
@@ -150,18 +150,9 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
           />
           {uploading && <Typography sx={{p: 2, color: 'text.secondary'}}>Uploading...</Typography>}
           {error && <Typography sx={{p: 2, color: 'error.main'}}>Error: {error}</Typography>}
-          <List dense>
-            <ListItem disablePadding>
-              <ListItemButton>
-                <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
-                  <HistoryIcon />
-                </ListItemIcon>
-                <ListItemText primary="History" />
-              </ListItemButton>
-            </ListItem>
-          </List>
+
           <Box sx={{ px: 2, mt: 2, mb: 1 }}>
-            <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+            <Typography variant="caption" sx={{ color: theme.palette.common.white }}>
               My Documents
             </Typography>
           </Box>
@@ -217,7 +208,10 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                     sx={{ 
                       opacity: 0,
                       transition: 'opacity 0.2s',
-                      color: theme.palette.text.secondary
+                      color: theme.palette.error.main,
+                      '&:hover': {
+                        color: theme.palette.error.light,
+                      }
                     }}
                     aria-label="delete document"
                   >
