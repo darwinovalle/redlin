@@ -30,6 +30,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import EditIcon from '@mui/icons-material/Edit';
 
 import { ThemeProvider } from '@mui/material/styles';
 import { darkTheme } from '../../../theme';
@@ -40,6 +41,7 @@ import { documentService } from '../../../services/api';
 import AddSpaceModal from '../../../components/common/AddSpaceModal';
 import LoaderOverlay from '../../../components/common/LoaderOverlay';
 import SuccessAlert from '../../../components/common/SuccessAlert';
+import RenameDialog from '../../../components/common/RenameDialog';
 
 const drawerWidth = 480;
 
@@ -76,6 +78,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [kanbanOpen, setKanbanOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [openSampleModal, setOpenSampleModal] = useState(false);
+  const [renameState, setRenameState] = useState({ open: false, doc: null, saving: false });
   
   // Helper to fetch docs so we can reuse after uploads
   const fetchUserDocuments = async () => {
@@ -139,6 +142,23 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   useEffect(() => {
     fetchUserDocuments();
   }, [user]); // Re-run effect when the user object changes
+
+  const openRename = (doc) => setRenameState({ open: true, doc, saving: false });
+  const closeRename = () => setRenameState({ open: false, doc: null, saving: false });
+  const submitRename = async (newTitle) => {
+    if (!renameState.doc) return;
+    try {
+      setRenameState((s) => ({ ...s, saving: true }));
+      await documentService.renameDocument(renameState.doc.id, newTitle);
+      // Optimistically update UI without refetch
+      setUserDocuments((prev) => prev.map(d => d.id === renameState.doc.id ? { ...d, title: newTitle } : d));
+      closeRename();
+    } catch (err) {
+      console.error('Rename failed:', err);
+      setError(err.error || 'Rename failed. Please try again.');
+      setRenameState((s) => ({ ...s, saving: false }));
+    }
+  };
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -262,14 +282,14 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             {!loadingDocs && !fetchError && userDocuments.length === 0 && user && (
               <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No documents uploaded yet.</Typography>
             )}
-            <List dense>
+      <List dense>
               {userDocuments.map((doc) => (
                 <ListItem 
                   key={doc.id} 
                   disablePadding 
                   sx={{ 
                     position: 'relative',
-                    '&:hover .delete-button': {
+        '&:hover .delete-button, &:hover .rename-button': {
                       opacity: 1,
                     }
                   }}
@@ -299,6 +319,22 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                         }
                       }}
                     />
+                    <IconButton
+                      className="rename-button"
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openRename(doc);
+                      }}
+                      sx={{
+                        mr: 0.5,
+                        opacity: 0,
+                        transition: 'opacity 0.2s',
+                      }}
+                      aria-label="rename document"
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
                     <IconButton 
                       className="delete-button"
                       size="small"
@@ -480,6 +516,13 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
           onCreateKanban={() => { console.log('Create kanban'); setOpenSampleModal(false); }}
         />
       </Box>
+      <RenameDialog
+        open={renameState.open}
+        initialValue={renameState.doc?.title || ''}
+        onClose={closeRename}
+        onSubmit={submitRename}
+        submitting={renameState.saving}
+      />
     </ThemeProvider>
   );
 }
