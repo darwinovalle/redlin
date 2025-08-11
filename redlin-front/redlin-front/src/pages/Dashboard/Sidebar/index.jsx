@@ -5,6 +5,7 @@ import MuiDrawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import CssBaseline from '@mui/material/CssBaseline';
 import Typography from '@mui/material/Typography';
+import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
 import Button from '@mui/material/Button';
 import ListItem from '@mui/material/ListItem';
@@ -17,10 +18,18 @@ import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import MenuIcon from '@mui/icons-material/Menu';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import FolderIcon from '@mui/icons-material/Folder';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import DescriptionIcon from '@mui/icons-material/Description';
+import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
+import SettingsIcon from '@mui/icons-material/Settings';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 
 import { ThemeProvider } from '@mui/material/styles';
 import { darkTheme } from '../../../theme';
@@ -29,7 +38,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { documentService } from '../../../services/api';
 
-const drawerWidth = 240;
+const drawerWidth = 480;
 
 const Drawer = styled(MuiDrawer)(({ theme }) => ({
   width: drawerWidth,
@@ -44,7 +53,7 @@ const Drawer = styled(MuiDrawer)(({ theme }) => ({
   },
 }));
 
-export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDocumentDelete, onLogout }) {
+export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDocumentDelete, onLogout, onOpenSettings, onUpgradeToPro }) {
   const theme = useTheme();
   const { user } = useAuth(); 
 
@@ -55,6 +64,11 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [userDocuments, setUserDocuments] = useState([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [fetchError, setFetchError] = useState(null);
+  const [docsOpen, setDocsOpen] = useState(true);
+  const [tutorialsOpen, setTutorialsOpen] = useState(false);
+  const [sheetsOpen, setSheetsOpen] = useState(false);
+  const [kanbanOpen, setKanbanOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
 
   const handleAddContent = () => {
     fileInputRef.current.click(); // Trigger the hidden file input
@@ -151,81 +165,285 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
           {uploading && <Typography sx={{p: 2, color: 'text.secondary'}}>Uploading...</Typography>}
           {error && <Typography sx={{p: 2, color: 'error.main'}}>Error: {error}</Typography>}
 
-          <Box sx={{ px: 2, mt: 2, mb: 1 }}>
-            <Typography variant="caption" sx={{ color: theme.palette.common.white }}>
-              My Documents
-            </Typography>
+          {/* Tutorial Courses */}
+          <Box
+            onClick={() => setTutorialsOpen((v) => !v)}
+            sx={{
+              px: 2,
+              py: 1,
+              mt: 1,
+              mb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderRadius: 1,
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+              backgroundColor: tutorialsOpen ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              },
+            }}
+          >
+            <Box className="section-label" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <MenuBookIcon fontSize="small" sx={{ color: 'common.white' }} />
+              <Typography variant="caption" sx={{ color: 'common.white' }}>
+                Tutorial Courses
+              </Typography>
+            </Box>
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); setTutorialsOpen((v) => !v); }}
+              aria-label={tutorialsOpen ? 'collapse courses' : 'expand courses'}
+              sx={{ color: 'common.white' }}
+            >
+              {tutorialsOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            </IconButton>
           </Box>
-          {loadingDocs && <Typography sx={{ px: 2, color: 'text.secondary' }}>Loading documents...</Typography>}
-          {fetchError && <Typography sx={{ px: 2, color: 'error.main' }}>Error: {fetchError}</Typography>}
-          {!loadingDocs && !fetchError && userDocuments.length === 0 && user && (
-            <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No documents uploaded yet.</Typography>
-          )}
-          <List dense>
-            {userDocuments.map((doc) => (
-              <ListItem 
-                key={doc.id} 
-                disablePadding 
-                sx={{ 
-                  position: 'relative',
-                  '&:hover .delete-button': {
-                    opacity: 1,
-                  }
-                }}
-              >
-                <ListItemButton 
-                  onClick={() => onDocumentSelect(doc.id)}
-                  selected={selectedDocumentId === doc.id} // Highlight if selected
-                  sx={{
-                    '&.Mui-selected': { // Style for selected item
-                      backgroundColor: 'rgba(255, 255, 255, 0.08)', 
-                    },
-                    '&.Mui-selected:hover': { // Style for selected item on hover
-                      backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                    },
+          <Collapse in={tutorialsOpen} timeout="auto" unmountOnExit>
+            <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No courses yet.</Typography>
+          </Collapse>
+
+          <Box
+            onClick={() => setDocsOpen((v) => !v)}
+            sx={{
+              px: 2,
+              py: 1,
+              mt: 2,
+              mb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderRadius: 1,
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+              backgroundColor: docsOpen ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              },
+            }}
+          >
+            <Box className="docs-label" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <FolderIcon fontSize="small" sx={{ color: 'common.white' }} />
+              <Typography variant="caption" sx={{ color: 'common.white' }}>
+                Study Documents
+              </Typography>
+            </Box>
+            <IconButton
+              className="docs-toggle"
+              size="small"
+              onClick={(e) => { e.stopPropagation(); setDocsOpen((v) => !v); }}
+              aria-label={docsOpen ? 'collapse documents' : 'expand documents'}
+              sx={{ color: 'common.white' }}
+            >
+              {docsOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            </IconButton>
+          </Box>
+          <Collapse in={docsOpen} timeout="auto" unmountOnExit>
+            {loadingDocs && <Typography sx={{ px: 2, color: 'text.secondary' }}>Loading documents...</Typography>}
+            {fetchError && <Typography sx={{ px: 2, color: 'error.main' }}>Error: {fetchError}</Typography>}
+            {!loadingDocs && !fetchError && userDocuments.length === 0 && user && (
+              <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No documents uploaded yet.</Typography>
+            )}
+            <List dense>
+              {userDocuments.map((doc) => (
+                <ListItem 
+                  key={doc.id} 
+                  disablePadding 
+                  sx={{ 
+                    position: 'relative',
+                    '&:hover .delete-button': {
+                      opacity: 1,
+                    }
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
-                    <InsertDriveFileIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={doc.title}
-                    primaryTypographyProps={{
-                      style: {
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }
+                  <ListItemButton 
+                    onClick={() => onDocumentSelect(doc.id)}
+                    selected={selectedDocumentId === doc.id} // Highlight if selected
+                    sx={{
+                      '&.Mui-selected': { // Style for selected item
+                        backgroundColor: 'rgba(255, 255, 255, 0.08)', 
+                      },
+                      '&.Mui-selected:hover': { // Style for selected item on hover
+                        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                      },
                     }}
-                  />
-                  <IconButton 
-                    className="delete-button"
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent the ListItemButton click
-                      onDocumentDelete(doc.id);
-                    }}
-                    sx={{ 
-                      opacity: 0,
-                      transition: 'opacity 0.2s',
-                      color: theme.palette.error.main,
-                      '&:hover': {
-                        color: theme.palette.error.light,
-                      }
-                    }}
-                    aria-label="delete document"
                   >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
+                    <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
+                      <InsertDriveFileIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={doc.title}
+                      primaryTypographyProps={{
+                        style: {
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }
+                      }}
+                    />
+                    <IconButton 
+                      className="delete-button"
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent the ListItemButton click
+                        onDocumentDelete(doc.id);
+                      }}
+                      sx={{ 
+                        opacity: 0,
+                        transition: 'opacity 0.2s',
+                        color: theme.palette.error.main,
+                        '&:hover': {
+                          color: theme.palette.error.light,
+                        }
+                      }}
+                      aria-label="delete document"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          </Collapse>
+
+          {/* Study Sheets */}
+          <Box
+            onClick={() => setSheetsOpen((v) => !v)}
+            sx={{
+              px: 2,
+              py: 1,
+              mt: 1,
+              mb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderRadius: 1,
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+              backgroundColor: sheetsOpen ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              },
+            }}
+          >
+            <Box className="section-label" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <DescriptionIcon fontSize="small" sx={{ color: 'common.white' }} />
+              <Typography variant="caption" sx={{ color: 'common.white' }}>
+                Study Sheets
+              </Typography>
+            </Box>
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); setSheetsOpen((v) => !v); }}
+              aria-label={sheetsOpen ? 'collapse sheets' : 'expand sheets'}
+              sx={{ color: 'common.white' }}
+            >
+              {sheetsOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            </IconButton>
+          </Box>
+          <Collapse in={sheetsOpen} timeout="auto" unmountOnExit>
+            <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No sheets yet.</Typography>
+          </Collapse>
+
+          {/* Kanban Tasks */}
+          <Box
+            onClick={() => setKanbanOpen((v) => !v)}
+            sx={{
+              px: 2,
+              py: 1,
+              mt: 1,
+              mb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderRadius: 1,
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+              backgroundColor: kanbanOpen ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              },
+            }}
+          >
+            <Box className="section-label" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ViewKanbanIcon fontSize="small" sx={{ color: 'common.white' }} />
+              <Typography variant="caption" sx={{ color: 'common.white' }}>
+                Kanban Tasks
+              </Typography>
+            </Box>
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); setKanbanOpen((v) => !v); }}
+              aria-label={kanbanOpen ? 'collapse kanban' : 'expand kanban'}
+              sx={{ color: 'common.white' }}
+            >
+              {kanbanOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            </IconButton>
+          </Box>
+          <Collapse in={kanbanOpen} timeout="auto" unmountOnExit>
+            <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No tasks yet.</Typography>
+          </Collapse>
+
+          {/* Stats */}
+          <Box
+            onClick={() => setStatsOpen((v) => !v)}
+            sx={{
+              px: 2,
+              py: 1,
+              mt: 1,
+              mb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderRadius: 1,
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+              backgroundColor: statsOpen ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              },
+            }}
+          >
+            <Box className="section-label" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <BarChartIcon fontSize="small" sx={{ color: 'common.white' }} />
+              <Typography variant="caption" sx={{ color: 'common.white' }}>
+                Stats
+              </Typography>
+            </Box>
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); setStatsOpen((v) => !v); }}
+              aria-label={statsOpen ? 'collapse stats' : 'expand stats'}
+              sx={{ color: 'common.white' }}
+            >
+              {statsOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            </IconButton>
+          </Box>
+          <Collapse in={statsOpen} timeout="auto" unmountOnExit>
+            <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No stats yet.</Typography>
+          </Collapse>
           <Box sx={{ flexGrow: 1 }} /> 
           
           {/* Logout button at the bottom */}
           <Divider />
           <List dense>
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => onUpgradeToPro?.()}>
+                  <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
+                    <WorkspacePremiumIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText primary="Upgrade Plan" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => onOpenSettings?.()}>
+                <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
+                  <SettingsIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Settings" />
+              </ListItemButton>
+            </ListItem>
             <ListItem disablePadding>
               <ListItemButton onClick={onLogout}>
                 <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
