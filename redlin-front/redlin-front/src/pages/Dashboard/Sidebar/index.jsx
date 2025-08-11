@@ -37,6 +37,7 @@ import { darkTheme } from '../../../theme';
 import { useRef, useState, useEffect } from 'react'; 
 import { useAuth } from '../../../context/AuthContext';
 import { documentService } from '../../../services/api';
+import AddSpaceModal from '../../../components/common/AddSpaceModal';
 
 const drawerWidth = 480;
 
@@ -69,66 +70,66 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [sheetsOpen, setSheetsOpen] = useState(false);
   const [kanbanOpen, setKanbanOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [openSampleModal, setOpenSampleModal] = useState(false);
+  
+  // Helper to fetch docs so we can reuse after uploads
+  const fetchUserDocuments = async () => {
+    if (user && user.id) { // Check if user and user.id exist
+      setLoadingDocs(true);
+      setFetchError(null);
+      setUserDocuments([]); // Clear previous documents
+      try {
+        const documents = await documentService.getUserDocuments(user.id);
+        setUserDocuments(documents);
+      } catch (err) {
+        console.error('Failed to fetch documents:', err);
+        setFetchError(err.message || 'Could not load documents.');
+      } finally {
+        setLoadingDocs(false);
+      }
+    } else {
+      setUserDocuments([]);
+      setLoadingDocs(false);
+      setFetchError(null);
+    }
+  };
 
   const handleAddContent = () => {
     fileInputRef.current.click(); // Trigger the hidden file input
   };
 
-  const handleFileChange = async (event) => {
-    const file = event.target.files[0];
-    if (!file) {
-      return; // No file selected
-    }
-
+  const uploadFile = async (file) => {
+    if (!file) return;
     const currentUserId = user ? user.id : null;
     if (!currentUserId) {
-        setError('User not logged in. Cannot upload document.');
-        console.error('Upload failed: User not logged in.');
-        return; 
+      setError('User not logged in. Cannot upload document.');
+      console.error('Upload failed: User not logged in.');
+      return;
     }
-
     setError(null);
     setUploading(true);
-
     try {
       const result = await documentService.uploadDocument(file, currentUserId);
       console.log('Upload successful:', result);
+      await fetchUserDocuments();
     } catch (err) {
       console.error('Upload failed:', err);
       setError(err.error || 'Upload failed. Please try again.');
     } finally {
       setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    }
+  };
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    await uploadFile(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
   useEffect(() => {
-    const fetchDocuments = async () => {
-      if (user && user.id) { // Check if user and user.id exist
-        setLoadingDocs(true);
-        setFetchError(null);
-        setUserDocuments([]); // Clear previous documents
-        try {
-          // Call the service function to get documents for the user
-          const documents = await documentService.getUserDocuments(user.id);
-          setUserDocuments(documents);
-        } catch (err) {
-          console.error('Failed to fetch documents:', err);
-          setFetchError(err.message || 'Could not load documents.'); // Use err.message
-        } finally {
-          setLoadingDocs(false);
-        }
-      } else {
-        // Clear documents if user logs out or isn't loaded yet
-        setUserDocuments([]);
-        setLoadingDocs(false); // Ensure loading is false if no user
-        setFetchError(null); // Clear errors if no user
-      }
-    };
-
-    fetchDocuments();
+    fetchUserDocuments();
   }, [user]); // Re-run effect when the user object changes
 
   return (
@@ -154,6 +155,26 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             >
               Add Document 
             </Button>
+          </Box>
+          <Box sx={{ p: 2 }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              fullWidth
+              onClick={() => setOpenSampleModal(true)}
+              sx={{
+                color: 'common.white',
+                justifyContent: 'flex-start',
+                textTransform: 'none',
+                backgroundColor: theme.palette.grey[800],
+                '&:hover': {
+                  backgroundColor: theme.palette.grey[500],
+                },
+              }}
+            >
+              Add Space
+            </Button>
+
           </Box>
           <input
             type="file"
@@ -454,6 +475,14 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </ListItem>
           </List>
         </Drawer>
+        <AddSpaceModal
+          open={openSampleModal}
+          onClose={() => setOpenSampleModal(false)}
+          onImportDocument={async (file) => { await uploadFile(file); setOpenSampleModal(false); }}
+          onImportSheet={(file) => { console.log('Import sheet placeholder', file); }}
+          onCreateTutorial={() => { console.log('Create tutorial'); setOpenSampleModal(false); }}
+          onCreateKanban={() => { console.log('Create kanban'); setOpenSampleModal(false); }}
+        />
       </Box>
     </ThemeProvider>
   );
