@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Button,
   IconButton,
   LinearProgress,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   Divider,
 } from '@mui/material';
@@ -20,6 +19,8 @@ import {
   HighlightOff as HighlightOffIcon,
 } from '@mui/icons-material';
 import { documentService } from '../../services/api';
+import FlashcardCard from './FlashcardCard';
+import FlashcardModal from './FlashcardModal';
 
 const Flashcard = ({ documentId }) => {
   const [flashcards, setFlashcards] = useState([]);
@@ -28,6 +29,9 @@ const Flashcard = ({ documentId }) => {
   const [isBlinking, setIsBlinking] = useState(false); // State for blink effect
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalFlipped, setModalFlipped] = useState(false);
+  const [reviews, setReviews] = useState({}); // { [idOrIndex]: 'known' | 'unknown' }
 
   useEffect(() => {
     if (!documentId) {
@@ -74,6 +78,27 @@ const Flashcard = ({ documentId }) => {
     setIsFlipped(!isFlipped);
     setIsBlinking(true); // Trigger blink
     setTimeout(() => setIsBlinking(false), 150); // Reset blink after 150ms
+  };
+
+  const openModalForIndex = (index) => {
+    setCurrentCardIndex(index);
+    setModalFlipped(false);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => setModalOpen(false);
+
+  // Toggle review status for a given index, only one active at a time; clicking again clears
+  const toggleReview = (index, status) => {
+    setReviews((prev) => {
+      const key = (flashcards[index] && (flashcards[index].id ?? index)) ?? index;
+      const current = prev[key];
+      if (current === status) {
+        const { [key]: _, ...rest } = prev; // clear status
+        return rest;
+      }
+      return { ...prev, [key]: status };
+    });
   };
 
   React.useEffect(() => {
@@ -132,59 +157,16 @@ console.log('Current Card Data:', currentCard);
         />
       </Box>
 
-      {/* Card Area - Simple Toggle (No Animation) */}
-      <Box sx={{ width: '90%', maxWidth: '500px', height: '300px', mb: 4 }}>
-        <Card
-          onClick={handleFlip}
-          sx={{
-            width: '100%',
-            height: '100%',
-            cursor: 'pointer',
-            borderRadius: '16px',
-            boxShadow: 3, // Base shadow
-            display: 'flex', 
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            p: 3,
-            textAlign: 'center',
-            backgroundColor: 'background.paper', 
-            transition: 'transform 0.2s ease-in-out, boxShadow 0.2s ease-in-out, outline 0.1s ease-in-out', // Added transitions
-            outline: isBlinking ? '3px solid lightgreen' : 'none', // Conditional green blink outline
-            '&:hover': { // Hover effect
-              transform: 'scale(1.02)',
-              boxShadow: 6, // Increase shadow on hover
-            },
-          }}
-        >
-          {/* Conditional Rendering based on isFlipped */}
-          {isFlipped ? (
-            // Back of Card (Definition)
-            <CardContent sx={{ width: '100%', height: '100%' }}>
-              <Typography variant="body1" sx={{ color: 'text.primary' }}> 
-                {currentCard?.definition || 'N/A'}
-              </Typography>
-            </CardContent>
-          ) : (
-            // Front of Card (Term)
-            <CardContent sx={{ width: '100%', height: '100%' }}>
-              {currentCard?.image && (
-                <Box
-                  component="img"
-                  src={currentCard.image}
-                  alt="Flashcard image"
-                  sx={{ maxHeight: '80px', maxWidth: '80%', mb: 2, borderRadius: '8px' }}
-                />
-              )}
-              <Typography variant="h6">
-                {currentCard?.key_term || 'N/A'} 
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 2 }}>
-                Click to see definition
-              </Typography>
-            </CardContent>
-          )}
-        </Card>
+      {/* Card Area */}
+      <Box sx={{ width: '90%', maxWidth: '500px', mb: 4 }}>
+        <FlashcardCard
+          card={currentCard}
+          isFlipped={isFlipped}
+          onToggleFlip={handleFlip}
+          blink={isBlinking}
+          size="md"
+          showHint={!isFlipped}
+        />
       </Box>
 
       {/* Navigation Buttons */}
@@ -218,7 +200,10 @@ console.log('Current Card Data:', currentCard);
           Card Overview
         </Typography>
         <List dense sx={{ borderRadius: '8px' }}>
-          {flashcards.map((card, index) => (
+          {flashcards.map((card, index) => {
+            const itemKey = card.id ?? index;
+            const status = reviews[itemKey] || null; // 'known' | 'unknown' | null
+            return (
             <ListItem
               key={card.id || `card-${index}`}
               secondaryAction={
@@ -226,41 +211,71 @@ console.log('Current Card Data:', currentCard);
                   <IconButton 
                     edge="end" 
                     aria-label="know it"
+                    aria-pressed={status === 'known'}
+                    onClick={(e) => { e.stopPropagation(); toggleReview(index, 'known'); }}
                   >
-                    <CheckCircleOutlineIcon />
+                    <CheckCircleOutlineIcon sx={{ color: status === 'known' ? 'success.main' : 'text.disabled' }} />
                   </IconButton>
                   <IconButton 
                     edge="end" 
                     aria-label="don't know it"
                     sx={{ ml: 1 }}
+                    aria-pressed={status === 'unknown'}
+                    onClick={(e) => { e.stopPropagation(); toggleReview(index, 'unknown'); }}
                   >
-                    <HighlightOffIcon />
+                    <HighlightOffIcon sx={{ color: status === 'unknown' ? 'error.main' : 'text.disabled' }} />
                   </IconButton>
                 </Box>
               }
               disablePadding
+              selected={index === currentCardIndex}
               sx={{
                 py: 1.5, 
                 borderBottom: index < flashcards.length - 1 ? '1px solid' : 'none', 
                 borderColor: 'divider', 
+                borderRadius: 1,
+                transition: 'background-color 120ms ease',
+                '&:hover': {
+                  backgroundColor: (theme) => theme.palette.mode === 'dark' ? theme.palette.grey[700] : theme.palette.grey[200],
+                },
+                '&.Mui-selected': {
+                  backgroundColor: 'action.selected',
+                },
+                '&.Mui-selected:hover': {
+                  backgroundColor: 'action.selected',
+                },
               }}
             >
-              <ListItemText
-                id={`flashcard-list-item-${card.id}`}
-                primary={`${index + 1}. ${card.key_term}`}
-                primaryTypographyProps={{ 
-                  color: 'text.primary', 
-                  noWrap: true, 
-                  sx:{ 
-                    pr: '100px' 
-                  }
+              <ListItemButton
+                onClick={() => openModalForIndex(index)}
+                sx={{
+                  pl: 2,
+                  pr: 14,
+                  // hover/selected background is handled by ListItem
                 }}
-                sx={{ pl: 2 }} 
-              />
+              >
+                <ListItemText
+                  id={`flashcard-list-item-${card.id}`}
+                  primary={`${index + 1}. ${card.key_term}`}
+                  primaryTypographyProps={{ 
+                    color: 'text.primary', 
+                    noWrap: true,
+                  }}
+                />
+              </ListItemButton>
             </ListItem>
-          ))}
+          );})}
         </List>
       </Box>
+
+      {/* Modal for viewing card from overview */}
+      <FlashcardModal
+        open={modalOpen}
+        onClose={closeModal}
+        card={currentCard}
+        isFlipped={modalFlipped}
+        onToggleFlip={() => setModalFlipped((f) => !f)}
+      />
     </Box>
   );
 };
