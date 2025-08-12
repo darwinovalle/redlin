@@ -137,11 +137,22 @@ const Flashcard = ({ documentId }) => {
       </Box>
     );
   }
-
-console.log('Current Card Data:', currentCard);
+  // console.log('Current Card Data:', currentCard);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 3, height: '100%', justifyContent: 'center' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        px: 3,
+        py: 3,
+  height: '100%', // fit parent area to avoid outer scrollbars
+  overflow: 'hidden', // prevent outer/page-level scrollbars
+        boxSizing: 'border-box',
+        gap: 0,
+      }}
+    >
       {/* Progress Indicator */}
       <Box sx={{ width: '80%', maxWidth: '600px', mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
@@ -192,10 +203,27 @@ console.log('Current Card Data:', currentCard);
       </Box>
 
       {/* Divider */}
-      <Divider sx={{ width: '90%', maxWidth: '600px', my: 3 }} />
+  <Divider sx={{ width: '90%', maxWidth: '600px', my: 2 }} />
 
       {/* List of Flashcard Questions */}
-      <Box sx={{ width: '90%', maxWidth: '600px', flexGrow: 1, overflowY: 'auto', mb: 2 }}>
+      <Box
+        sx={{
+          width: '90%',
+          maxWidth: '600px',
+          maxHeight: '27.5vh', // smaller scroll area at the bottom
+          overflowY: 'auto',
+          mb: 2,
+          // thin, subtle scrollbar
+          scrollbarWidth: 'thin', // Firefox
+          scrollbarColor: (theme) => `${theme.palette.divider} transparent`,
+          '&::-webkit-scrollbar': { width: 6 },
+          '&::-webkit-scrollbar-track': { backgroundColor: 'transparent' },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'divider',
+            borderRadius: 8,
+          },
+        }}
+      >
         <Typography variant="h6" sx={{ mb: 1, textAlign: 'center', color: 'text.primary' }}>
           Card Overview
         </Typography>

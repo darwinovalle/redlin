@@ -27,7 +27,7 @@ const FlashcardModal = ({ open, onClose, card, isFlipped, onToggleFlip }) => {
           outline: 'none',
         }}
       >
-        <IconButton
+        {/* <IconButton
           aria-label="close"
           onClick={onClose}
           size="small"
@@ -47,7 +47,7 @@ const FlashcardModal = ({ open, onClose, card, isFlipped, onToggleFlip }) => {
           }}
         >
           <CloseIcon fontSize="small" />
-        </IconButton>
+        </IconButton> */}
         <FlashcardCard
           card={card}
           isFlipped={isFlipped}

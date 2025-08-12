@@ -13,6 +13,7 @@ import QuizView from '../../components/Flashcard/QuizView';
 import { documentService } from '../../services/api';
 import Summary from '../../components/Summary';
 import { useAuth } from '../../context/AuthContext';
+import WavyBackground from '../../components/common/WavyBackground';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -128,7 +129,8 @@ const Dashboard = ({ user }) => {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ position: 'relative', display: 'flex', height: '100vh', bgcolor: 'transparent' }}>
+  <WavyBackground waveHeight="60vh" offsetY={0} />
       <MiniDrawer 
         selectedDocumentId={selectedDocumentId}
         onDocumentSelect={handleDocumentSelect}
@@ -136,9 +138,9 @@ const Dashboard = ({ user }) => {
         onLogout={handleLogout}
       />
       {/* Wrapper Box to handle spacing from sidebar and enable centering */}
-      <Box sx={{ flexGrow: 1, pl: '0px', /* Removed padding to shift fully left for centering */ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflow: 'hidden', pt: 2 }}>
+      <Box sx={{ position: 'relative', zIndex: 1, flexGrow: 1, pl: '0px', /* Removed padding to shift fully left for centering */ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflow: 'hidden', pt: 2 }}>
         {/* Centered Content Box */}
-        <Box sx={{ width: '100%', maxWidth: '1000px', /* Max width for centered content */ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Box sx={{ width: '100%', maxWidth: '1000px', /* Max width for centered content */ display: 'flex', flexDirection: 'column', height: '100%', backdropFilter: 'none' }}>
           {/* Tabs as Header - Centered within the 'Centered Content Box' */}
           <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%', flexShrink: 0 }}>
             <Tabs value={activeTab} onChange={handleTabChange} aria-label="main content tabs" centered> 
