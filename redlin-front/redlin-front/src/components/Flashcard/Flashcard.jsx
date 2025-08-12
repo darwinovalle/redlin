@@ -21,6 +21,7 @@ import {
 import { documentService } from '../../services/api';
 import FlashcardCard from './FlashcardCard';
 import FlashcardModal from './FlashcardModal';
+import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 
 const Flashcard = ({ documentId }) => {
   const [flashcards, setFlashcards] = useState([]);
@@ -108,7 +109,7 @@ const Flashcard = ({ documentId }) => {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', p: 3 }}>
-        <LinearProgress sx={{ width: '50%' }} />
+        <img src={GearSvg} alt="Loading" width={30} height={30} />
         <Typography sx={{ ml: 2 }}>Loading Flashcards...</Typography>
       </Box>
     );
@@ -156,15 +157,19 @@ const Flashcard = ({ documentId }) => {
       {/* Progress Indicator */}
       <Box sx={{ width: '80%', maxWidth: '600px', mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
-          <AutoAwesomeIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700 }}>
             {currentCardIndex + 1} of {flashcards.length}
           </Typography>
         </Box>
         <LinearProgress
           variant="determinate"
           value={(currentCardIndex + 1) / flashcards.length * 100}
-          sx={{ height: 8, borderRadius: 5 }}
+          sx={{
+            height: 8,
+            borderRadius: 5,
+            bgcolor: '#fff',
+            '& .MuiLinearProgress-bar': { backgroundColor: '#acf3d0' },
+          }}
         />
       </Box>
 
@@ -183,22 +188,20 @@ const Flashcard = ({ documentId }) => {
       {/* Navigation Buttons */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '90%', maxWidth: '500px' }}>
         <Button
-          variant="outlined"
+          variant="contained"
           startIcon={<ArrowBackIcon />}
           onClick={previousCard}
           disabled={currentCardIndex === 0}
-          sx={{ borderRadius: '20px', px: 3 }}
+          sx={{ borderRadius: '20px', px: 3 , backgroundColor: '#6be0a6'}}
         >
-          Previous
         </Button>
         <Button
           variant="contained"
           endIcon={<ArrowForwardIcon />}
           onClick={nextCard}
           disabled={currentCardIndex === flashcards.length - 1}
-          sx={{ borderRadius: '20px', px: 3 }}
+          sx={{ borderRadius: '20px', px: 3 , backgroundColor: '#6be0a6'}}
         >
-          Next
         </Button>
       </Box>
 

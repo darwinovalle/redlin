@@ -12,6 +12,10 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
+import {
+  ArrowBack as ArrowBackIcon,
+  ArrowForward as ArrowForwardIcon,
+} from '@mui/icons-material';
 import { AutoAwesome as AutoAwesomeIcon } from '@mui/icons-material';
 import { documentService } from '../../services/api';
 
@@ -176,6 +180,7 @@ const QuizView = ({ documentId }) => {
           size="large" 
           onClick={startQuizHandler} 
           disabled={!canStart || !documentId}
+          sx={{ backgroundColor: '#000' , borderRadius: '20px'}}
         >
           {canStart ? 'Start Quiz' : (documentId ? 'No Questions Found' : 'Select Document')}
         </Button>
@@ -215,8 +220,7 @@ const QuizView = ({ documentId }) => {
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, width: '100%', justifyContent: 'center' }}>
-        <AutoAwesomeIcon sx={{ mr: 1, color: 'primary.main' }} />
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 700 }}>
           {currentQuestionIndex + 1} of {totalQuestions}
         </Typography>
       </Box>
@@ -276,26 +280,31 @@ const QuizView = ({ documentId }) => {
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, width: '100%', maxWidth: '500px' }}>
         <Button
-          variant="outlined"
+          variant="contained"
+          startIcon={<ArrowBackIcon />}
           onClick={previousQuestionHandler} 
           disabled={currentQuestionIndex === 0}
+          sx={{ borderRadius: '20px', px: 3 , backgroundColor: '#6be0a6'}}
         >
-          Previous
         </Button>
         <Button
-          variant="outlined" 
-          color="secondary" 
+          variant="contained" 
           onClick={endQuizHandler} 
-          sx={{ mx: 1 }} 
+          sx={{
+            borderRadius: '20px', 
+            mx: 1 ,
+            backgroundColor: '#ff5454',
+          }} 
         >
-          Exit Quiz
+         exit 
         </Button>
         <Button
           variant="contained"
+          endIcon={<ArrowForwardIcon />}
           onClick={nextQuestionHandler} 
           disabled={currentQuestionIndex === totalQuestions - 1}
+          sx={{ borderRadius: '20px', px: 3 , backgroundColor: '#6be0a6'}}
         >
-          Next
         </Button>
       </Box>
 
