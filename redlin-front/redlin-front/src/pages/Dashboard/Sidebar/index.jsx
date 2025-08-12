@@ -43,7 +43,7 @@ import LoaderOverlay from '../../../components/common/LoaderOverlay';
 import SuccessAlert from '../../../components/common/SuccessAlert';
 import RenameDialog from '../../../components/common/RenameDialog';
 
-const drawerWidth = 480;
+const drawerWidth = 350;
 
 const Drawer = styled(MuiDrawer)(({ theme }) => ({
   width: drawerWidth,
