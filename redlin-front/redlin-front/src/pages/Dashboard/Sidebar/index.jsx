@@ -202,7 +202,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
           {uploading && <Typography sx={{p: 2, color: 'text.secondary'}}>Uploading...</Typography>}
           {error && <Typography sx={{p: 2, color: 'error.main'}}>Error: {error}</Typography>}
 
-          {/* Tutorial Courses */}
+          {/* Tutorial Courses
           <Box
             onClick={() => setTutorialsOpen((v) => !v)}
             sx={{
@@ -239,7 +239,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
           </Box>
           <Collapse in={tutorialsOpen} timeout="auto" unmountOnExit>
             <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No courses yet.</Typography>
-          </Collapse>
+          </Collapse> */}
 
           <Box
             onClick={() => setDocsOpen((v) => !v)}

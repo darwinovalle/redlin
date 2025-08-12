@@ -30,7 +30,7 @@ const AddSpaceModal = ({
   onClose,
   onImportDocument,
   onImportSheet,
-  onCreateTutorial,
+  // onCreateTutorial,
   onCreateKanban,
 }) => {
   const [selected, setSelected] = useState('document'); // 'document' | 'sheet' | 'tutorial' | 'kanban'
@@ -41,7 +41,7 @@ const AddSpaceModal = ({
     () => [
       { key: 'document', label: 'Import Document', icon: <InsertDriveFileIcon fontSize="small" /> },
       { key: 'sheet', label: 'Import Sheet', icon: <DescriptionIcon fontSize="small" /> },
-      { key: 'tutorial', label: 'Create Tutorial', icon: <MenuBookIcon fontSize="small" /> },
+      // { key: 'tutorial', label: 'Create Tutorial', icon: <MenuBookIcon fontSize="small" /> },
       { key: 'kanban', label: 'Create Kanban Task', icon: <ViewKanbanIcon fontSize="small" /> },
     ],
     []
@@ -244,7 +244,7 @@ const AddSpaceModal = ({
               </Box>
             )}
 
-            {selected === 'tutorial' && (
+            {/* {selected === 'tutorial' && (
               <Box sx={{ textAlign: 'center', maxWidth: 520 }}>
                 <Typography variant="h6" sx={{ mb: 1.5 }}>Create Tutorial</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -252,7 +252,7 @@ const AddSpaceModal = ({
                 </Typography>
                 <Button variant="contained" onClick={onCreateTutorial}>Create</Button>
               </Box>
-            )}
+            )} */}
 
             {selected === 'kanban' && (
               <Box sx={{ textAlign: 'center', maxWidth: 520 }}>

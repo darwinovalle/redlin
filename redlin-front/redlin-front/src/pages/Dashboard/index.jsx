@@ -143,10 +143,30 @@ const Dashboard = ({ user }) => {
         <Box sx={{ width: '100%', maxWidth: '1000px', /* Max width for centered content */ display: 'flex', flexDirection: 'column', height: '100%', backdropFilter: 'none' }}>
           {/* Tabs as Header - Centered within the 'Centered Content Box' */}
           <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%', flexShrink: 0 }}>
-            <Tabs value={activeTab} onChange={handleTabChange} aria-label="main content tabs" centered> 
-              <Tab label="Flashcards" />
-              <Tab label="Quiz" />
-              <Tab label="Summary" />
+            <Tabs 
+              value={activeTab} 
+              onChange={handleTabChange} 
+              aria-label="main content tabs" 
+              centered
+              textColor="inherit"
+              sx={{
+                '& .MuiTabs-indicator': {
+                  backgroundColor: '#ffffff',
+                },
+              }}
+            > 
+              <Tab 
+                label="Flashcards" 
+                sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
+              />
+              <Tab 
+                label="Quiz" 
+                sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
+              />
+              <Tab 
+                label="Summary" 
+                sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
+              />
             </Tabs>
           </Box>
 
