@@ -1,7 +1,7 @@
 import * as React from 'react'; 
 import { useState, useEffect } from 'react';
 import { Navigate } from "react-router-dom";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import MiniDrawer from "./Sidebar";
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs'; 
@@ -44,8 +44,20 @@ const Dashboard = ({ user }) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { user: authUser, logout } = useAuth();
+  const { docSlug } = useParams();
 
   // Fetch user documents when component mounts
+  const slugify = (str) =>
+    (str || '')
+      .toString()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
   useEffect(() => {
     const fetchUserDocuments = async () => {
       // Only proceed if we have a user
@@ -60,10 +72,19 @@ const Dashboard = ({ user }) => {
         
         // Update state with the fetched documents
         setUserDocuments(documents);
-        
-        // If documents exist and nothing is selected, select the first one
-        if (documents && documents.length > 0 && !selectedDocumentId) {
-          setSelectedDocumentId(documents[0].id);
+
+        // If a slug is present, try to select the matching doc
+        let initialId = null;
+        if (docSlug && documents?.length) {
+          const match = documents.find((d) => slugify(d.title) === docSlug);
+          if (match) initialId = match.id;
+        }
+        // Fallback to first doc if nothing matched
+        if (!initialId && documents && documents.length > 0) {
+          initialId = documents[0].id;
+        }
+        if (initialId && selectedDocumentId !== initialId) {
+          setSelectedDocumentId(initialId);
         }
       } catch (error) {
         console.error('Error fetching documents:', error);
@@ -77,7 +98,7 @@ const Dashboard = ({ user }) => {
     if (authUser && authUser.id) {
       fetchUserDocuments();
     }
-  }, [authUser, selectedDocumentId]); // Re-run when auth user or selected document changes
+  }, [authUser, selectedDocumentId, docSlug]); // Re-run when auth user, selected doc, or slug changes
   
   const handleDocumentSelect = (id) => {
     setSelectedDocumentId(id);

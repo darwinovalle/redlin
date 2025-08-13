@@ -25,6 +25,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import HomeIcon from '@mui/icons-material/Home';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -42,6 +43,7 @@ import AddSpaceModal from '../../../components/common/AddSpaceModal';
 import LoaderOverlay from '../../../components/common/LoaderOverlay';
 import SuccessAlert from '../../../components/common/SuccessAlert';
 import RenameDialog from '../../../components/common/RenameDialog';
+import { useNavigate } from 'react-router-dom';
 
 const drawerWidth = 350;
 
@@ -64,6 +66,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [successAlertOpen, setSuccessAlertOpen] = useState(false);
   const theme = useTheme();
   const { user } = useAuth(); 
+  const navigate = useNavigate();
 
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -160,6 +163,17 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
     }
   };
 
+  const slugify = (str) =>
+    (str || '')
+      .toString()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '') // remove accents
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
   return (
     <ThemeProvider theme={darkTheme}>
       <LoaderOverlay open={loading} text="Uploading..." />
@@ -192,16 +206,6 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </Button>
 
           </Box>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            style={{ display: 'none' }} 
-            accept=".pdf" 
-          />
-          {uploading && <Typography sx={{p: 2, color: 'text.secondary'}}>Uploading...</Typography>}
-          {error && <Typography sx={{p: 2, color: 'error.main'}}>Error: {error}</Typography>}
-
           {/* Tutorial Courses
           <Box
             onClick={() => setTutorialsOpen((v) => !v)}
@@ -240,6 +244,20 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
           <Collapse in={tutorialsOpen} timeout="auto" unmountOnExit>
             <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No courses yet.</Typography>
           </Collapse> */}
+          <Box>
+
+              <List dense>
+                <ListItem disablePadding>
+                  <ListItemButton onClick={() => navigate('/home')}>
+                    <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
+                      <HomeIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primary="Home" />
+                  </ListItemButton>
+                </ListItem>
+              </List>
+
+          </Box>
 
           <Box
             onClick={() => setDocsOpen((v) => !v)}
@@ -295,7 +313,12 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                   }}
                 >
                   <ListItemButton 
-                    onClick={() => onDocumentSelect(doc.id)}
+                    onClick={() => {
+                      const slug = slugify(doc.title || String(doc.id));
+                      try { localStorage.setItem('lastDocSlug', slug); } catch {}
+                      navigate(`/documents/${slug}`);
+                      onDocumentSelect?.(doc.id);
+                    }}
                     selected={selectedDocumentId === doc.id} // Highlight if selected
                     sx={{
                       '&.Mui-selected': { // Style for selected item
@@ -482,7 +505,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
           <Divider />
           <List dense>
             <ListItem disablePadding>
-              <ListItemButton onClick={() => onUpgradeToPro?.()}>
+              <ListItemButton onClick={() => navigate('/pricing')}>
                   <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
                     <WorkspacePremiumIcon fontSize="small" />
                   </ListItemIcon>
