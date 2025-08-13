@@ -38,7 +38,7 @@ const Login = () => {
     try {
       const userData = await authService.login(username, password);
       login(userData);
-      navigate('/dashboard');
+      navigate('/home');
       console.log('Login successful:', userData);
       // Handle successful login (e.g., store user data, redirect)
     } catch (err) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -17,33 +17,7 @@ import {
 import { ThemeProvider } from '@mui/material/styles';
 import { darkTheme } from '../../theme';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-
-const plans = [
-  {
-    name: 'Basic Plan',
-    priceMonthly: 5,
-    priceAnnual: 50,
-    features: ['Up to 3 projects', '20GB of storage', 'Up to 1 device'],
-    cta: 'Choose plan',
-    highlighted: false,
-  },
-  {
-    name: 'Professional Plan',
-    priceMonthly: 25,
-    priceAnnual: 250,
-    features: ['Unlimited projects', '150GB of storage', 'Up to 5 devices'],
-    cta: 'Choose plan',
-    highlighted: true,
-  },
-  {
-    name: 'Business Plan',
-    priceMonthly: 45,
-    priceAnnual: 450,
-    features: ['Unlimited projects', 'Unlimited storage', 'Unlimited devices'],
-    cta: 'Choose plan',
-    highlighted: false,
-  },
-];
+import { plans } from './plans';
 
 function PriceTag({ amount, period }) {
   return (
@@ -55,11 +29,12 @@ function PriceTag({ amount, period }) {
 }
 
 export default function Pricing() {
+  const navigate = useNavigate();
   const [billing, setBilling] = React.useState('monthly');
 
   const handleChoose = (plan, interval) => {
-    // TODO: conectar con checkout
-    window.location.href = '/register';
+    const params = new URLSearchParams({ plan: plan.name, interval });
+    navigate(`/checkout?${params.toString()}`);
   };
 
   return (
