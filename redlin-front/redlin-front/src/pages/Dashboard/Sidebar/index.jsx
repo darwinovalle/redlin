@@ -40,6 +40,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { documentService } from '../../../services/api';
 import AddSpaceModal from '../../../components/common/AddSpaceModal';
+import { csvService } from '../../../services/api/csv';
 import LoaderOverlay from '../../../components/common/LoaderOverlay';
 import SuccessAlert from '../../../components/common/SuccessAlert';
 import RenameDialog from '../../../components/common/RenameDialog';
@@ -78,6 +79,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [docsOpen, setDocsOpen] = useState(true);
   const [tutorialsOpen, setTutorialsOpen] = useState(false);
   const [sheetsOpen, setSheetsOpen] = useState(false);
+  const [csvImports, setCsvImports] = useState([]);
   const [kanbanOpen, setKanbanOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [openSampleModal, setOpenSampleModal] = useState(false);
@@ -144,6 +146,16 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
 
   useEffect(() => {
     fetchUserDocuments();
+    // fetch CSV imports (user-scoped via JWT in backend)
+    (async () => {
+      try {
+        const data = await csvService.listImports();
+        setCsvImports(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.warn('Failed to load CSV imports', e);
+        setCsvImports([]);
+      }
+    })();
   }, [user]); // Re-run effect when the user object changes
 
   const openRename = (doc) => setRenameState({ open: true, doc, saving: false });
@@ -419,7 +431,26 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </IconButton>
           </Box>
           <Collapse in={sheetsOpen} timeout="auto" unmountOnExit>
-            <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No sheets yet.</Typography>
+            {csvImports.length === 0 ? (
+              <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No sheets yet.</Typography>
+            ) : (
+              <List dense>
+                {csvImports.map((imp) => {
+                  const name = (imp.filename || 'csv').replace(/\.[^/.]+$/, '');
+                  const slug = slugify(name);
+                  return (
+                    <ListItem key={imp.id} disablePadding>
+                      <ListItemButton onClick={() => navigate(`/csv/${slug}?importId=${imp.id}`)}>
+                        <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
+                          <DescriptionIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText primary={name} secondary={new Date(imp.created_at).toLocaleString()} />
+                      </ListItemButton>
+                    </ListItem>
+                  );
+                })}
+              </List>
+            )}
           </Collapse>
 
           {/* Kanban Tasks */}
@@ -534,7 +565,19 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
           open={openSampleModal}
           onClose={() => setOpenSampleModal(false)}
           onImportDocument={async (file) => { await uploadFile(file); setOpenSampleModal(false); }}
-          onImportSheet={(file) => { console.log('Import sheet placeholder', file); }}
+          onImportSheet={async (file) => {
+            try {
+              const res = await csvService.uploadCSV(file);
+              setOpenSampleModal(false);
+              // Navigate to csv page for this import using filename as slug
+              const name = (file?.name || 'csv').replace(/\.[^/.]+$/, '');
+              const slug = slugify(name);
+              navigate(`/csv/${slug}?importId=${res?.import?.id || ''}`);
+            } catch (e) {
+              console.error('CSV import failed', e);
+              alert('CSV import failed');
+            }
+          }}
           onCreateTutorial={() => { console.log('Create tutorial'); setOpenSampleModal(false); }}
           onCreateKanban={() => { console.log('Create kanban'); setOpenSampleModal(false); }}
         />

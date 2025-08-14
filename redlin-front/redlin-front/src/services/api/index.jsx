@@ -202,4 +202,4 @@ export const documentService = {
   }
 };
 
-export default authService;
+export default api;

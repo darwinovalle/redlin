@@ -15,6 +15,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import DescriptionIcon from '@mui/icons-material/Description';
+import { csvService } from '../../services/api/csv';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
 
@@ -49,11 +50,17 @@ const AddSpaceModal = ({
 
   const handleOpenFile = () => fileInputRef.current?.click();
 
-  const handleFiles = (files) => {
+  const handleFiles = async (files) => {
     if (!files || files.length === 0) return;
     const file = files[0];
-    if (selected === 'document') onImportDocument?.(file);
-    else if (selected === 'sheet') onImportSheet?.(file);
+    if (selected === 'document') {
+      onImportDocument?.(file);
+    } else if (selected === 'sheet') {
+      // CSV import path
+      try {
+        await onImportSheet?.(file);
+      } catch {}
+    }
   };
 
   const onDrop = (e) => {
@@ -238,6 +245,7 @@ const AddSpaceModal = ({
                 <input
                   ref={fileInputRef}
                   type="file"
+                  accept=".csv,text/csv"
                   style={{ display: 'none' }}
                   onChange={(e) => handleFiles(e.target.files)}
                 />

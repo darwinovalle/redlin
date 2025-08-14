@@ -1,5 +1,6 @@
 import { Route, Routes, BrowserRouter , Link} from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
+import CSVStudy from "./pages/CSVStudy";
 import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
@@ -30,6 +31,11 @@ const RouterContent = () => {
         <Route path="/documents/:docSlug" element={
           <ProtectRoute user={user}>
             <Dashboard />
+          </ProtectRoute>
+        } />
+        <Route path="/csv/:csvSlug" element={
+          <ProtectRoute user={user}>
+            <CSVStudy />
           </ProtectRoute>
         } />
         <Route path="/home" element={
