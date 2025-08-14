@@ -8,6 +8,7 @@ import Register from "./pages/Register";
 import Checkout from "./pages/Checkout";
 import ProtectRoute from "./components/ProtectRoute";
 import { AuthProvider, useAuth } from './context/AuthContext';
+import AppLayout from './layouts/AppLayout';
 
 
 const AppRouter = () => {
@@ -28,26 +29,18 @@ const RouterContent = () => {
   <Route path="/pricing" element={<Pricing />} />
         <Route path="/register" element={<Register />} />
   <Route path="/checkout" element={<Checkout />} />
-        <Route path="/documents/:docSlug" element={
+        {/* Protected app shell keeps Sidebar mounted */}
+        <Route element={
           <ProtectRoute user={user}>
-            <Dashboard />
+            <AppLayout />
           </ProtectRoute>
-        } />
-        <Route path="/csv/:csvSlug" element={
-          <ProtectRoute user={user}>
-            <CSVStudy />
-          </ProtectRoute>
-        } />
-        <Route path="/home" element={
-          <ProtectRoute user={user}>
-            <Home />
-          </ProtectRoute>
-        } />
-        <Route path="/dashboard" element={
-          <ProtectRoute user={user}>
-            <Dashboard />
-          </ProtectRoute>
-        } />
+        }>
+          <Route path="/home" element={<Home />} />
+          <Route path="/documents/:docSlug" element={<Dashboard />} />
+          <Route path="/csv/:csvSlug" element={<CSVStudy />} />
+          {/* Optional alias */}
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

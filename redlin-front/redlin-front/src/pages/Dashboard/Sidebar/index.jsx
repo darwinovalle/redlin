@@ -44,7 +44,7 @@ import { csvService } from '../../../services/api/csv';
 import LoaderOverlay from '../../../components/common/LoaderOverlay';
 import SuccessAlert from '../../../components/common/SuccessAlert';
 import RenameDialog from '../../../components/common/RenameDialog';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const drawerWidth = 350;
 
@@ -68,6 +68,16 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const theme = useTheme();
   const { user } = useAuth(); 
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname.startsWith('/home');
+  const currentDocSlug = React.useMemo(() => {
+    const m = location.pathname.match(/^\/documents\/([^/?#]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  }, [location.pathname]);
+  const docsOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:docsOpen` : null), [user?.id]);
+  const sheetsOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:sheetsOpen` : null), [user?.id]);
+  const kanbanOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:kanbanOpen` : null), [user?.id]);
+  const statsOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:statsOpen` : null), [user?.id]);
 
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -76,12 +86,45 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [userDocuments, setUserDocuments] = useState([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [fetchError, setFetchError] = useState(null);
-  const [docsOpen, setDocsOpen] = useState(true);
+  const [docsOpen, setDocsOpen] = useState(() => {
+    if (docsOpenKey) {
+      try {
+        const v = localStorage.getItem(docsOpenKey);
+        if (v === 'true' || v === 'false') return v === 'true';
+      } catch {}
+    }
+    // Default when no persisted value: collapsed on Home, expanded elsewhere
+    return !isHome;
+  });
   const [tutorialsOpen, setTutorialsOpen] = useState(false);
-  const [sheetsOpen, setSheetsOpen] = useState(false);
+  const [sheetsOpen, setSheetsOpen] = useState(() => {
+    if (sheetsOpenKey) {
+      try {
+        const v = localStorage.getItem(sheetsOpenKey);
+        if (v === 'true' || v === 'false') return v === 'true';
+      } catch {}
+    }
+    return false;
+  });
   const [csvImports, setCsvImports] = useState([]);
-  const [kanbanOpen, setKanbanOpen] = useState(false);
-  const [statsOpen, setStatsOpen] = useState(false);
+  const [kanbanOpen, setKanbanOpen] = useState(() => {
+    if (kanbanOpenKey) {
+      try {
+        const v = localStorage.getItem(kanbanOpenKey);
+        if (v === 'true' || v === 'false') return v === 'true';
+      } catch {}
+    }
+    return false;
+  });
+  const [statsOpen, setStatsOpen] = useState(() => {
+    if (statsOpenKey) {
+      try {
+        const v = localStorage.getItem(statsOpenKey);
+        if (v === 'true' || v === 'false') return v === 'true';
+      } catch {}
+    }
+    return false;
+  });
   const [openSampleModal, setOpenSampleModal] = useState(false);
   const [renameState, setRenameState] = useState({ open: false, doc: null, saving: false });
   
@@ -143,6 +186,88 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       fileInputRef.current.value = '';
     }
   };
+
+  const handleDeleteDocument = async (doc) => {
+    if (onDocumentDelete) { onDocumentDelete(doc.id); return; }
+    if (!window.confirm('Are you sure you want to delete this document? This action cannot be undone.')) return;
+    try {
+      await documentService.deleteDocument(doc.id);
+      const remaining = userDocuments.filter((d) => d.id !== doc.id);
+      setUserDocuments(remaining);
+      // If we were on this doc page, redirect to next available or home
+      if (currentDocSlug && slugify(doc.title) === currentDocSlug) {
+        if (remaining.length > 0) {
+          const nextSlug = slugify(remaining[0].title || String(remaining[0].id));
+          navigate(`/documents/${nextSlug}`);
+        } else {
+          navigate('/home');
+        }
+      }
+    } catch (e) {
+      console.error('Delete failed', e);
+      alert('Failed to delete document');
+    }
+  };
+
+  // Load persisted docsOpen when user changes (and a key becomes available)
+  useEffect(() => {
+    if (!docsOpenKey) return;
+    try {
+      const v = localStorage.getItem(docsOpenKey);
+      if (v === 'true' || v === 'false') setDocsOpen(v === 'true');
+    } catch {}
+  }, [docsOpenKey]);
+
+  // Persist docsOpen whenever it changes
+  useEffect(() => {
+    if (!docsOpenKey) return;
+    try { localStorage.setItem(docsOpenKey, String(docsOpen)); } catch {}
+  }, [docsOpen, docsOpenKey]);
+
+  // Load persisted sheetsOpen when user changes
+  useEffect(() => {
+    if (!sheetsOpenKey) return;
+    try {
+      const v = localStorage.getItem(sheetsOpenKey);
+      if (v === 'true' || v === 'false') setSheetsOpen(v === 'true');
+    } catch {}
+  }, [sheetsOpenKey]);
+
+  // Persist sheetsOpen whenever it changes
+  useEffect(() => {
+    if (!sheetsOpenKey) return;
+    try { localStorage.setItem(sheetsOpenKey, String(sheetsOpen)); } catch {}
+  }, [sheetsOpen, sheetsOpenKey]);
+
+  // Load persisted kanbanOpen when user changes
+  useEffect(() => {
+    if (!kanbanOpenKey) return;
+    try {
+      const v = localStorage.getItem(kanbanOpenKey);
+      if (v === 'true' || v === 'false') setKanbanOpen(v === 'true');
+    } catch {}
+  }, [kanbanOpenKey]);
+
+  // Persist kanbanOpen whenever it changes
+  useEffect(() => {
+    if (!kanbanOpenKey) return;
+    try { localStorage.setItem(kanbanOpenKey, String(kanbanOpen)); } catch {}
+  }, [kanbanOpen, kanbanOpenKey]);
+
+  // Load persisted statsOpen when user changes
+  useEffect(() => {
+    if (!statsOpenKey) return;
+    try {
+      const v = localStorage.getItem(statsOpenKey);
+      if (v === 'true' || v === 'false') setStatsOpen(v === 'true');
+    } catch {}
+  }, [statsOpenKey]);
+
+  // Persist statsOpen whenever it changes
+  useEffect(() => {
+    if (!statsOpenKey) return;
+    try { localStorage.setItem(statsOpenKey, String(statsOpen)); } catch {}
+  }, [statsOpen, statsOpenKey]);
 
   useEffect(() => {
     fetchUserDocuments();
@@ -260,7 +385,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
 
               <List dense>
                 <ListItem disablePadding>
-                  <ListItemButton onClick={() => navigate('/home')}>
+                  <ListItemButton onClick={() => navigate('/home')} selected={isHome} sx={{ '&.Mui-selected': { backgroundColor: 'rgba(255, 255, 255, 0.08)' }, '&.Mui-selected:hover': { backgroundColor: 'rgba(255, 255, 255, 0.12)' } }}>
                     <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
                       <HomeIcon fontSize="small" />
                     </ListItemIcon>
@@ -331,7 +456,10 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                       navigate(`/documents/${slug}`);
                       onDocumentSelect?.(doc.id);
                     }}
-                    selected={selectedDocumentId === doc.id} // Highlight if selected
+                    selected={
+                      selectedDocumentId === doc.id ||
+                      (currentDocSlug && slugify(doc.title || String(doc.id)) === currentDocSlug)
+                    } // Highlight if selected
                     sx={{
                       '&.Mui-selected': { // Style for selected item
                         backgroundColor: 'rgba(255, 255, 255, 0.08)', 
@@ -375,7 +503,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                       size="small"
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent the ListItemButton click
-                        onDocumentDelete(doc.id);
+                        handleDeleteDocument(doc);
                       }}
                       sx={{ 
                         opacity: 0,

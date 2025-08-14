@@ -1,13 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Paper from '@mui/material/Paper';
-import { useNavigate } from 'react-router-dom';
-
-import MiniDrawer from '../Dashboard/Sidebar';
-import WavyBackground from '../../components/common/WavyBackground';
 import { useAuth } from '../../context/AuthContext';
 
 // Small helper to track a simple daily streak locally (no backend dependency)
@@ -51,8 +46,7 @@ function useDailyStreak(userId) {
 }
 
 const Home = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const streak = useDailyStreak(user?.id);
 
   // Local daily goal progress (simple local storage state)
@@ -91,17 +85,7 @@ const Home = () => {
 //   };
 
   return (
-    <Box sx={{ position: 'relative', display: 'flex', height: '100vh', bgcolor: 'transparent' }}>
-      <WavyBackground waveHeight="60vh" offsetY={0} />
-      <MiniDrawer
-        selectedDocumentId={null}
-        onDocumentSelect={() => {}}
-        onDocumentDelete={() => {}}
-        onLogout={() => { logout(); navigate('/'); }}
-      />
-
-      <Box sx={{ position: 'relative', zIndex: 1, flexGrow: 1, height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflow: 'hidden', pt: 4 }}>
-        <Box sx={{ width: '100%', maxWidth: 1000, display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <Box sx={{ width: '100%', maxWidth: 1000, display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
           {/* Welcome */}
           <Box>
             <Typography
@@ -172,8 +156,6 @@ const Home = () => {
               {/* <Button variant="contained" onClick={markOne} sx={{ borderRadius: 999, px: 4 }}>Aprender</Button> */}
             </Paper>
           </Box>
-        </Box>
-      </Box>
     </Box>
   );
 };

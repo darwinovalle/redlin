@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { Box, Tabs, Tab, Typography, Button } from '@mui/material';
-import WavyBackground from '../../components/common/WavyBackground';
-import MiniDrawer from '../Dashboard/Sidebar';
 import FlashcardCard from '../../components/Flashcard/FlashcardCard';
 import CSVFlashcards from '../../components/CSV/CSVFlashcards';
 import { csvService } from '../../services/api/csv';
@@ -14,7 +12,6 @@ function useQuery() {
 
 const CSVStudy = () => {
   const { csvSlug } = useParams();
-  const navigate = useNavigate();
   const query = useQuery();
   const importId = query.get('importId');
 
@@ -121,67 +118,61 @@ const CSVStudy = () => {
   };
 
   return (
-    <Box sx={{ position: 'relative', display: 'flex', height: '100vh', bgcolor: 'transparent' }}>
-      <WavyBackground waveHeight="60vh" offsetY={0} />
-      <MiniDrawer />
-      <Box sx={{ position: 'relative', zIndex: 1, flexGrow: 1, pl: '0px', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflow: 'hidden', pt: 2 }}>
-        <Box sx={{ width: '100%', maxWidth: '1000px', display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%', flexShrink: 0 }}>
-            <Tabs value={activeTab} onChange={(e,v)=>setActiveTab(v)} centered textColor="inherit" sx={{ '& .MuiTabs-indicator': { backgroundColor: '#ffffff' } }}>
-              <Tab label="Flashcards" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }} />
-              <Tab label="Review" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }} />
-            </Tabs>
+    <Box sx={{ width: '100%', maxWidth: '1000px', display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%', flexShrink: 0 }}>
+        <Tabs value={activeTab} onChange={(e,v)=>setActiveTab(v)} centered textColor="inherit" sx={{ '& .MuiTabs-indicator': { backgroundColor: '#ffffff' } }}>
+          <Tab label="Flashcards" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }} />
+          <Tab label="Review" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }} />
+        </Tabs>
+      </Box>
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%', display: 'flex', flexDirection: 'column', p: 3 }}>
+        {activeTab === 0 && (
+          <CSVFlashcards sourceId={importId} />
+        )}
+        {activeTab === 1 && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              Drag the card into a bucket. Buckets: Hard, Medium, Easy. Submit when you’ve sorted all cards.
+            </Typography>
+
+            {/* Draggable Card */}
+            <Box sx={{ width: '100%', maxWidth: 520 }}>
+              {currentStudy ? (
+                <Box draggable onDragStart={onDragStart} sx={{ cursor: 'grab' }}>
+                  <FlashcardCard card={currentStudy} isFlipped={false} onToggleFlip={()=>{}} size="md" />
+                </Box>
+              ) : (
+                <Typography color="text.secondary">No cards due right now.</Typography>
+              )}
+            </Box>
+
+            {/* Drop Bins */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, width: '100%', maxWidth: 820 }}>
+              {[{key:'hard',label:'Hard',color:'error.main'}, {key:'medium',label:'Medium',color:'warning.main'}, {key:'easy',label:'Easy',color:'success.main'}].map(({key,label,color}) => (
+                <Box key={key} onDragOver={allowDrop} onDrop={handleDropTo(key)}
+                  sx={{ p: 2, border: '2px dashed', borderColor: color, borderRadius: 2, minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(255,255,255,0.04)' }}>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Typography sx={{ fontWeight: 700 }}>{label}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {Object.values(assignments).filter(v=>v===key).length} assigned
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+
+            {/* Footer actions */}
+            <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+              <Button variant="outlined" onClick={resetReview} disabled={submitting}>Reset</Button>
+              <Button variant="contained" onClick={handleSubmit} disabled={!canSubmit}>
+                {submitting ? 'Submitting…' : 'Submit Reviews'}
+              </Button>
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              Sorted {Object.keys(assignments).length} / {studyBatch.length}
+            </Typography>
           </Box>
-          <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%', display: 'flex', flexDirection: 'column', p: 3 }}>
-            {activeTab === 0 && (
-              <CSVFlashcards sourceId={importId} />
-            )}
-            {activeTab === 1 && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Drag the card into a bucket. Buckets: Hard, Medium, Easy. Submit when you’ve sorted all cards.
-                </Typography>
-
-                {/* Draggable Card */}
-                <Box sx={{ width: '100%', maxWidth: 520 }}>
-                  {currentStudy ? (
-                    <Box draggable onDragStart={onDragStart} sx={{ cursor: 'grab' }}>
-                      <FlashcardCard card={currentStudy} isFlipped={false} onToggleFlip={()=>{}} size="md" />
-                    </Box>
-                  ) : (
-                    <Typography color="text.secondary">No cards due right now.</Typography>
-                  )}
-                </Box>
-
-                {/* Drop Bins */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, width: '100%', maxWidth: 820 }}>
-                  {[{key:'hard',label:'Hard',color:'error.main'}, {key:'medium',label:'Medium',color:'warning.main'}, {key:'easy',label:'Easy',color:'success.main'}].map(({key,label,color}) => (
-                    <Box key={key} onDragOver={allowDrop} onDrop={handleDropTo(key)}
-                      sx={{ p: 2, border: '2px dashed', borderColor: color, borderRadius: 2, minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(255,255,255,0.04)' }}>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography sx={{ fontWeight: 700 }}>{label}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {Object.values(assignments).filter(v=>v===key).length} assigned
-                        </Typography>
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
-
-                {/* Footer actions */}
-                <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                  <Button variant="outlined" onClick={resetReview} disabled={submitting}>Reset</Button>
-                  <Button variant="contained" onClick={handleSubmit} disabled={!canSubmit}>
-                    {submitting ? 'Submitting…' : 'Submit Reviews'}
-                  </Button>
-                </Box>
-                <Typography variant="caption" color="text.secondary">
-                  Sorted {Object.keys(assignments).length} / {studyBatch.length}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        </Box>
+        )}
       </Box>
     </Box>
   );
