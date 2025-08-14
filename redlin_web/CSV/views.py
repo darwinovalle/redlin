@@ -22,6 +22,8 @@ from .serializers import (
 
 class CSVImportViewSet(mixins.ListModelMixin,
 					   mixins.RetrieveModelMixin,
+					   mixins.UpdateModelMixin,
+					   mixins.DestroyModelMixin,
 					   viewsets.GenericViewSet):
 	queryset = CSVImport.objects.all().select_related('user')
 	serializer_class = CSVImportSerializer
@@ -76,19 +78,18 @@ class CSVImportViewSet(mixins.ListModelMixin,
 			if not key or not definition:
 				continue
 
-			# Upsert by (user, key_term)
+			# Upsert by (user, source, key_term) so each import has its own set
 			card, created_flag = CSVFlashcard.objects.get_or_create(
 				user=request.user,
+				source=imp,
 				key_term=key,
 				defaults={
-					'source': imp,
 					'definition': definition,
 				}
 			)
 			if not created_flag:
-				# Update definition and reset SR metrics for refreshed import
+				# If duplicate row inside the same file, update definition and reset SR metrics
 				card.definition = definition
-				card.source = imp
 				card.status = 'still_learning'
 				card.repetitions = 0
 				card.interval = 0

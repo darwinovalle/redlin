@@ -56,7 +56,7 @@ class CSVFlashcard(models.Model):
 	easiness = models.FloatField(default=2.5)  # SM-2 E-Factor baseline
 
 	class Meta:
-		unique_together = ("user", "key_term")
+		unique_together = ("user", "source", "key_term")
 		indexes = [
 			models.Index(fields=["user", "next_review_at"]),
 			models.Index(fields=["user", "status"]),

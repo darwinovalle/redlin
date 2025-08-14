@@ -40,6 +40,18 @@ export const csvService = {
     const resp = await api.post(`/csv/flashcards/${id}/review/`, { quality });
     return resp.data;
   },
+
+  // Rename an import (update its display filename)
+  renameImport: async (importId, newName) => {
+    const resp = await api.patch(`/csv/imports/${importId}/`, { filename: newName });
+    return resp.data;
+  },
+
+  // Delete an import (and cascade flashcards)
+  deleteImport: async (importId) => {
+    await api.delete(`/csv/imports/${importId}/`);
+    return { success: true };
+  },
 };
 
 export default csvService;

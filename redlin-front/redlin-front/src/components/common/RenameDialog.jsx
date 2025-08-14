@@ -14,6 +14,8 @@ export default function RenameDialog({
   onClose,
   onSubmit,
   submitting = false,
+  title = 'Rename document',
+  label = 'Title',
 }) {
   const [value, setValue] = useState(initialValue);
 
@@ -39,13 +41,13 @@ export default function RenameDialog({
       }}
     >
       <form onSubmit={handleSubmit}>
-        <DialogTitle>Rename document</DialogTitle>
+        <DialogTitle>{title}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             fullWidth
             margin="dense"
-            label="Title"
+            label={label}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             disabled={submitting}
