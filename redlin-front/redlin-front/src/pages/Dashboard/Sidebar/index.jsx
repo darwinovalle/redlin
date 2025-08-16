@@ -40,10 +40,11 @@ import { useRef, useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { documentService } from '../../../services/api';
 import AddSpaceModal from '../../../components/common/AddSpaceModal';
+import { csvService } from '../../../services/api/csv';
 import LoaderOverlay from '../../../components/common/LoaderOverlay';
 import SuccessAlert from '../../../components/common/SuccessAlert';
 import RenameDialog from '../../../components/common/RenameDialog';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const drawerWidth = 350;
 
@@ -67,6 +68,20 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const theme = useTheme();
   const { user } = useAuth(); 
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname.startsWith('/home');
+  const currentDocSlug = React.useMemo(() => {
+    const m = location.pathname.match(/^\/documents\/([^/?#]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  }, [location.pathname]);
+  const currentCsvSlug = React.useMemo(() => {
+    const m = location.pathname.match(/^\/csv\/([^/?#]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  }, [location.pathname]);
+  const docsOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:docsOpen` : null), [user?.id]);
+  const sheetsOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:sheetsOpen` : null), [user?.id]);
+  const kanbanOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:kanbanOpen` : null), [user?.id]);
+  const statsOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:statsOpen` : null), [user?.id]);
 
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -75,13 +90,48 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [userDocuments, setUserDocuments] = useState([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [fetchError, setFetchError] = useState(null);
-  const [docsOpen, setDocsOpen] = useState(true);
+  const [docsOpen, setDocsOpen] = useState(() => {
+    if (docsOpenKey) {
+      try {
+        const v = localStorage.getItem(docsOpenKey);
+        if (v === 'true' || v === 'false') return v === 'true';
+      } catch {}
+    }
+    // Default when no persisted value: collapsed on Home, expanded elsewhere
+    return !isHome;
+  });
   const [tutorialsOpen, setTutorialsOpen] = useState(false);
-  const [sheetsOpen, setSheetsOpen] = useState(false);
-  const [kanbanOpen, setKanbanOpen] = useState(false);
-  const [statsOpen, setStatsOpen] = useState(false);
+  const [sheetsOpen, setSheetsOpen] = useState(() => {
+    if (sheetsOpenKey) {
+      try {
+        const v = localStorage.getItem(sheetsOpenKey);
+        if (v === 'true' || v === 'false') return v === 'true';
+      } catch {}
+    }
+    return false;
+  });
+  const [csvImports, setCsvImports] = useState([]);
+  const [kanbanOpen, setKanbanOpen] = useState(() => {
+    if (kanbanOpenKey) {
+      try {
+        const v = localStorage.getItem(kanbanOpenKey);
+        if (v === 'true' || v === 'false') return v === 'true';
+      } catch {}
+    }
+    return false;
+  });
+  const [statsOpen, setStatsOpen] = useState(() => {
+    if (statsOpenKey) {
+      try {
+        const v = localStorage.getItem(statsOpenKey);
+        if (v === 'true' || v === 'false') return v === 'true';
+      } catch {}
+    }
+    return false;
+  });
   const [openSampleModal, setOpenSampleModal] = useState(false);
   const [renameState, setRenameState] = useState({ open: false, doc: null, saving: false });
+  const [renameSheetState, setRenameSheetState] = useState({ open: false, imp: null, saving: false });
   
   // Helper to fetch docs so we can reuse after uploads
   const fetchUserDocuments = async () => {
@@ -142,8 +192,123 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
     }
   };
 
+  const handleDeleteDocument = async (doc) => {
+    if (onDocumentDelete) { onDocumentDelete(doc.id); return; }
+    if (!window.confirm('Are you sure you want to delete this document? This action cannot be undone.')) return;
+    try {
+      await documentService.deleteDocument(doc.id);
+      const remaining = userDocuments.filter((d) => d.id !== doc.id);
+      setUserDocuments(remaining);
+      // If we were on this doc page, redirect to next available or home
+      if (currentDocSlug && slugify(doc.title || String(doc.id)) === currentDocSlug) {
+        if (remaining.length > 0) {
+          const nextSlug = slugify(remaining[0].title || String(remaining[0].id));
+          navigate(`/documents/${nextSlug}`);
+        } else {
+          navigate('/home');
+        }
+      }
+    } catch (e) {
+      console.error('Delete failed', e);
+      alert('Failed to delete document');
+    }
+  };
+
+  const handleDeleteSheet = async (imp) => {
+    if (!window.confirm('Delete this sheet and its flashcards? This action cannot be undone.')) return;
+    try {
+      await csvService.deleteImport(imp.id);
+      const remaining = csvImports.filter((i) => i.id !== imp.id);
+      setCsvImports(remaining);
+      const deletedName = (imp.filename || 'csv').replace(/\.[^/.]+$/, '');
+      const deletedSlug = slugify(deletedName);
+      if (currentCsvSlug && deletedSlug === currentCsvSlug) {
+        if (remaining.length > 0) {
+          const nextName = (remaining[0].filename || 'csv').replace(/\.[^/.]+$/, '');
+          const nextSlug = slugify(nextName);
+          navigate(`/csv/${nextSlug}?importId=${remaining[0].id}`);
+        } else {
+          navigate('/home');
+        }
+      }
+    } catch (e) {
+      console.error('Delete sheet failed', e);
+      alert('Failed to delete sheet');
+    }
+  };
+
+  // Load persisted docsOpen when user changes (and a key becomes available)
+  useEffect(() => {
+    if (!docsOpenKey) return;
+    try {
+      const v = localStorage.getItem(docsOpenKey);
+      if (v === 'true' || v === 'false') setDocsOpen(v === 'true');
+    } catch {}
+  }, [docsOpenKey]);
+
+  // Persist docsOpen whenever it changes
+  useEffect(() => {
+    if (!docsOpenKey) return;
+    try { localStorage.setItem(docsOpenKey, String(docsOpen)); } catch {}
+  }, [docsOpen, docsOpenKey]);
+
+  // Load persisted sheetsOpen when user changes
+  useEffect(() => {
+    if (!sheetsOpenKey) return;
+    try {
+      const v = localStorage.getItem(sheetsOpenKey);
+      if (v === 'true' || v === 'false') setSheetsOpen(v === 'true');
+    } catch {}
+  }, [sheetsOpenKey]);
+
+  // Persist sheetsOpen whenever it changes
+  useEffect(() => {
+    if (!sheetsOpenKey) return;
+    try { localStorage.setItem(sheetsOpenKey, String(sheetsOpen)); } catch {}
+  }, [sheetsOpen, sheetsOpenKey]);
+
+  // Load persisted kanbanOpen when user changes
+  useEffect(() => {
+    if (!kanbanOpenKey) return;
+    try {
+      const v = localStorage.getItem(kanbanOpenKey);
+      if (v === 'true' || v === 'false') setKanbanOpen(v === 'true');
+    } catch {}
+  }, [kanbanOpenKey]);
+
+  // Persist kanbanOpen whenever it changes
+  useEffect(() => {
+    if (!kanbanOpenKey) return;
+    try { localStorage.setItem(kanbanOpenKey, String(kanbanOpen)); } catch {}
+  }, [kanbanOpen, kanbanOpenKey]);
+
+  // Load persisted statsOpen when user changes
+  useEffect(() => {
+    if (!statsOpenKey) return;
+    try {
+      const v = localStorage.getItem(statsOpenKey);
+      if (v === 'true' || v === 'false') setStatsOpen(v === 'true');
+    } catch {}
+  }, [statsOpenKey]);
+
+  // Persist statsOpen whenever it changes
+  useEffect(() => {
+    if (!statsOpenKey) return;
+    try { localStorage.setItem(statsOpenKey, String(statsOpen)); } catch {}
+  }, [statsOpen, statsOpenKey]);
+
   useEffect(() => {
     fetchUserDocuments();
+    // fetch CSV imports (user-scoped via JWT in backend)
+    (async () => {
+      try {
+        const data = await csvService.listImports();
+        setCsvImports(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.warn('Failed to load CSV imports', e);
+        setCsvImports([]);
+      }
+    })();
   }, [user]); // Re-run effect when the user object changes
 
   const openRename = (doc) => setRenameState({ open: true, doc, saving: false });
@@ -160,6 +325,28 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       console.error('Rename failed:', err);
       setError(err.error || 'Rename failed. Please try again.');
       setRenameState((s) => ({ ...s, saving: false }));
+    }
+  };
+
+  const openRenameSheet = (imp) => setRenameSheetState({ open: true, imp, saving: false });
+  const closeRenameSheet = () => setRenameSheetState({ open: false, imp: null, saving: false });
+  const submitRenameSheet = async (newName) => {
+    if (!renameSheetState.imp) return;
+    try {
+      setRenameSheetState((s) => ({ ...s, saving: true }));
+      await csvService.renameImport(renameSheetState.imp.id, newName);
+      const oldName = (renameSheetState.imp.filename || 'csv').replace(/\.[^/.]+$/, '');
+      const oldSlug = slugify(oldName);
+      const newSlug = slugify(newName);
+      setCsvImports((prev) => prev.map(i => i.id === renameSheetState.imp.id ? { ...i, filename: newName } : i));
+      if (currentCsvSlug && currentCsvSlug === oldSlug) {
+        navigate(`/csv/${newSlug}?importId=${renameSheetState.imp.id}`);
+      }
+      closeRenameSheet();
+    } catch (err) {
+      console.error('Rename sheet failed:', err);
+      setError(err.error || 'Rename failed. Please try again.');
+      setRenameSheetState((s) => ({ ...s, saving: false }));
     }
   };
 
@@ -248,7 +435,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
 
               <List dense>
                 <ListItem disablePadding>
-                  <ListItemButton onClick={() => navigate('/home')}>
+                  <ListItemButton onClick={() => navigate('/home')} selected={isHome} sx={{ '&.Mui-selected': { backgroundColor: 'rgba(255, 255, 255, 0.08)' }, '&.Mui-selected:hover': { backgroundColor: 'rgba(255, 255, 255, 0.12)' } }}>
                     <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
                       <HomeIcon fontSize="small" />
                     </ListItemIcon>
@@ -302,29 +489,71 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             )}
       <List dense>
               {userDocuments.map((doc) => (
-                <ListItem 
-                  key={doc.id} 
-                  disablePadding 
-                  sx={{ 
+                <ListItem
+                  key={doc.id}
+                  disablePadding
+                  secondaryAction={
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <IconButton
+                        className="rename-button"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openRename(doc);
+                        }}
+                        sx={{
+                          mr: 0.5,
+                          opacity: 0,
+                          transition: 'opacity 0.2s',
+                        }}
+                        aria-label="rename document"
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        className="delete-button"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteDocument(doc);
+                        }}
+                        sx={{
+                          opacity: 0,
+                          transition: 'opacity 0.2s',
+                          color: theme.palette.error.main,
+                          '&:hover': {
+                            color: theme.palette.error.light,
+                          }
+                        }}
+                        aria-label="delete document"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  }
+                  sx={{
                     position: 'relative',
-        '&:hover .delete-button, &:hover .rename-button': {
+                    '&:hover .delete-button, &:hover .rename-button': {
                       opacity: 1,
                     }
                   }}
                 >
-                  <ListItemButton 
+                  <ListItemButton
                     onClick={() => {
                       const slug = slugify(doc.title || String(doc.id));
                       try { localStorage.setItem('lastDocSlug', slug); } catch {}
                       navigate(`/documents/${slug}`);
                       onDocumentSelect?.(doc.id);
                     }}
-                    selected={selectedDocumentId === doc.id} // Highlight if selected
+                    selected={
+                      selectedDocumentId === doc.id ||
+                      (currentDocSlug && slugify(doc.title || String(doc.id)) === currentDocSlug)
+                    }
                     sx={{
-                      '&.Mui-selected': { // Style for selected item
-                        backgroundColor: 'rgba(255, 255, 255, 0.08)', 
+                      '&.Mui-selected': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
                       },
-                      '&.Mui-selected:hover': { // Style for selected item on hover
+                      '&.Mui-selected:hover': {
                         backgroundColor: 'rgba(255, 255, 255, 0.12)',
                       },
                     }}
@@ -342,41 +571,6 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                         }
                       }}
                     />
-                    <IconButton
-                      className="rename-button"
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openRename(doc);
-                      }}
-                      sx={{
-                        mr: 0.5,
-                        opacity: 0,
-                        transition: 'opacity 0.2s',
-                      }}
-                      aria-label="rename document"
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton 
-                      className="delete-button"
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent the ListItemButton click
-                        onDocumentDelete(doc.id);
-                      }}
-                      sx={{ 
-                        opacity: 0,
-                        transition: 'opacity 0.2s',
-                        color: theme.palette.error.main,
-                        '&:hover': {
-                          color: theme.palette.error.light,
-                        }
-                      }}
-                      aria-label="delete document"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
                   </ListItemButton>
                 </ListItem>
               ))}
@@ -419,7 +613,94 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </IconButton>
           </Box>
           <Collapse in={sheetsOpen} timeout="auto" unmountOnExit>
-            <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No sheets yet.</Typography>
+            {csvImports.length === 0 ? (
+              <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No sheets yet.</Typography>
+            ) : (
+              <List dense>
+                {csvImports.map((imp) => {
+                  const name = (imp.filename || 'csv').replace(/\.[^/.]+$/, '');
+                  const slug = slugify(name);
+                  return (
+                    <ListItem
+                      key={imp.id}
+                      disablePadding
+                      secondaryAction={
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <IconButton
+                            className="rename-button"
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openRenameSheet(imp);
+                            }}
+                            sx={{
+                              mr: 0.5,
+                              opacity: 0,
+                              transition: 'opacity 0.2s',
+                            }}
+                            aria-label="rename sheet"
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            className="delete-button"
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteSheet(imp);
+                            }}
+                            sx={{
+                              opacity: 0,
+                              transition: 'opacity 0.2s',
+                              color: theme.palette.error.main,
+                              '&:hover': {
+                                color: theme.palette.error.light,
+                              }
+                            }}
+                            aria-label="delete sheet"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      }
+                      sx={{
+                        position: 'relative',
+                        '&:hover .delete-button, &:hover .rename-button': {
+                          opacity: 1,
+                        }
+                      }}
+                    >
+                      <ListItemButton
+                        onClick={() => navigate(`/csv/${slug}?importId=${imp.id}`)}
+                        selected={currentCsvSlug && slug === currentCsvSlug}
+                        sx={{
+                          '&.Mui-selected': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                          },
+                          '&.Mui-selected:hover': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                          },
+                        }}
+                      >
+                        <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
+                          <DescriptionIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={name}
+                          primaryTypographyProps={{
+                            style: {
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  );
+                })}
+              </List>
+            )}
           </Collapse>
 
           {/* Kanban Tasks */}
@@ -534,7 +815,19 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
           open={openSampleModal}
           onClose={() => setOpenSampleModal(false)}
           onImportDocument={async (file) => { await uploadFile(file); setOpenSampleModal(false); }}
-          onImportSheet={(file) => { console.log('Import sheet placeholder', file); }}
+          onImportSheet={async (file) => {
+            try {
+              const res = await csvService.uploadCSV(file);
+              setOpenSampleModal(false);
+              // Navigate to csv page for this import using filename as slug
+              const name = (file?.name || 'csv').replace(/\.[^/.]+$/, '');
+              const slug = slugify(name);
+              navigate(`/csv/${slug}?importId=${res?.import?.id || ''}`);
+            } catch (e) {
+              console.error('CSV import failed', e);
+              alert('CSV import failed');
+            }
+          }}
           onCreateTutorial={() => { console.log('Create tutorial'); setOpenSampleModal(false); }}
           onCreateKanban={() => { console.log('Create kanban'); setOpenSampleModal(false); }}
         />
@@ -545,6 +838,15 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
         onClose={closeRename}
         onSubmit={submitRename}
         submitting={renameState.saving}
+      />
+      <RenameDialog
+        open={renameSheetState.open}
+        initialValue={(renameSheetState.imp?.filename || '').replace(/\.[^/.]+$/, '')}
+        onClose={closeRenameSheet}
+        onSubmit={submitRenameSheet}
+        submitting={renameSheetState.saving}
+        title="Rename Sheet"
+        label="Sheet name"
       />
     </ThemeProvider>
   );

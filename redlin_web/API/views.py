@@ -1,7 +1,10 @@
 from rest_framework import viewsets, status
+from django.utils import timezone
+from django.db import models
 from django.shortcuts import get_object_or_404
 from .models import User, Document, Summary, Flashcard, MCQ
-from .serializer import UserSerializer, DocumentSerializer, SummarySerializer, FlashcardSerializer, MCQSerializer
+from .serializer import UserSerializer, DocumentSerializer, SummarySerializer, FlashcardSerializer, MCQSerializer, ReviewSerializer
+from .utils import apply_review
 
 
 from rest_framework.decorators import action
@@ -65,14 +68,21 @@ class DocumentViewSet(viewsets.ModelViewSet):
         return Response({
             'document': DocumentSerializer(document).data,
             'summary': SummarySerializer(document.summary).data,
-            'flashcards': FlashcardSerializer(document.flashcards.all(), many=True).data,
+            # Order flashcards by review priority so consumers get a consistent ordering
+            'flashcards': FlashcardSerializer(
+                document.flashcards.all().order_by('next_review_at', 'score', 'times_shown', 'id'),
+                many=True
+            ).data,
             'mcqs': MCQSerializer(document.mcqs.all(), many=True).data
         })
 
     @action(detail=True, methods=['get'])
     def flashcards(self, request, pk=None):
         document = self.get_object()
-        return Response(FlashcardSerializer(document.flashcards.all(), many=True).data)
+        # Return flashcards ordered by priority: due first (next_review_at null or earlier),
+        # then lower score and fewer times_shown to surface weaker items.
+        qs = document.flashcards.all().order_by('next_review_at', 'score', 'times_shown', 'id')
+        return Response(FlashcardSerializer(qs, many=True).data)
 
     @action(detail=True, methods=['get'])
     def mcqs(self, request, pk=None):
@@ -97,16 +107,62 @@ class FlashcardViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        status = self.request.query_params.get('status')
-        if status:
-            return Flashcard.objects.filter(status=status)
-        return super().get_queryset()
+        user = self.request.user
+        qs = Flashcard.objects.filter(document__user=user)
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
+        document_param = self.request.query_params.get('document')
+        if document_param:
+            try:
+                qs = qs.filter(document_id=int(document_param))
+            except ValueError:
+                pass
+        return qs
     
     @action(detail=False, methods=['get'])
     def still_learning(self, request):
-        flashcards = Flashcard.objects.filter(status='still_learning')
+        flashcards = self.get_queryset().filter(status='still_learning')
         serializer = self.get_serializer(flashcards, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='review')
+    def review(self, request, pk=None):
+        card = self.get_object()
+        serializer = ReviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        q = serializer.validated_data['quality']  # 0..5
+
+        apply_review(card, q)
+        card.save()
+        return Response(self.get_serializer(card).data)
+
+    @action(detail=False, methods=['get'], url_path='study')
+    def study(self, request):
+        """Return a prioritized batch of cards for study.
+
+        Priority: due (next_review_at <= now or null) first, then by lower
+        score and fewer times_shown to increase exposure to weak items.
+        """
+        limit = request.query_params.get('limit')
+        try:
+            limit = max(1, min(100, int(limit))) if limit is not None else 20
+        except ValueError:
+            limit = 20
+
+        now = timezone.now()
+        qs = self.get_queryset()
+
+        due = qs.filter(models.Q(next_review_at__isnull=True) | models.Q(next_review_at__lte=now))
+        due = due.order_by('next_review_at', 'score', 'times_shown')[:limit]
+        remaining = limit - due.count()
+        if remaining > 0:
+            filler = qs.exclude(id__in=due.values_list('id', flat=True)).order_by('score', 'times_shown')[:remaining]
+        else:
+            filler = qs.none()
+
+        cards = list(due) + list(filler)
+        return Response(self.get_serializer(cards, many=True).data)
 
 class MCQViewSet(viewsets.ModelViewSet):
     queryset = MCQ.objects.all()

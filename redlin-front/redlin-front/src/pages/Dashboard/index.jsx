@@ -1,19 +1,17 @@
 import * as React from 'react'; 
 import { useState, useEffect } from 'react';
-import { Navigate } from "react-router-dom";
-import { useNavigate, useParams } from 'react-router-dom';
-import MiniDrawer from "./Sidebar";
+import { useParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs'; 
 import Tab from '@mui/material/Tab';   
 import Typography from '@mui/material/Typography'; 
 import { FlashcardProvider } from '../../context/FlashcardContext';
 import Flashcard from '../../components/Flashcard/Flashcard';
+import DocReview from '../../components/Flashcard/DocReview';
 import QuizView from '../../components/Flashcard/QuizView';
 import { documentService } from '../../services/api';
 import Summary from '../../components/Summary';
 import { useAuth } from '../../context/AuthContext';
-import WavyBackground from '../../components/common/WavyBackground';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -25,7 +23,7 @@ function TabPanel(props) {
       id={`simple-tabpanel-${index}`}
       aria-labelledby={`simple-tab-${index}`}
       {...other}
-      style={{ height: 'calc(100% - 48px)', overflowY: 'auto' }} 
+      style={{ height: '100%' }} 
     >
       {value === index && (
         <Box sx={{ p: 3 }}>
@@ -40,10 +38,10 @@ const Dashboard = ({ user }) => {
   const [activeTab, setActiveTab] = React.useState(0); 
 
   const [selectedDocumentId, setSelectedDocumentId] = useState(null);
+  const [flashcardsRefreshKey, setFlashcardsRefreshKey] = useState(0);
   const [userDocuments, setUserDocuments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  const { user: authUser, logout } = useAuth();
+  const { user: authUser } = useAuth();
   const { docSlug } = useParams();
 
   // Fetch user documents when component mounts
@@ -140,74 +138,66 @@ const Dashboard = ({ user }) => {
     }
   };
 
-  const handleLogout = () => {
-    logout(); // Call the logout function from AuthContext
-    navigate('/'); // Navigate to login page (assuming '/' is your login route)
-  };
-
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  return (
-    <Box sx={{ position: 'relative', display: 'flex', height: '100vh', bgcolor: 'transparent' }}>
-  <WavyBackground waveHeight="60vh" offsetY={0} />
-      <MiniDrawer 
-        selectedDocumentId={selectedDocumentId}
-        onDocumentSelect={handleDocumentSelect}
-        onDocumentDelete={handleDeleteDocument}
-        onLogout={handleLogout}
-      />
-      {/* Wrapper Box to handle spacing from sidebar and enable centering */}
-      <Box sx={{ position: 'relative', zIndex: 1, flexGrow: 1, pl: '0px', /* Removed padding to shift fully left for centering */ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflow: 'hidden', pt: 2 }}>
-        {/* Centered Content Box */}
-        <Box sx={{ width: '100%', maxWidth: '1000px', /* Max width for centered content */ display: 'flex', flexDirection: 'column', height: '100%', backdropFilter: 'none' }}>
-          {/* Tabs as Header - Centered within the 'Centered Content Box' */}
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%', flexShrink: 0 }}>
-            <Tabs 
-              value={activeTab} 
-              onChange={handleTabChange} 
-              aria-label="main content tabs" 
-              centered
-              textColor="inherit"
-              sx={{
-                '& .MuiTabs-indicator': {
-                  backgroundColor: '#ffffff',
-                },
-              }}
-            > 
-              <Tab 
-                label="Flashcards" 
-                sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
-              />
-              <Tab 
-                label="Quiz" 
-                sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
-              />
-              <Tab 
-                label="Summary" 
-                sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
-              />
-            </Tabs>
-          </Box>
+  const handleReviewChange = () => {
+    // Increment key to force Flashcard component to refetch ordered list
+    setFlashcardsRefreshKey((k) => k + 1);
+  };
 
-          {/* Single Main Content Area Below Tabs - Also centered */}
-          <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%', display: 'flex', flexDirection: 'column' }}>
-            {/* TabPanel content based on activeTab */}
-            {/* Apply height 100% to TabPanel if its content needs to fill vertically */}
-            <TabPanel value={activeTab} index={0} sx={{ p: 0, flexGrow: 1 }}>
-              <FlashcardProvider>
-                <Flashcard documentId={selectedDocumentId} /> 
-              </FlashcardProvider>
-            </TabPanel>
-            <TabPanel value={activeTab} index={1} sx={{ p: 0, flexGrow: 1 }}>
-              <QuizView documentId={selectedDocumentId} />
-            </TabPanel>
-            <TabPanel value={activeTab} index={2} sx={{ p: 0, flexGrow: 1 }}>
-              <Summary documentId={selectedDocumentId} />
-            </TabPanel>
-          </Box>
-        </Box>
+  return (
+    <Box sx={{ width: '100%', maxWidth: '1000px', display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%', flexShrink: 0 }}>
+        <Tabs 
+          value={activeTab} 
+          onChange={handleTabChange} 
+          aria-label="main content tabs" 
+          centered
+          textColor="inherit"
+          sx={{
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#ffffff',
+            },
+          }}
+        > 
+          <Tab 
+            label="Flashcards" 
+            sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
+          />
+          <Tab 
+            label="Review" 
+            sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
+          />
+          <Tab 
+            label="Quiz" 
+            sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
+          />
+          <Tab 
+            label="Summary" 
+            sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
+          />
+        </Tabs>
+      </Box>
+
+      {/* Single Main Content Area Below Tabs */}
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%', display: 'flex', flexDirection: 'column' }}>
+        {/* TabPanel content based on activeTab */}
+        <TabPanel value={activeTab} index={0} sx={{ p: 0, flexGrow: 1 }}>
+          <FlashcardProvider>
+            <Flashcard documentId={selectedDocumentId} refreshKey={flashcardsRefreshKey} /> 
+          </FlashcardProvider>
+        </TabPanel>
+        <TabPanel value={activeTab} index={1} sx={{ p: 0, flexGrow: 1 }}>
+          <DocReview documentId={selectedDocumentId} onReviewChange={handleReviewChange} />
+        </TabPanel>
+        <TabPanel value={activeTab} index={2} sx={{ p: 0, flexGrow: 1 }}>
+          <QuizView documentId={selectedDocumentId} />
+        </TabPanel>
+        <TabPanel value={activeTab} index={3} sx={{ p: 0, flexGrow: 1 }}>
+          <Summary documentId={selectedDocumentId} />
+        </TabPanel>
       </Box>
     </Box>
   );

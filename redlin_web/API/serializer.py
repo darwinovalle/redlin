@@ -22,6 +22,10 @@ class FlashcardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Flashcard
         fields = '__all__'
+        read_only_fields = [
+            'last_reviewed', 'times_shown', 'next_review_at',
+            'score', 'repetitions', 'interval', 'easiness'
+        ]
 
 class MCQSerializer(serializers.ModelSerializer):
     class Meta:
@@ -46,3 +50,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         return user
+
+
+class ReviewSerializer(serializers.Serializer):
+    # SM-2 quality response 0..5
+    quality = serializers.IntegerField(min_value=0, max_value=5)

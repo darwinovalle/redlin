@@ -172,6 +172,53 @@ export const documentService = {
     }
   },
 
+  // Update a flashcard (keyword and definition)
+  async updateFlashcard(id, { key_term, definition }) {
+    try {
+      const resp = await api.patch(`/flashcards/${id}/`, { key_term, definition });
+      return resp.data;
+    } catch (error) {
+      console.error('Error updating flashcard:', error.response?.data || error.message);
+      throw error.response?.data || { error: 'Failed to update flashcard' };
+    }
+  },
+
+  // Delete a flashcard
+  async deleteFlashcard(id) {
+    try {
+      await api.delete(`/flashcards/${id}/`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting flashcard:', error.response?.data || error.message);
+      throw error.response?.data || { error: 'Failed to delete flashcard' };
+    }
+  },
+
+  // Study batch (prioritized) for document flashcards
+  async studyBatch({ limit = 20, documentId } = {}) {
+    const params = new URLSearchParams();
+    params.set('limit', limit);
+    if (documentId) params.set('document', documentId);
+    try {
+      const resp = await api.get(`/flashcards/study/?${params.toString()}`);
+      return resp.data;
+    } catch (error) {
+      console.error('Error fetching study batch:', error.response?.data || error.message);
+      throw error.response?.data || { error: 'Failed to fetch study batch' };
+    }
+  },
+
+  // Review a card (SM-2)
+  async reviewCard(id, quality) {
+    try {
+      const resp = await api.post(`/flashcards/${id}/review/`, { quality });
+      return resp.data;
+    } catch (error) {
+      console.error('Error reviewing flashcard:', error.response?.data || error.message);
+      throw error.response?.data || { error: 'Failed to review flashcard' };
+    }
+  },
+
   // Function to get quiz data (MCQs) for a specific document
   async getQuizForDocument(documentId) {
     if (!documentId) {
@@ -202,4 +249,4 @@ export const documentService = {
   }
 };
 
-export default authService;
+export default api;
