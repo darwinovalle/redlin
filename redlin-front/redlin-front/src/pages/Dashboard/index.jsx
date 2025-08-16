@@ -7,6 +7,7 @@ import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography'; 
 import { FlashcardProvider } from '../../context/FlashcardContext';
 import Flashcard from '../../components/Flashcard/Flashcard';
+import DocReview from '../../components/Flashcard/DocReview';
 import QuizView from '../../components/Flashcard/QuizView';
 import { documentService } from '../../services/api';
 import Summary from '../../components/Summary';
@@ -22,7 +23,7 @@ function TabPanel(props) {
       id={`simple-tabpanel-${index}`}
       aria-labelledby={`simple-tab-${index}`}
       {...other}
-      style={{ height: 'calc(100% - 48px)', overflowY: 'auto' }} 
+      style={{ height: '100%' }} 
     >
       {value === index && (
         <Box sx={{ p: 3 }}>
@@ -37,6 +38,7 @@ const Dashboard = ({ user }) => {
   const [activeTab, setActiveTab] = React.useState(0); 
 
   const [selectedDocumentId, setSelectedDocumentId] = useState(null);
+  const [flashcardsRefreshKey, setFlashcardsRefreshKey] = useState(0);
   const [userDocuments, setUserDocuments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const { user: authUser } = useAuth();
@@ -140,6 +142,11 @@ const Dashboard = ({ user }) => {
     setActiveTab(newValue);
   };
 
+  const handleReviewChange = () => {
+    // Increment key to force Flashcard component to refetch ordered list
+    setFlashcardsRefreshKey((k) => k + 1);
+  };
+
   return (
     <Box sx={{ width: '100%', maxWidth: '1000px', display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%', flexShrink: 0 }}>
@@ -160,6 +167,10 @@ const Dashboard = ({ user }) => {
             sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
           />
           <Tab 
+            label="Review" 
+            sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
+          />
+          <Tab 
             label="Quiz" 
             sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
           />
@@ -175,13 +186,16 @@ const Dashboard = ({ user }) => {
         {/* TabPanel content based on activeTab */}
         <TabPanel value={activeTab} index={0} sx={{ p: 0, flexGrow: 1 }}>
           <FlashcardProvider>
-            <Flashcard documentId={selectedDocumentId} /> 
+            <Flashcard documentId={selectedDocumentId} refreshKey={flashcardsRefreshKey} /> 
           </FlashcardProvider>
         </TabPanel>
         <TabPanel value={activeTab} index={1} sx={{ p: 0, flexGrow: 1 }}>
-          <QuizView documentId={selectedDocumentId} />
+          <DocReview documentId={selectedDocumentId} onReviewChange={handleReviewChange} />
         </TabPanel>
         <TabPanel value={activeTab} index={2} sx={{ p: 0, flexGrow: 1 }}>
+          <QuizView documentId={selectedDocumentId} />
+        </TabPanel>
+        <TabPanel value={activeTab} index={3} sx={{ p: 0, flexGrow: 1 }}>
           <Summary documentId={selectedDocumentId} />
         </TabPanel>
       </Box>

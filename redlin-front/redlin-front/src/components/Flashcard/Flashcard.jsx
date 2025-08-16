@@ -10,29 +10,60 @@ import {
   ListItemButton,
   ListItemText,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   ArrowForward as ArrowForwardIcon,
-  AutoAwesome as AutoAwesomeIcon,
-  CheckCircleOutline as CheckCircleOutlineIcon,
-  HighlightOff as HighlightOffIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { documentService } from '../../services/api';
 import FlashcardCard from './FlashcardCard';
 import FlashcardModal from './FlashcardModal';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
+import useClickSound from '../../hooks/useClickSound';
+import clickSfx from '../../assets/buttonclick.mp3';
+import flipSfx from '../../assets/ui-pop-sound-316482.mp3';
+import Keyf1Png from '../../assets/keyboard/icons8-f1-key-30.png';
+import Keyf2Png from '../../assets/keyboard/icons8-f2-key-30.png';
 
-const Flashcard = ({ documentId }) => {
+const Flashcard = ({ documentId, refreshKey = 0 }) => {
   const [flashcards, setFlashcards] = useState([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [isBlinking, setIsBlinking] = useState(false); // State for blink effect
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalFlipped, setModalFlipped] = useState(false);
-  const [reviews, setReviews] = useState({}); // { [idOrIndex]: 'known' | 'unknown' }
+
+  // Estado de edición (paridad con CSVFlashcards)
+  const [editOpen, setEditOpen] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
+  const [editForm, setEditForm] = useState({ key_term: '', definition: '' });
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  // Animación (paridad con CSVFlashcards)
+  const [anim, setAnim] = useState({ dir: null, phase: 'idle' }); // 'left' | 'right' | null
+
+  // Sonidos de UI
+  const playClick = useClickSound(clickSfx, { volume: 0.3, playbackRate: 1.0 });
+  const playFlip = useClickSound(flipSfx, { volume: 0.2, playbackRate: 1.0 });
+
+  // Preparar transición de entrada (modal-like)
+  const triggerEnter = (dir) => {
+    setAnim({ dir, phase: 'prep' });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setAnim({ dir, phase: 'run' });
+        setTimeout(() => setAnim({ dir: null, phase: 'idle' }), 220);
+      });
+    });
+  };
 
   useEffect(() => {
     if (!documentId) {
@@ -59,26 +90,29 @@ const Flashcard = ({ documentId }) => {
     };
 
     fetchFlashcards();
-  }, [documentId]); 
+  }, [documentId, refreshKey]); 
 
   const nextCard = () => {
     if (currentCardIndex < flashcards.length - 1) {
+      playClick();
       setCurrentCardIndex(currentCardIndex + 1);
+      triggerEnter('right');
     }
   };
 
   const previousCard = () => {
     if (currentCardIndex > 0) {
+      playClick();
       setCurrentCardIndex(currentCardIndex - 1);
+      triggerEnter('left');
     }
   };
 
   const currentCard = flashcards && flashcards.length > 0 ? flashcards[currentCardIndex] : null;
 
   const handleFlip = () => {
-    setIsFlipped(!isFlipped);
-    setIsBlinking(true); // Trigger blink
-    setTimeout(() => setIsBlinking(false), 150); // Reset blink after 150ms
+    playFlip();
+    setIsFlipped((f) => !f);
   };
 
   const openModalForIndex = (index) => {
@@ -89,22 +123,95 @@ const Flashcard = ({ documentId }) => {
 
   const closeModal = () => setModalOpen(false);
 
-  // Toggle review status for a given index, only one active at a time; clicking again clears
-  const toggleReview = (index, status) => {
-    setReviews((prev) => {
-      const key = (flashcards[index] && (flashcards[index].id ?? index)) ?? index;
-      const current = prev[key];
-      if (current === status) {
-        const { [key]: _, ...rest } = prev; // clear status
-        return rest;
-      }
-      return { ...prev, [key]: status };
-    });
+  // Edit handlers (paridad con CSVFlashcards pero usando documentService)
+  const openEdit = (index) => {
+    const card = flashcards[index];
+    if (!card) return;
+    setEditIndex(index);
+    setEditForm({ key_term: card.key_term || '', definition: card.definition || '' });
+    setEditOpen(true);
   };
+
+  const closeEdit = () => {
+    if (savingEdit) return;
+    setEditOpen(false);
+    setEditIndex(null);
+  };
+
+  const handleEditChange = (field) => (e) => setEditForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const saveEdit = async () => {
+    if (editIndex == null) return;
+    const card = flashcards[editIndex];
+    try {
+      setSavingEdit(true);
+      const updated = await documentService.updateFlashcard(card.id, editForm);
+      setFlashcards((prev) => prev.map((item, i) => (i === editIndex ? { ...item, ...updated } : item)));
+      setEditOpen(false);
+      setEditIndex(null);
+    } catch (e) {
+      alert('No se pudo actualizar la flashcard: ' + (e?.response?.data?.detail || e?.message || 'Error desconocido'));
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDelete = async (index) => {
+    const card = flashcards[index];
+    if (!card) return;
+    const confirmed = window.confirm('¿Eliminar esta flashcard? Esta acción no se puede deshacer.');
+    if (!confirmed) return;
+    try {
+      await documentService.deleteFlashcard(card.id);
+      setFlashcards((prev) => {
+        const next = prev.filter((_, i) => i !== index);
+        setCurrentCardIndex((curr) => {
+          if (curr > index) return curr - 1;
+          if (curr >= next.length) return Math.max(0, next.length - 1);
+          return curr;
+        });
+        return next;
+      });
+    } catch (e) {
+      alert('No se pudo eliminar la flashcard: ' + (e?.response?.data?.detail || e?.message || 'Error desconocido'));
+    }
+  };
+
+  // (Review 1/2/3 no aplica en la vista de Flashcards; se usa en la pestaña Review)
+
+  // No hay toggling de review en la UI de Flashcards (paridad con CSVFlashcards)
 
   React.useEffect(() => {
     setIsFlipped(false);
   }, [currentCardIndex]);
+
+  // Atajos de teclado (F1/F2) en vista normal, igual que CSVFlashcards
+  useEffect(() => {
+    if (modalOpen) return;
+    const onKey = (e) => {
+      const active = document.activeElement;
+      const tag = active?.tagName?.toLowerCase();
+      const isTyping = (tag === 'input' || tag === 'textarea' || active?.isContentEditable);
+      if (isTyping) return;
+      const key = e.key || e.code;
+      if (key === 'F1') {
+        e.preventDefault();
+        if (currentCardIndex > 0) { playClick(); setCurrentCardIndex(currentCardIndex - 1); triggerEnter('left'); }
+      } else if (key === 'F2') {
+        e.preventDefault();
+        if (currentCardIndex < flashcards.length - 1) { playClick(); setCurrentCardIndex(currentCardIndex + 1); triggerEnter('right'); }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [modalOpen, currentCardIndex, flashcards.length, playClick]);
+
+  // (Atajos 1/2/3 removidos en Flashcards; mantener solo F1/F2)
+
+  // Derivados para animación
+  const offset = anim.dir === 'right' ? 24 : anim.dir === 'left' ? -24 : 0;
+  const isPrep = anim.phase === 'prep';
+  const isRun = anim.phase === 'run';
 
   if (loading) {
     return (
@@ -141,19 +248,7 @@ const Flashcard = ({ documentId }) => {
   // console.log('Current Card Data:', currentCard);
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        px: 3,
-        py: 3,
-  height: '100%', // fit parent area to avoid outer scrollbars
-  overflow: 'hidden', // prevent outer/page-level scrollbars
-        boxSizing: 'border-box',
-        gap: 0,
-      }}
-    >
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', px: 3, py: 3, height: '100%', overflow: 'hidden', boxSizing: 'border-box', gap: 0 }}>
       {/* Progress Indicator */}
       <Box sx={{ width: '80%', maxWidth: '600px', mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
@@ -173,51 +268,70 @@ const Flashcard = ({ documentId }) => {
         />
       </Box>
 
-      {/* Card Area */}
-      <Box sx={{ width: '90%', maxWidth: '500px', mb: 4 }}>
-        <FlashcardCard
-          card={currentCard}
-          isFlipped={isFlipped}
-          onToggleFlip={handleFlip}
-          blink={isBlinking}
-          size="md"
-          showHint={!isFlipped}
-        />
-      </Box>
-
-      {/* Navigation Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '90%', maxWidth: '500px' }}>
-        <Button
-          variant="contained"
-          startIcon={<ArrowBackIcon />}
+      <Box sx={{ position: 'relative', width: '90%', maxWidth: '500px', mb: 4 }}>
+        <IconButton
+          aria-label="previous card"
           onClick={previousCard}
           disabled={currentCardIndex === 0}
-          sx={{ borderRadius: '20px', px: 3 , backgroundColor: '#6be0a6'}}
+          sx={{
+            position: 'absolute',
+            left: { xs: -43, sm: -55, md: -71 },
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 4,
+            width: 44,
+            height: 44,
+            borderRadius: '50%',
+            color: 'common.white',
+            bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(38,38,38,0.75)',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            '&:hover': {
+              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)',
+            },
+          }}
         >
-        </Button>
-        <Button
-          variant="contained"
-          endIcon={<ArrowForwardIcon />}
+          <ArrowBackIcon fontSize="medium" />
+        </IconButton>
+        <IconButton
+          aria-label="next card"
           onClick={nextCard}
           disabled={currentCardIndex === flashcards.length - 1}
-          sx={{ borderRadius: '20px', px: 3 , backgroundColor: '#6be0a6'}}
+          sx={{
+            position: 'absolute',
+            right: { xs: -43, sm: -55, md: -71 },
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 4,
+            width: 44,
+            height: 44,
+            borderRadius: '50%',
+            color: 'common.white',
+            bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(38,38,38,0.75)',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            '&:hover': {
+              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)',
+            },
+          }}
         >
-        </Button>
+          <ArrowForwardIcon fontSize="medium" />
+        </IconButton>
+        <Box sx={{ transition: isRun ? 'transform 200ms ease, opacity 200ms ease' : 'none', transform: isPrep ? `translateX(${offset}px)` : 'translateX(0px)', opacity: isPrep ? 0 : 1 }}>
+          <FlashcardCard card={currentCard} isFlipped={isFlipped} onToggleFlip={handleFlip} blink={false} size="md" showHint={!isFlipped} />
+        </Box>
       </Box>
 
-      {/* Divider */}
-  <Divider sx={{ width: '90%', maxWidth: '600px', my: 2 }} />
+      <Divider sx={{ width: '90%', maxWidth: '600px', my: 2 }} />
 
-      {/* List of Flashcard Questions */}
       <Box
         sx={{
           width: '90%',
           maxWidth: '600px',
-          maxHeight: '27.5vh', // smaller scroll area at the bottom
+          maxHeight: '27.5vh',
           overflowY: 'auto',
           mb: 2,
-          // thin, subtle scrollbar
-          scrollbarWidth: 'thin', // Firefox
+          scrollbarWidth: 'thin',
           scrollbarColor: (theme) => `${theme.palette.divider} transparent`,
           '&::-webkit-scrollbar': { width: 6 },
           '&::-webkit-scrollbar-track': { backgroundColor: 'transparent' },
@@ -231,39 +345,25 @@ const Flashcard = ({ documentId }) => {
           Card Overview
         </Typography>
         <List dense sx={{ borderRadius: '8px' }}>
-          {flashcards.map((card, index) => {
-            const itemKey = card.id ?? index;
-            const status = reviews[itemKey] || null; // 'known' | 'unknown' | null
-            return (
+          {flashcards.map((card, index) => (
             <ListItem
               key={card.id || `card-${index}`}
               secondaryAction={
                 <Box>
-                  <IconButton 
-                    edge="end" 
-                    aria-label="know it"
-                    aria-pressed={status === 'known'}
-                    onClick={(e) => { e.stopPropagation(); toggleReview(index, 'known'); }}
-                  >
-                    <CheckCircleOutlineIcon sx={{ color: status === 'known' ? 'success.main' : 'text.disabled' }} />
+                  <IconButton edge="end" aria-label="edit" onClick={(e) => { e.stopPropagation(); openEdit(index); }}>
+                    <EditIcon sx={{ color: 'text.secondary' }} />
                   </IconButton>
-                  <IconButton 
-                    edge="end" 
-                    aria-label="don't know it"
-                    sx={{ ml: 1 }}
-                    aria-pressed={status === 'unknown'}
-                    onClick={(e) => { e.stopPropagation(); toggleReview(index, 'unknown'); }}
-                  >
-                    <HighlightOffIcon sx={{ color: status === 'unknown' ? 'error.main' : 'text.disabled' }} />
+                  <IconButton edge="end" aria-label="delete" sx={{ ml: 1 }} onClick={(e) => { e.stopPropagation(); handleDelete(index); }}>
+                    <DeleteIcon sx={{ color: 'text.secondary' }} />
                   </IconButton>
                 </Box>
               }
               disablePadding
               selected={index === currentCardIndex}
               sx={{
-                py: 1.5, 
-                borderBottom: index < flashcards.length - 1 ? '1px solid' : 'none', 
-                borderColor: 'divider', 
+                py: 1.5,
+                borderBottom: index < flashcards.length - 1 ? '1px solid' : 'none',
+                borderColor: 'divider',
                 borderRadius: 1,
                 transition: 'background-color 120ms ease',
                 '&:hover': {
@@ -277,36 +377,60 @@ const Flashcard = ({ documentId }) => {
                 },
               }}
             >
-              <ListItemButton
-                onClick={() => openModalForIndex(index)}
-                sx={{
-                  pl: 2,
-                  pr: 14,
-                  // hover/selected background is handled by ListItem
-                }}
-              >
+              <ListItemButton onClick={() => openModalForIndex(index)} sx={{ pl: 2, pr: 14 }}>
                 <ListItemText
-                  id={`flashcard-list-item-${card.id}`}
+                  id={`flashcard-list-item-${card.id || index}`}
                   primary={`${index + 1}. ${card.key_term}`}
-                  primaryTypographyProps={{ 
-                    color: 'text.primary', 
-                    noWrap: true,
-                  }}
+                  primaryTypographyProps={{ color: 'text.primary', noWrap: true }}
                 />
               </ListItemButton>
             </ListItem>
-          );})}
+          ))}
         </List>
       </Box>
 
-      {/* Modal for viewing card from overview */}
+      {/* Modal con navegación (paridad con CSV) */}
       <FlashcardModal
         open={modalOpen}
         onClose={closeModal}
         card={currentCard}
         isFlipped={modalFlipped}
-        onToggleFlip={() => setModalFlipped((f) => !f)}
+        onToggleFlip={() => { playFlip(); setModalFlipped((f) => !f); }}
+        showNav
+        onPrev={() => { if (currentCardIndex > 0) { playClick(); setCurrentCardIndex(currentCardIndex - 1); setModalFlipped(false); } }}
+        onNext={() => { if (currentCardIndex < flashcards.length - 1) { playClick(); setCurrentCardIndex(currentCardIndex + 1); setModalFlipped(false); } }}
+        disablePrev={currentCardIndex === 0}
+        disableNext={currentCardIndex === flashcards.length - 1}
       />
+
+      {/* Diálogo de edición (paridad con CSV) */}
+      <Dialog open={editOpen} onClose={closeEdit} fullWidth maxWidth="sm">
+        <DialogTitle>Editar flashcard</DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField autoFocus label="Keyword" value={editForm.key_term} onChange={handleEditChange('key_term')} fullWidth />
+            <TextField label="Definition" value={editForm.definition} onChange={handleEditChange('definition')} fullWidth multiline minRows={3} />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeEdit} disabled={savingEdit}>Cancelar</Button>
+          <Button variant="contained" onClick={saveEdit} disabled={savingEdit} sx={{ backgroundColor: '#6be0a6' }}>Guardar</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Helper de atajos F1/F2 */}
+      <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, color: 'text.secondary' }}>
+        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.06)' }}>
+          <Typography variant="caption">Press</Typography>
+          <Box component="img" src={Keyf1Png} alt="Tecla F1" sx={{ height: 28, opacity: 0.85 }} />
+          <Typography variant="caption">to left</Typography>
+        </Box>
+        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.06)' }}>
+          <Typography variant="caption">Press</Typography>
+          <Box component="img" src={Keyf2Png} alt="Tecla F2" sx={{ height: 28, opacity: 0.85 }} />
+          <Typography variant="caption">to right</Typography>
+        </Box>
+      </Box>
     </Box>
   );
 };

@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 # Create your models here.
 
@@ -49,8 +50,28 @@ class Flashcard(models.Model):
     )
     last_reviewed = models.DateTimeField(auto_now=True)
 
+    # Review metadata
+    next_review_at = models.DateTimeField(null=True, blank=True)
+    times_shown = models.PositiveIntegerField(default=0)
+
+    # Scoring/SR (SM-2 inspired)
+    score = models.FloatField(default=0.0)  # 0..1 normalized mastery score
+    repetitions = models.PositiveIntegerField(default=0)
+    interval = models.PositiveIntegerField(default=0)  # days
+    easiness = models.FloatField(default=2.5)  # SM-2 E-Factor baseline
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["document", "next_review_at"]),
+            models.Index(fields=["document", "status"]),
+        ]
+
     def __str__(self):
         return self.key_term
+
+    def schedule_for(self, days: int) -> None:
+        self.interval = max(1, int(days))
+        self.next_review_at = timezone.now() + timezone.timedelta(days=self.interval)
 
 class MCQ(models.Model):
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='mcqs')

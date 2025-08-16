@@ -41,6 +41,18 @@ export const csvService = {
     return resp.data;
   },
 
+  // Update a flashcard (keyword and definition)
+  updateFlashcard: async (id, { key_term, definition }) => {
+    const resp = await api.patch(`/csv/flashcards/${id}/`, { key_term, definition });
+    return resp.data;
+  },
+
+  // Delete a flashcard
+  deleteFlashcard: async (id) => {
+    await api.delete(`/csv/flashcards/${id}/`);
+    return { success: true };
+  },
+
   // Rename an import (update its display filename)
   renameImport: async (importId, newName) => {
     const resp = await api.patch(`/csv/imports/${importId}/`, { filename: newName });
