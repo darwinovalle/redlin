@@ -165,12 +165,17 @@ const Dashboard = ({ user }) => {
               onChange={handleTabChange} 
               aria-label="study tabs" 
               textColor="inherit"
-              sx={{ '& .MuiTabs-indicator': { backgroundColor: '#ffffff' }, p: 0, m: 0 }}
+              centered
+              sx={{ 
+                '& .MuiTabs-indicator': { backgroundColor: '#ffffff' }, 
+                '& .MuiTabs-flexContainer': { justifyContent: 'center' },
+                p: 0, m: 0 
+              }}
             > 
-              <Tab label="Flashcards" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
-              <Tab label="Review" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
-              <Tab label="Quiz" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
-              <Tab label="Summary" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
+              <Tab label="Flashcards" sx={{ fontSize: '15px' ,fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
+              <Tab label="Review" sx={{ fontSize: '15px' ,fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
+              <Tab label="Quiz" sx={{ fontSize: '15px' ,fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
+              <Tab label="Summary" sx={{ fontSize: '15px' ,fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
             </Tabs>
           </Box>
           <Box sx={{ height: 'calc(100% - 48px)', overflow: 'auto' }}>
