@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = import.meta.env?.VITE_API_URL || 'http://127.0.0.1:8000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -91,6 +91,7 @@ export const authService = {
 };
 
 export const documentService = {
+  getPdfUrl: (documentId) => `${API_URL}/documents/${documentId}/file/`,
   uploadDocument: async (file, userId) => {
     const formData = new FormData();
     formData.append('pdf_file', file);

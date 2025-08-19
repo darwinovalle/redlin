@@ -20,6 +20,9 @@ from rest_framework.authentication import BasicAuthentication
 from .jwt_auth import JWTAuthentication
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+from django.http import FileResponse, HttpResponseForbidden, Http404
+from django.conf import settings
+from pathlib import Path
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -47,6 +50,38 @@ class DocumentViewSet(viewsets.ModelViewSet):
             # Optionally set status to 'failed' or log appropriately
             document.processing_status = 'failed' # Example status
             document.save()
+
+    @extend_schema(responses={200: OpenApiResponse(description='PDF stream')})
+    @action(detail=True, methods=['get'], url_path='file')
+    def file(self, request, pk=None):
+        """Stream the original PDF file for this document.
+
+        Security: Only the owner (document.user) can access.
+        """
+        document = self.get_object()
+        if request.user != document.user:
+            return HttpResponseForbidden('Not allowed')
+        if not document.pdf_file:
+            raise Http404('File not found')
+
+        # Try MEDIA storage first
+        file_handle = None
+        try:
+            file_handle = document.pdf_file.open('rb')
+        except FileNotFoundError:
+            # Fallback for seeded sample docs located in redlin_web/documents/
+            # Use the filename part only and look in BASE_DIR/documents
+            fname = Path(document.pdf_file.name).name
+            alt_path = Path(settings.BASE_DIR) / 'documents' / fname
+            if alt_path.exists():
+                file_handle = open(alt_path, 'rb')
+            else:
+                raise Http404('File not found')
+
+        response = FileResponse(file_handle, content_type='application/pdf')
+        # Force a stable filename for downloads if user saves it
+        response["Content-Disposition"] = f"inline; filename=\"{document.title or 'document'}.pdf\""
+        return response
 
     @action(detail=True, methods=['post'])
     def process(self, request, pk=None):

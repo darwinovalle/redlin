@@ -11,6 +11,7 @@ import DocReview from '../../components/Flashcard/DocReview';
 import QuizView from '../../components/Flashcard/QuizView';
 import { documentService } from '../../services/api';
 import Summary from '../../components/Summary';
+import PdfViewer from '../../components/PdfViewer/PdfViewer';
 import { useAuth } from '../../context/AuthContext';
 
 function TabPanel(props) {
@@ -26,7 +27,7 @@ function TabPanel(props) {
       style={{ height: '100%' }} 
     >
       {value === index && (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 0 }}>
           {children}
         </Box>
       )}
@@ -148,56 +149,47 @@ const Dashboard = ({ user }) => {
   };
 
   return (
-    <Box sx={{ width: '100%', maxWidth: '1000px', display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%', flexShrink: 0 }}>
-        <Tabs 
-          value={activeTab} 
-          onChange={handleTabChange} 
-          aria-label="main content tabs" 
-          centered
-          textColor="inherit"
-          sx={{
-            '& .MuiTabs-indicator': {
-              backgroundColor: '#ffffff',
-            },
-          }}
-        > 
-          <Tab 
-            label="Flashcards" 
-            sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
-          />
-          <Tab 
-            label="Review" 
-            sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
-          />
-          <Tab 
-            label="Quiz" 
-            sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
-          />
-          <Tab 
-            label="Summary" 
-            sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }}
-          />
-        </Tabs>
-      </Box>
+  <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
 
-      {/* Single Main Content Area Below Tabs */}
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%', display: 'flex', flexDirection: 'column' }}>
-        {/* TabPanel content based on activeTab */}
-        <TabPanel value={activeTab} index={0} sx={{ p: 0, flexGrow: 1 }}>
-          <FlashcardProvider>
-            <Flashcard documentId={selectedDocumentId} refreshKey={flashcardsRefreshKey} /> 
-          </FlashcardProvider>
-        </TabPanel>
-        <TabPanel value={activeTab} index={1} sx={{ p: 0, flexGrow: 1 }}>
-          <DocReview documentId={selectedDocumentId} onReviewChange={handleReviewChange} />
-        </TabPanel>
-        <TabPanel value={activeTab} index={2} sx={{ p: 0, flexGrow: 1 }}>
-          <QuizView documentId={selectedDocumentId} />
-        </TabPanel>
-        <TabPanel value={activeTab} index={3} sx={{ p: 0, flexGrow: 1 }}>
-          <Summary documentId={selectedDocumentId} />
-        </TabPanel>
+      {/* Three-column layout: center PDF, right Study panel; left sidebar is outside in app shell */}
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', gap: 0, p: 0, m: 0, height: '100%', overflow: 'hidden' }}>
+        {/* Middle: PDF Viewer */}
+        <Box sx={{ flex: 1, minWidth: 480, maxWidth: 'calc(100% - 700px)', height: '100%', overflow: 'hidden', borderRight: '1px solid #eee' }}>
+          <PdfViewer url={selectedDocumentId ? `${import.meta.env?.VITE_API_URL || 'http://127.0.0.1:8000/api'}/documents/${selectedDocumentId}/file/` : null} />
+        </Box>
+        {/* Right: Study panel, fixed width 700px */}
+        <Box sx={{ width: 700, height: '100%', overflow: 'auto' }}>
+          <Box sx={{ width: '100%', flexShrink: 0 }}>
+            <Tabs 
+              value={activeTab} 
+              onChange={handleTabChange} 
+              aria-label="study tabs" 
+              textColor="inherit"
+              sx={{ '& .MuiTabs-indicator': { backgroundColor: '#ffffff' }, p: 0, m: 0 }}
+            > 
+              <Tab label="Flashcards" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
+              <Tab label="Review" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
+              <Tab label="Quiz" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
+              <Tab label="Summary" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
+            </Tabs>
+          </Box>
+          <Box sx={{ height: 'calc(100% - 48px)', overflow: 'auto' }}>
+            <TabPanel value={activeTab} index={0}>
+              <FlashcardProvider>
+                <Flashcard documentId={selectedDocumentId} refreshKey={flashcardsRefreshKey} /> 
+              </FlashcardProvider>
+            </TabPanel>
+            <TabPanel value={activeTab} index={1}>
+              <DocReview documentId={selectedDocumentId} onReviewChange={handleReviewChange} />
+            </TabPanel>
+            <TabPanel value={activeTab} index={2}>
+              <QuizView documentId={selectedDocumentId} />
+            </TabPanel>
+            <TabPanel value={activeTab} index={3}>
+              <Summary documentId={selectedDocumentId} />
+            </TabPanel>
+          </Box>
+        </Box>
       </Box>
     </Box>
   );
