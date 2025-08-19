@@ -3,7 +3,7 @@ import React, { createContext, useContext, useReducer } from 'react';
 const ViewerContext = createContext(null);
 
 const initialState = {
-  scale: 1.0,
+  scale: 1.3,
   page: 1,
   numPages: 0,
   highlightMode: false,

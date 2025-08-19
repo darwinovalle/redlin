@@ -82,7 +82,7 @@ function InnerViewer({ url }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
       <PdfToolbar />
-      <div style={{ flex: 1, overflow: 'auto', background: '#fff' }}>
+      <div style={{ flex: 1, overflow: 'auto', background: '#2c2c2c' }}>
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <Document file={fileObj} onLoadSuccess={onLoadSuccess} loading={<div style={{ padding: 12 }}>Loading PDF…</div>}>
             {pages.map((p) => (
