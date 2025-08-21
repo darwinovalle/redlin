@@ -219,7 +219,16 @@ const CSVStudy = () => {
   return (
     <Box sx={{ width: '100%', maxWidth: '1000px', display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%', flexShrink: 0 }}>
-        <Tabs value={activeTab} onChange={(e,v)=>setActiveTab(v)} centered textColor="inherit" sx={{ '& .MuiTabs-indicator': { backgroundColor: '#ffffff' } }}>
+        <Tabs 
+          value={activeTab} 
+          onChange={(e,v)=>setActiveTab(v)} 
+          textColor="inherit" 
+          centered
+          sx={{ 
+            '& .MuiTabs-indicator': { backgroundColor: '#ffffff' },
+            '& .MuiTabs-flexContainer': { justifyContent: 'center' }
+          }}
+        >
           <Tab label="Flashcards" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }} />
           <Tab label="Review" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }} />
         </Tabs>
