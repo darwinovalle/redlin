@@ -41,3 +41,4 @@ drf-spectacular
 drf-spectacular-sidecar
 PyJWT>=2.9.0
 youtube-transcript-api==1.2.2
+yt-dlp==2025.8.20

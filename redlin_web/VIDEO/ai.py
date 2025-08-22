@@ -8,7 +8,7 @@ import google.generativeai as genai
 
 from django.db import transaction
 from .models import Video, VideoSummary, VideoMCQ
-from .transcript import fetch_transcript, TranscriptError
+from .transcript_yt_dlp import fetch_transcript_yt_dlp, TranscriptError
 
 load_dotenv()
 genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
@@ -90,8 +90,10 @@ def process_video(video_id_db: int, languages: List[str] | None = None):
     video.processing_status = 'processing'
     video.save()
     try:
-        print(f"[Video] Obteniendo transcript ({video.url})")
-        data = fetch_transcript(video.url, languages=languages)
+        print(f"[Video] Obteniendo transcript (yt-dlp) {video.url}")
+        # Pequeño retraso para mitigar bloqueos / rate limits (requisito)
+        time.sleep(2)
+        data = fetch_transcript_yt_dlp(video.url, languages=languages)
         snippets = data["snippets"]
         video.video_id = data["video_id"]
         video.snippet_count = len(snippets)
@@ -104,19 +106,18 @@ def process_video(video_id_db: int, languages: List[str] | None = None):
 
         # Detectar idioma dominante
         dominant = detect_language(full_text)
-        # Reglas solicitadas
-        if dominant in ("en","es"):
+        if dominant in ("en", "es"):
             target_lang = dominant
         else:
-            target_lang = "en"  # otros idiomas -> siempre inglés
+            target_lang = "en"
 
         lang_label = "English" if target_lang == "en" else "Spanish"
-        summary_heading_note = ("Produce la salida en Español." if target_lang == "es"
-                                else "Produce the output in English.")
+        summary_heading_note = (
+            "Produce la salida en Español." if target_lang == "es" else "Produce the output in English."
+        )
         timestamp_ref = _build_timestamp_reference(snippets)
         target_mcq_count = _compute_target_mcq_count(full_text)
 
-        # Summary prompt mejorado
         summary_prompt = f"""
 You are an expert educator. {summary_heading_note}
 Create an engaging, well-structured video summary with:
@@ -142,12 +143,11 @@ RAW TRANSCRIPT (for context):
             summary_text = summary_resp.text
             VideoSummary.objects.update_or_create(
                 video=video,
-                defaults={'content': summary_text}
+                defaults={"content": summary_text},
             )
         except Exception as e:
             print(f"[Video Error] Summary: {e}")
 
-        # MCQ prompt mejorado
         mcq_prompt = f"""
 You are an assessment designer. Generate EXACTLY {target_mcq_count} high-quality multiple choice questions
 covering ALL the key concepts of the video transcript (concept coverage is more important than quantity).
@@ -184,22 +184,24 @@ RAW TRANSCRIPT (for context):
             new_mcqs = []
             for block in blocks:
                 lines = [l for l in block.strip().split("\n") if l.strip()]
-                if len(lines) == 5 and all(l.split(":",1)[0] in ("Q","A","B","C","D") for l in lines):
-                    q_line,a_line,b_line,c_line,d_line = lines
+                if len(lines) == 5 and all(l.split(":", 1)[0] in ("Q", "A", "B", "C", "D") for l in lines):
+                    q_line, a_line, b_line, c_line, d_line = lines
                     q = q_line[2:].strip()
                     ca = a_line[2:].strip()
                     o1 = b_line[2:].strip()
                     o2 = c_line[2:].strip()
                     o3 = d_line[2:].strip()
-                    if all([q,ca,o1,o2,o3]):
-                        new_mcqs.append(VideoMCQ(
-                            video=video,
-                            question=q,
-                            correct_answer=ca,
-                            option_1=o1,
-                            option_2=o2,
-                            option_3=o3
-                        ))
+                    if all([q, ca, o1, o2, o3]):
+                        new_mcqs.append(
+                            VideoMCQ(
+                                video=video,
+                                question=q,
+                                correct_answer=ca,
+                                option_1=o1,
+                                option_2=o2,
+                                option_3=o3,
+                            )
+                        )
             if new_mcqs:
                 with transaction.atomic():
                     VideoMCQ.objects.filter(video=video).delete()
@@ -210,11 +212,10 @@ RAW TRANSCRIPT (for context):
         except Exception as e:
             print(f"[Video Error] MCQs: {e}")
 
-        video.processing_status = 'completed'
+        video.processing_status = "completed"
         video.save()
         print(f"[Video] Procesado OK {video.id}")
-
     except (TranscriptError, Exception) as e:
         print(f"[Video Fatal] {e}")
-        video.processing_status = 'failed'
+        video.processing_status = "failed"
         video.save()
