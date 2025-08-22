@@ -323,6 +323,16 @@ def fetch_transcript_yt_dlp(
     variant_index = 0
     current_variant = client_variants[variant_index] if variant_index < len(client_variants) else None
 
+    # ------------- Direct caption (JSON) fast-path -------------
+    if not os.getenv('TRANSCRIPT_DISABLE_DIRECT'):
+        if os.getenv('TRANSCRIPT_DEBUG'):
+            print('[yt-dlp DEBUG] intentando modo directo inicial')
+        direct_result = _direct_caption_try(video_id, extended, client_variants)
+        if direct_result:
+            return direct_result
+        if os.getenv('TRANSCRIPT_DEBUG'):
+            print('[yt-dlp DEBUG] modo directo inicial no produjo snippets, continuando con modo archivos')
+
     cmd = _build_command(video_id, extended, current_variant)
 
     last_err: Exception | None = None
@@ -513,106 +523,97 @@ def fetch_transcript_yt_dlp(
             break
 
     # Direct fallback: query info JSON and pull caption URLs manually
-    if os.getenv('TRANSCRIPT_DEBUG'):
-        print('[yt-dlp DEBUG] initiating direct caption fallback')
-    try:
-        info_proc = subprocess.run([
+    # Use fact that direct fallback already attempted via helper; if we are here it's failure.
+    raise TranscriptError(f"Falló extracción con yt-dlp: {last_err} (sin subtítulos incluso en directo)")
+
+# ---------------- Direct caption helper -----------------
+
+def _direct_caption_try(video_id: str, extended: List[str], client_variants: List[Optional[str]]):
+    """Attempt to fetch captions directly using JSON info and HTTP GET to caption URLs.
+    Returns transcript dict or None if unsuccessful."""
+    order_pref = {'json3':0,'vtt':1,'srv3':2,'srv2':3,'srv1':4}
+    for variant in client_variants:
+        cmd = [
             'yt-dlp','-J','--skip-download', f'https://www.youtube.com/watch?v={video_id}'
-        ], capture_output=True, text=True, timeout=160)
-        if info_proc.returncode != 0:
-            raise TranscriptError(f'Fallback info fail rc={info_proc.returncode}: {(info_proc.stderr or "")[:160]}')
-        info = json.loads(info_proc.stdout)
-    except Exception as e2:
-        raise TranscriptError(f"Falló extracción con yt-dlp: {last_err} (fallback info error: {e2})") from e2
-
-    def _pick_caption_source(info: dict, lang_roots: List[str]):
-        sources = []
-        for key in ('subtitles','automatic_captions'):
-            captions = info.get(key) or {}
-            for code, entries in captions.items():
-                sources.append((code, entries))
-        # priority by requested order then others
-        for root in lang_roots:
-            for code, entries in sources:
-                if code == root or code.startswith(root + '-'):
-                    yield code, entries
-        # then any
-        for code, entries in sources:
-            yield code, entries
-
-    def _choose_entry(entries):
-        # prefer json3 then vtt then others
-        order = {'json3':0,'vtt':1,'srv3':2,'srv2':3,'srv1':4}
-        entries2 = [e for e in entries if e.get('url')]
-        entries2.sort(key=lambda e: order.get(e.get('ext'), 50))
-        return entries2[0] if entries2 else None
-
-    picked_code = None
-    picked_snippets = None
-    for code, entries in _pick_caption_source(info, extended):
-        ent = _choose_entry(entries)
-        if not ent:
-            continue
-        url = ent.get('url')
-        ext = ent.get('ext')
-        if not url:
-            continue
+        ]
+        if variant:
+            cmd += ['--extractor-args', f'youtube:player_client={variant}']
         try:
-            resp = requests.get(url, timeout=60)
-            if resp.status_code != 200 or not resp.text.strip():
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=160)
+            if proc.returncode != 0:
                 continue
-            text = resp.text
-            tmp_path = None
-            # Parse based on extension
-            if ext == 'json3':
-                try:
-                    data = json.loads(text)
-                    events = data.get('events', [])
-                    snips = []
-                    for ev in events:
-                        if 'segs' in ev and 'tStartMs' in ev:
-                            seg_text = ''.join(seg.get('utf8','') for seg in ev.get('segs',[]))
-                            if seg_text and not seg_text.startswith('['):
-                                start = ev['tStartMs']/1000.0
-                                dur = ev.get('dDurationMs',0)/1000.0
-                                snips.append({ 'text': seg_text.strip(), 'start': start, 'duration': dur })
-                    if snips:
-                        picked_code = code
-                        picked_snippets = snips
-                        break
-                except Exception:
-                    continue
-            elif ext == 'vtt':
-                # Save temp then reuse parser
-                fd, tmp_path = tempfile.mkstemp(suffix='.vtt')
-                with os.fdopen(fd, 'w', encoding='utf-8') as ftmp:
-                    ftmp.write(text)
-                snips = _parse_vtt(tmp_path)
-                os.unlink(tmp_path)
-                if snips:
-                    picked_code = code
-                    picked_snippets = snips
-                    break
-            else:
-                # ignore other formats for now
-                continue
+            info = json.loads(proc.stdout)
         except Exception:
             continue
-
-    if picked_snippets:
-        full_text = ' '.join(s['text'] for s in picked_snippets)
-        lang_guess = _guess_lang(full_text)
-        return {
-            'video_id': video_id,
-            'title': info.get('title'),
-            'language': lang_guess,
-            'language_code': picked_code,
-            'is_generated': True,
-            'snippets': picked_snippets,
-            'source': 'yt-dlp-direct'
-        }
-
-    raise TranscriptError(f"Falló extracción con yt-dlp: {last_err} (fallback direct sin resultados)")
+        captions_sources = []
+        for key in ('subtitles','automatic_captions'):
+            data = info.get(key) or {}
+            for code, entries in data.items():
+                entries2 = [e for e in entries if e.get('url')]
+                if not entries2:
+                    continue
+                entries2.sort(key=lambda e: order_pref.get(e.get('ext'),50))
+                captions_sources.append((code, entries2))
+        if not captions_sources:
+            continue
+        # try requested roots first
+        def iter_candidates():
+            for root in extended:
+                for code, entries in captions_sources:
+                    if code == root or code.startswith(root + '-'):
+                        yield code, entries
+            for code, entries in captions_sources:
+                yield code, entries
+        for code, entries in iter_candidates():
+            for ent in entries:
+                ext = ent.get('ext')
+                if not ent.get('url'):
+                    continue
+                if ext not in ('json3','vtt','srv1','srv2','srv3'):
+                    continue
+                try:
+                    resp = requests.get(ent['url'], timeout=60)
+                    if resp.status_code != 200 or not resp.text.strip():
+                        continue
+                    txt = resp.text
+                    snippets = []
+                    if ext == 'json3':
+                        try:
+                            data = json.loads(txt)
+                            for ev in data.get('events', []):
+                                if 'segs' in ev and 'tStartMs' in ev:
+                                    seg_text = ''.join(seg.get('utf8','') for seg in ev.get('segs',[]))
+                                    if seg_text and not seg_text.startswith('['):
+                                        start = ev['tStartMs']/1000.0
+                                        dur = ev.get('dDurationMs',0)/1000.0
+                                        snippets.append({'text': seg_text.strip(), 'start': start, 'duration': dur})
+                        except Exception:
+                            continue
+                    else:
+                        # treat srv* like vtt? skip; only parse vtt properly
+                        if ext == 'vtt':
+                            fd, tmp_path = tempfile.mkstemp(suffix='.vtt')
+                            with os.fdopen(fd, 'w', encoding='utf-8') as ftmp:
+                                ftmp.write(txt)
+                            snippets = _parse_vtt(tmp_path)
+                            os.unlink(tmp_path)
+                        else:
+                            continue
+                    if snippets:
+                        full_text = ' '.join(s['text'] for s in snippets)
+                        lang_guess = _guess_lang(full_text)
+                        return {
+                            'video_id': video_id,
+                            'title': info.get('title'),
+                            'language': lang_guess,
+                            'language_code': code,
+                            'is_generated': True,
+                            'snippets': snippets,
+                            'source': 'yt-dlp-direct'
+                        }
+                except Exception:
+                    continue
+    return None
 
     raise TranscriptError(f"Falló extracción con yt-dlp tras reintentos: {last_err}")
 
