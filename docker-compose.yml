@@ -10,6 +10,10 @@ services:
       - "8000:8000"
     env_file:
       - ./redlin_web/.env
+    environment:
+      TRANSCRIPT_DEBUG: "1"  # habilita logs de depuración de subtitles
+      TRANSCRIPT_MIN_INTERVAL: "1.2"  # throttle mínimo entre llamadas yt-dlp (segundos)
+      TRANSCRIPT_CLIENT_VARIANTS: "web,android,ios,tv"  # rotación de client variants para reducir 403/DNS
     entrypoint: ["sh", "-c", "./entrypoint.sh"]
 
   frontend:

@@ -95,6 +95,8 @@ def process_video(video_id_db: int, languages: List[str] | None = None):
         time.sleep(2)
         data = fetch_transcript_yt_dlp(video.url, languages=languages)
         snippets = data["snippets"]
+        if data.get("title") and not video.title:
+            video.title = data["title"][:255]
         video.video_id = data["video_id"]
         video.snippet_count = len(snippets)
         full_text = " ".join(s["text"] for s in snippets if s.get("text"))
