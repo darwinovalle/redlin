@@ -24,6 +24,27 @@ class VideoViewSet(viewsets.ModelViewSet):
         except Exception:
             pass
 
+    def list(self, request, *args, **kwargs):
+        """Custom list to bypass full ModelSerializer in case of hidden serialization error.
+        Returns minimal fields required by frontend. Also adds lightweight debug logging."""
+        qs = self.get_queryset()
+        out = []
+        for v in qs:
+            try:
+                out.append({
+                    'id': v.id,
+                    'url': v.url,
+                    'video_id': v.video_id,
+                    'title': v.title,
+                    'created_at': v.created_at,
+                    'processing_status': v.processing_status,
+                    'snippet_count': v.snippet_count,
+                    'transcript_text': v.transcript_text,
+                })
+            except Exception as e:
+                print(f"[Video list error] video {getattr(v,'id','?')}: {e}")
+        return Response(out)
+
     @action(detail=True, methods=['get'])
     def summary(self, request, pk=None):
         video = self.get_object()

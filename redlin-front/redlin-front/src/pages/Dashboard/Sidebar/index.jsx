@@ -39,6 +39,8 @@ import { darkTheme } from '../../../theme';
 import { useRef, useState, useEffect } from 'react'; 
 import { useAuth } from '../../../context/AuthContext';
 import { documentService } from '../../../services/api';
+import { videoService } from '../../../services/api/video';
+import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import AddSpaceModal from '../../../components/common/AddSpaceModal';
 import { csvService } from '../../../services/api/csv';
 import LoaderOverlay from '../../../components/common/LoaderOverlay';
@@ -81,6 +83,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const docsOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:docsOpen` : null), [user?.id]);
   const sheetsOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:sheetsOpen` : null), [user?.id]);
   const kanbanOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:kanbanOpen` : null), [user?.id]);
+  const videosOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:videosOpen` : null), [user?.id]);
   const statsOpenKey = React.useMemo(() => (user?.id ? `sidebar:${user.id}:statsOpen` : null), [user?.id]);
 
   const fileInputRef = useRef(null);
@@ -120,6 +123,15 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
     }
     return false;
   });
+  const [videosOpen, setVideosOpen] = useState(() => {
+    if (videosOpenKey) {
+      try {
+        const v = localStorage.getItem(videosOpenKey);
+        if (v === 'true' || v === 'false') return v === 'true';
+      } catch {}
+    }
+    return false;
+  });
   const [statsOpen, setStatsOpen] = useState(() => {
     if (statsOpenKey) {
       try {
@@ -132,6 +144,10 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [openSampleModal, setOpenSampleModal] = useState(false);
   const [renameState, setRenameState] = useState({ open: false, doc: null, saving: false });
   const [renameSheetState, setRenameSheetState] = useState({ open: false, imp: null, saving: false });
+  const [videos, setVideos] = useState([]);
+  const [loadingVideos, setLoadingVideos] = useState(false);
+  const [videoError, setVideoError] = useState(null);
+  const [creatingVideo, setCreatingVideo] = useState(false);
   
   // Helper to fetch docs so we can reuse after uploads
   const fetchUserDocuments = async () => {
@@ -282,6 +298,21 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
     try { localStorage.setItem(kanbanOpenKey, String(kanbanOpen)); } catch {}
   }, [kanbanOpen, kanbanOpenKey]);
 
+  // Load persisted videosOpen when user changes
+  useEffect(() => {
+    if (!videosOpenKey) return;
+    try {
+      const v = localStorage.getItem(videosOpenKey);
+      if (v === 'true' || v === 'false') setVideosOpen(v === 'true');
+    } catch {}
+  }, [videosOpenKey]);
+
+  // Persist videosOpen whenever it changes
+  useEffect(() => {
+    if (!videosOpenKey) return;
+    try { localStorage.setItem(videosOpenKey, String(videosOpen)); } catch {}
+  }, [videosOpen, videosOpenKey]);
+
   // Load persisted statsOpen when user changes
   useEffect(() => {
     if (!statsOpenKey) return;
@@ -308,6 +339,18 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
         console.warn('Failed to load CSV imports', e);
         setCsvImports([]);
       }
+    })();
+    // fetch videos
+    (async () => {
+      if (!user) { setVideos([]); return; }
+      setLoadingVideos(true); setVideoError(null);
+      try {
+        const list = await videoService.listVideos();
+        setVideos(Array.isArray(list) ? list : []);
+      } catch (e) {
+        console.warn('Failed to load videos', e);
+        setVideoError('Could not load videos');
+      } finally { setLoadingVideos(false); }
     })();
   }, [user]); // Re-run effect when the user object changes
 
@@ -360,6 +403,23 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       .trim()
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
+
+  const handleCreateVideo = async ({ url, languages }) => {
+    if (!url) return;
+    setCreatingVideo(true);
+    try {
+      const v = await videoService.createVideo({ url, languages });
+      // Prepend new video for visibility
+      setVideos(prev => [v, ...prev]);
+      setOpenSampleModal(false);
+      // Navigate to a video view route (to be implemented) e.g., /videos/{id}
+      navigate(`/videos/${v.id}`);
+    } catch (e) {
+      alert(e?.response?.data?.error || 'Failed to add video');
+    } finally {
+      setCreatingVideo(false);
+    }
+  };
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -742,6 +802,70 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No tasks yet.</Typography>
           </Collapse>
 
+          {/* Videos */}
+          <Box
+            onClick={() => setVideosOpen(v => !v)}
+            sx={{
+              px: 2,
+              py: 1,
+              mt: 1,
+              mb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderRadius: 1,
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+              backgroundColor: videosOpen ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.06)' },
+            }}
+          >
+            <Box className="section-label" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <OndemandVideoIcon fontSize="small" sx={{ color: 'common.white' }} />
+              <Typography variant="caption" sx={{ color: 'common.white' }}>Videos</Typography>
+            </Box>
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); setVideosOpen(v => !v); }}
+              aria-label={videosOpen ? 'collapse videos' : 'expand videos'}
+              sx={{ color: 'common.white' }}
+            >
+              {videosOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            </IconButton>
+          </Box>
+          <Collapse in={videosOpen} timeout="auto" unmountOnExit>
+            {loadingVideos && <Typography sx={{ px: 2, color: 'text.secondary' }}>Loading videos...</Typography>}
+            {videoError && <Typography sx={{ px: 2, color: 'error.main' }}>{videoError}</Typography>}
+            {!loadingVideos && !videoError && videos.length === 0 && (
+              <Typography sx={{ px: 2, color: 'text.secondary', fontStyle: 'italic' }}>No videos yet.</Typography>
+            )}
+            <List dense>
+              {videos.map(v => (
+                <ListItem key={v.id} disablePadding>
+                  <ListItemButton
+                    onClick={() => navigate(`/videos/${v.id}`)}
+                    sx={{
+                      '&.Mui-selected': { backgroundColor: 'rgba(255,255,255,0.08)' },
+                      '&.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.12)' }
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 'auto', mr: 1.5 }}>
+                      <OndemandVideoIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={(v.title || v.video_id || 'Video ' + v.id)}
+                      primaryTypographyProps={{
+                        style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+                      }}
+                      secondary={v.processing_status}
+                      secondaryTypographyProps={{ variant: 'caption' }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          </Collapse>
+
           {/* Stats */}
           <Box
             onClick={() => setStatsOpen((v) => !v)}
@@ -830,6 +954,8 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
           }}
           onCreateTutorial={() => { console.log('Create tutorial'); setOpenSampleModal(false); }}
           onCreateKanban={() => { console.log('Create kanban'); setOpenSampleModal(false); }}
+          onCreateVideo={handleCreateVideo}
+          creatingVideo={creatingVideo}
         />
       </Box>
       <RenameDialog
