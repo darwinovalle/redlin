@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'API',
     'CSV',
+    'VIDEO',
     'nltk',
     'PyPDF2',
     'google.generativeai',
