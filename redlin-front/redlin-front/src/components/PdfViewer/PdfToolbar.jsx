@@ -1,30 +1,68 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useViewer } from './ViewerContext';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import HighlightIcon from '@mui/icons-material/Highlight';
+// Highlight toggle removed
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 
 export default function PdfToolbar() {
   const { state, dispatch } = useViewer();
+  const [localSearch, setLocalSearch] = useState(state.searchTerm);
+
+  const triggerSearch = () => {
+    dispatch({ type: 'SET_SEARCH_TERM', term: localSearch.trim() });
+  };
+
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 8,
+      display: 'flex', alignItems: 'center', gap: 6,
       padding: '6px 8px', borderBottom: '1px solid #000000',
-      background: '#000000'
+      background: '#000000', flexWrap: 'wrap'
     }}>
+      {/* Zoom controls */}
       <Tooltip title="Zoom out"><IconButton size="small" onClick={() => dispatch({ type: 'ZOOM_OUT' })}><ZoomOutIcon fontSize="small" sx={{ color: 'white' }} /></IconButton></Tooltip>
       <Tooltip title="Reset zoom"><IconButton size="small" onClick={() => dispatch({ type: 'ZOOM_RESET' })}><RestartAltIcon fontSize="small" sx={{ color: 'white' }}/></IconButton></Tooltip>
       <Tooltip title="Zoom in"><IconButton size="small" onClick={() => dispatch({ type: 'ZOOM_IN' })}><ZoomInIcon fontSize="small" sx={{ color: 'white' }}/></IconButton></Tooltip>
-      <div style={{ marginLeft: 8, fontSize: 12 }}>Zoom: {(state.scale * 100).toFixed(0)}%</div>
-      <div style={{ flex: 1 }} />
-      <Tooltip title={state.highlightMode ? 'Exit highlight mode' : 'Enter highlight mode'}>
-        <IconButton size="small" color={state.highlightMode ? 'primary' : 'default'} onClick={() => dispatch({ type: 'TOGGLE_HIGHLIGHT' })}>
-          <HighlightIcon fontSize="small" sx={{ color: 'white'}}/>
+      <div style={{ fontSize: 12, color: '#fff', minWidth: 60 }}>Zoom {(state.scale * 100).toFixed(0)}%</div>
+
+      {/* Search box */}
+      <div style={{ display: 'flex', alignItems: 'center', background: '#1f1f1f', padding: '2px 6px', borderRadius: 6, flex: '1 1 260px', maxWidth: 320 }}>
+        <SearchIcon sx={{ fontSize: 16, color: '#888', mr: 0.5 }} />
+        <input
+          style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: 13 }}
+          placeholder="Search in document..."
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') triggerSearch(); }}
+        />
+        {localSearch && (
+          <IconButton size="small" onClick={() => { setLocalSearch(''); dispatch({ type: 'SET_SEARCH_TERM', term: '' }); }}>
+            <ClearIcon sx={{ fontSize: 16, color: '#999' }} />
+          </IconButton>
+        )}
+        <IconButton size="small" onClick={triggerSearch}>
+          <SearchIcon sx={{ fontSize: 16, color: '#ffffff' }} />
         </IconButton>
-      </Tooltip>
+      </div>
+      {/* Search navigation */}
+      {state.searchResults.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, color: '#fff', fontSize: 12 }}>
+          <IconButton size="small" onClick={() => dispatch({ type: 'PREV_SEARCH_RESULT' })}><NavigateBeforeIcon sx={{ fontSize: 18, color: '#fff' }} /></IconButton>
+          <span>{state.currentSearchIndex + 1}/{state.searchResults.length}</span>
+          <IconButton size="small" onClick={() => dispatch({ type: 'NEXT_SEARCH_RESULT' })}><NavigateNextIcon sx={{ fontSize: 18, color: '#fff' }} /></IconButton>
+        </div>
+      )}
+      {state.searchTerm && !state.searchResults.length && state.searchScanningPage > 0 && (
+        <div style={{ color: '#aaa', fontSize: 11 }}>Scanning p.{state.searchScanningPage}/{state.numPages || '?'}...</div>
+      )}
+
+  <div style={{ flex: 1 }} />
     </div>
   );
 }
