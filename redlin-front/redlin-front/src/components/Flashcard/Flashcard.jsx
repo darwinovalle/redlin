@@ -247,30 +247,29 @@ const Flashcard = ({ documentId, refreshKey = 0 }) => {
         />
       </Box>
 
-  <Box sx={{ position: 'relative', width: '92%', maxWidth: '520px', mb: 3 }}>
+  <Box sx={{ position: 'relative', width: '92%', maxWidth: '640px', mb: 3 }}>
+        {/* Botones fuera visualmente de la carta (la carta se estrecha) */}
         <IconButton
           aria-label="previous card"
           onClick={previousCard}
           disabled={currentCardIndex === 0}
           sx={{
             position: 'absolute',
-            left: { xs: -43, sm: -55, md: -71 },
+            left: 0,
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 4,
-            width: 44,
-            height: 44,
+            width: 38,
+            height: 38,
             borderRadius: '50%',
             color: 'common.white',
             bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(38,38,38,0.75)',
             boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
             border: '1px solid rgba(255,255,255,0.06)',
-            '&:hover': {
-              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)',
-            },
+            '&:hover': { bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)' },
           }}
         >
-          <ArrowBackIcon fontSize="medium" />
+          <ArrowBackIcon fontSize="small" />
         </IconButton>
         <IconButton
           aria-label="next card"
@@ -278,26 +277,32 @@ const Flashcard = ({ documentId, refreshKey = 0 }) => {
           disabled={currentCardIndex === flashcards.length - 1}
           sx={{
             position: 'absolute',
-            right: { xs: -43, sm: -55, md: -71 },
+            right: 0,
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 4,
-            width: 44,
-            height: 44,
+            width: 38,
+            height: 38,
             borderRadius: '50%',
             color: 'common.white',
             bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(38,38,38,0.75)',
             boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
             border: '1px solid rgba(255,255,255,0.06)',
-            '&:hover': {
-              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)',
-            },
+            '&:hover': { bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)' },
           }}
         >
-          <ArrowForwardIcon fontSize="medium" />
+          <ArrowForwardIcon fontSize="small" />
         </IconButton>
         <Box sx={{ transition: isRun ? 'transform 200ms ease, opacity 200ms ease' : 'none', transform: isPrep ? `translateX(${offset}px)` : 'translateX(0px)', opacity: isPrep ? 0 : 1 }}>
-          <FlashcardCard card={currentCard} isFlipped={isFlipped} onToggleFlip={handleFlip} blink={false} size="md" showHint={!isFlipped} />
+          <FlashcardCard
+            card={currentCard}
+            isFlipped={isFlipped}
+            onToggleFlip={handleFlip}
+            blink={false}
+            size="sm"
+            showHint={!isFlipped}
+            sx={{ width: { xs: 'calc(100% - 110px)', sm: 'calc(100% - 130px)' }, mx: 'auto', minWidth: 260 }}
+          />
         </Box>
       </Box>
 

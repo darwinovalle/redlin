@@ -118,10 +118,12 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       <CssBaseline />
       <SidebarShell>
         <div style={{ padding: '0 24px 24px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 24, display: 'flex', alignItems: 'center', fontWeight: 600 }}>
-            <span style={{ marginRight: 12, fontSize: 28, color: '#20C997', display: 'inline-flex' }}>🧠</span>
-            AI Learn
-          </h2>
+          <div style={{ display:'flex', alignItems:'center', height:64 }}>
+            <div style={{ width:40, height:40, background:'linear-gradient(135deg,#20C997,#4A90E2)', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', marginRight:12, boxShadow:'0 0 20px rgba(32,201,151,0.3)' }}>
+              <i className="ri-brain-line" style={{ fontSize:22, color:'#fff' }} />
+            </div>
+            <span style={{ fontSize:24, fontWeight:700, background:'linear-gradient(90deg,#FFFFFF,#B0B7C3)', WebkitBackgroundClip:'text', backgroundClip:'text', color:'transparent' }}>LearnSphere</span>
+          </div>
         </div>
         <div style={{ flex:1, overflowY:'auto' }}>
           <div className="nav-section" style={{ marginBottom:24 }}>

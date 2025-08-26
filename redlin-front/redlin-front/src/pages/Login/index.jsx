@@ -106,9 +106,9 @@ const Login = () => {
       </div>
       <div className="right-section">
         <div className="login-form-container">
-          <div className="platform-logo">
-            <i className="ri-brain-line" />
-            <h2 className="platform-name">BrainWave</h2>
+          <div className="logo-container">
+            <div className="logo"><i className="ri-brain-line" /></div>
+            <div className="platform-name">LearnSphere</div>
           </div>
           <h3 className="login-title">Login</h3>
           {error && <div className="error-banner" role="alert">{error}</div>}
@@ -164,10 +164,10 @@ const Login = () => {
             <div className="divider">
               <span className="divider-text">or continue with</span>
             </div>
-            <div className="social-login">
-              <button type="button" className="social-button" aria-label="Continue with Google"><i className="ri-google-fill" /></button>
-              <button type="button" className="social-button" aria-label="Continue with Facebook"><i className="ri-facebook-fill" /></button>
-              <button type="button" className="social-button" aria-label="Continue with Apple"><i className="ri-apple-fill" /></button>
+            <div className="social-buttons">
+              <button type="button" className="social-btn google-btn" aria-label="Continue with Google"><i className="ri-google-fill" /></button>
+              <button type="button" className="social-btn facebook-btn" aria-label="Continue with Facebook"><i className="ri-facebook-fill" /></button>
+              <button type="button" className="social-btn apple-btn" aria-label="Continue with Apple"><i className="ri-apple-fill" /></button>
             </div>
           </form>
         </div>
