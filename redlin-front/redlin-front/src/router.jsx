@@ -10,6 +10,7 @@ import Checkout from "./pages/Checkout";
 import ProtectRoute from "./components/ProtectRoute";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AppLayout from './layouts/AppLayout';
+import LandingPage from "./pages/LandingPage/LandingPage";
 
 
 const AppRouter = () => {
@@ -26,6 +27,7 @@ const RouterContent = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
   <Route path="/pricing" element={<Pricing />} />
         <Route path="/register" element={<Register />} />

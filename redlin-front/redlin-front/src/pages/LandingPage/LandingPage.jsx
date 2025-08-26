@@ -1,0 +1,388 @@
+import React, { useEffect, useRef } from 'react';
+import './LandingPage.css';
+
+const LandingPage = () => {
+    useEffect(() => {
+        const neuralNetwork = document.querySelector('.neural-network-landing');
+        if (neuralNetwork) {
+            // Clear previous elements
+            while (neuralNetwork.firstChild) {
+                neuralNetwork.removeChild(neuralNetwork.firstChild);
+            }
+
+            const nodeCount = 20;
+            const connectionCount = 30;
+            
+            const nodes = [];
+
+            // Create nodes
+            for (let i = 0; i < nodeCount; i++) {
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.style.left = `${Math.random() * 100}%`;
+                node.style.top = `${Math.random() * 100}%`;
+                node.style.opacity = Math.random() * 0.8 + 0.2;
+                node.style.transform = `scale(${Math.random() * 0.5 + 0.5})`;
+                neuralNetwork.appendChild(node);
+                nodes.push(node);
+            }
+            
+            // Create connections
+            const neuralRect = neuralNetwork.getBoundingClientRect();
+            for (let i = 0; i < connectionCount; i++) {
+                const connection = document.createElement('div');
+                connection.className = 'connection';
+                
+                const startNode = nodes[Math.floor(Math.random() * nodes.length)];
+                const endNode = nodes[Math.floor(Math.random() * nodes.length)];
+                
+                if (startNode === endNode) continue;
+                
+                const startRect = startNode.getBoundingClientRect();
+                const endRect = endNode.getBoundingClientRect();
+                
+                const startX = startRect.left - neuralRect.left + startRect.width / 2;
+                const startY = startRect.top - neuralRect.top + startRect.height / 2;
+                const endX = endRect.left - neuralRect.left + endRect.width / 2;
+                const endY = endRect.top - neuralRect.top + endRect.height / 2;
+                
+                const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+                const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+                
+                connection.style.width = `${length}px`;
+                connection.style.left = `${startX}px`;
+                connection.style.top = `${startY}px`;
+                connection.style.transform = `rotate(${angle}deg)`;
+                
+                neuralNetwork.appendChild(connection);
+            }
+        }
+
+        const navbar = document.querySelector('.navbar-landing');
+        const handleScroll = () => {
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(26, 42, 58, 0.95)';
+            } else {
+                navbar.style.background = 'rgba(26, 42, 58, 0.8)';
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+
+    return (
+        <div className="container-landing">
+            {/* Navigation Bar */}
+            <nav className="navbar-landing">
+                <div className="logo-container-landing">
+                    <div className="logo-landing">
+                        <div className="logo-icon-landing">
+                            <i className="ri-brain-line"></i>
+                        </div>
+                        NeurAI
+                    </div>
+                </div>
+                
+                <div className="nav-links-landing">
+                    <a href="#features" className="nav-link-landing">Features</a>
+                    <a href="#benefits" className="nav-link-landing">Benefits</a>
+                    <a href="#how-it-works" className="nav-link-landing">How It Works</a>
+                    <a href="#pricing" className="nav-link-landing">Pricing</a>
+                </div>
+                
+                <div className="auth-buttons-landing">
+                    <a href="/login" className="btn-landing btn-outline-landing">Sign In</a>
+                    <a href="/register" className="btn-landing btn-primary-landing">Sign Up</a>
+                </div>
+            </nav>
+            
+            {/* Hero Section */}
+            <section className="hero-landing" id="hero">
+                <div className="hero-bg-landing"></div>
+                <div className="mesh-grid-landing"></div>
+                
+                <div className="floating-elements-landing">
+                    <div className="floating-element-landing"></div>
+                    <div className="floating-element-landing"></div>
+                    <div className="floating-element-landing"></div>
+                    <div className="floating-element-landing"></div>
+                </div>
+                
+                <div className="neural-network-landing">
+                    {/* Neural network nodes and connections will be added via JavaScript */}
+                </div>
+                
+                <div className="ui-elements-landing">
+                    <div className="ui-card-landing ui-card-1-landing">
+                        <div className="ui-card-header-landing">
+                            <div className="ui-card-icon-landing">
+                                <i className="ri-brain-line" style={{fontSize: '12px', color: 'white'}}></i>
+                            </div>
+                            <div className="ui-card-title-landing">Learning Progress</div>
+                        </div>
+                        <div className="ui-card-content-landing">
+                            <div className="ui-card-bar-landing"></div>
+                            <div className="ui-card-bar-landing"></div>
+                        </div>
+                    </div>
+                    
+                    <div className="ui-card-landing ui-card-2-landing">
+                        <div className="ui-card-header-landing">
+                            <div className="ui-card-icon-landing">
+                                <i className="ri-rocket-line" style={{fontSize: '12px', color: 'white'}}></i>
+                            </div>
+                            <div className="ui-card-title-landing">Performance</div>
+                        </div>
+                        <div className="ui-card-content-landing">
+                            <div className="ui-card-bar-landing"></div>
+                        </div>
+                    </div>
+                    
+                    <div className="ui-card-landing ui-card-3-landing">
+                        <div className="ui-card-header-landing">
+                            <div className="ui-card-icon-landing">
+                                <i className="ri-flashlight-line" style={{fontSize: '12px', color: 'white'}}></i>
+                            </div>
+                            <div className="ui-card-title-landing">Insights</div>
+                        </div>
+                        <div className="ui-card-content-landing">
+                            <div className="ui-card-bar-landing"></div>
+                            <div className="ui-card-bar-landing"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="hero-content-landing">
+                    <div className="hero-subtitle-landing">AI-POWERED LEARNING PLATFORM</div>
+                    <h1 className="hero-title-landing">Transform How You Learn With Adaptive AI</h1>
+                    <p className="hero-description-landing">Experience a revolutionary learning platform that adapts to your unique learning style, providing personalized content and real-time feedback to accelerate your mastery of any subject.</p>
+                    <div className="hero-cta-landing">
+                        <a href="#" className="btn-landing btn-hero-landing">Start Learning Now <i className="ri-arrow-right-line" style={{marginLeft: '8px'}}></i></a>
+                    </div>
+                </div>
+            </section>
+
+            {/* Features Section */}
+            <section className="features-landing" id="features">
+                <h2 className="section-title-landing">Powerful Features</h2>
+                <div className="features-container-landing">
+                    <div className="feature-card-landing">
+                        <i className="feature-icon-landing ri-brain-line"></i>
+                        <h3 className="feature-title-landing">Adaptive Learning</h3>
+                        <p className="feature-description-landing">Our AI analyzes your learning patterns and adapts content to match your unique style, pace, and preferences, ensuring optimal knowledge retention.</p>
+                    </div>
+                    <div className="feature-card-landing">
+                        <i className="feature-icon-landing ri-robot-line"></i>
+                        <h3 className="feature-title-landing">AI Tutoring</h3>
+                        <p className="feature-description-landing">Get personalized guidance from our AI tutors that provide real-time feedback, answer questions, and help you overcome learning obstacles.</p>
+                    </div>
+                    <div className="feature-card-landing">
+                        <i className="feature-icon-landing ri-dashboard-line"></i>
+                        <h3 className="feature-title-landing">Progress Analytics</h3>
+                        <p className="feature-description-landing">Track your learning journey with detailed analytics that show your strengths, areas for improvement, and projected learning outcomes.</p>
+                    </div>
+                    <div className="feature-card-landing">
+                        <i className="feature-icon-landing ri-community-line"></i>
+                        <h3 className="feature-title-landing">Collaborative Learning</h3>
+                        <p className="feature-description-landing">Connect with peers and form study groups based on AI-matched learning compatibility for enhanced knowledge sharing.</p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Benefits Section */}
+            <section className="benefits-landing">
+                <div className="benefits-container-landing">
+                    <div className="benefits-content-landing">
+                        <h2 className="benefits-title-landing">Transform Your Learning Experience</h2>
+                        <p className="benefits-description-landing">Our AI-powered platform revolutionizes how you acquire and retain knowledge, making learning more efficient, engaging, and personalized than ever before.</p>
+                        <div className="stats-container-landing">
+                            <div className="stat-item-landing">
+                                <div className="stat-number-landing">87%</div>
+                                <div className="stat-label-landing">Improved Retention</div>
+                            </div>
+                            <div className="stat-item-landing">
+                                <div className="stat-number-landing">3.2x</div>
+                                <div className="stat-label-landing">Faster Learning</div>
+                            </div>
+                            <div className="stat-item-landing">
+                                <div className="stat-number-landing">92%</div>
+                                <div className="stat-label-landing">User Satisfaction</div>
+                            </div>
+                            <div className="stat-item-landing">
+                                <div className="stat-number-landing">24/7</div>
+                                <div className="stat-label-landing">Learning Access</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="benefits-visual-landing">
+                        <div className="data-visualization-landing">
+                            <div className="data-bar-landing bar-1-landing" style={{'--height': '60%'}}></div>
+                            <div className="data-bar-landing bar-2-landing" style={{'--height': '80%'}}></div>
+                            <div className="data-bar-landing bar-3-landing" style={{'--height': '40%'}}></div>
+                            <div className="data-bar-landing bar-4-landing" style={{'--height': '90%'}}></div>
+                            <div className="data-bar-landing bar-5-landing" style={{'--height': '70%'}}></div>
+                            <div className="data-bar-landing bar-6-landing" style={{'--height': '50%'}}></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* How It Works Section */}
+            <section className="how-it-works-landing">
+                <h2 className="section-title-landing">How It Works</h2>
+                <div className="timeline-landing">
+                    <div className="timeline-item-landing">
+                        <div className="timeline-step-landing">1</div>
+                        <div className="timeline-content-landing">
+                            <h3 className="timeline-title-landing">Create Your Profile</h3>
+                            <p className="timeline-description-landing">Sign up and complete a comprehensive learning assessment that helps our AI understand your learning style, goals, and preferences.</p>
+                        </div>
+                    </div>
+                    <div className="timeline-item-landing">
+                        <div className="timeline-step-landing">2</div>
+                        <div className="timeline-content-landing">
+                            <h3 className="timeline-title-landing">AI Personalization</h3>
+                            <p className="timeline-description-landing">Our advanced algorithms analyze your data to create a customized learning path designed specifically for your needs and objectives.</p>
+                        </div>
+                    </div>
+                    <div className="timeline-item-landing">
+                        <div className="timeline-step-landing">3</div>
+                        <div className="timeline-content-landing">
+                            <h3 className="timeline-title-landing">Interactive Learning</h3>
+                            <p className="timeline-description-landing">Engage with dynamic content that adapts in real-time based on your interactions, ensuring optimal comprehension and retention.</p>
+                        </div>
+                    </div>
+                    <div className="timeline-item-landing">
+                        <div className="timeline-step-landing">4</div>
+                        <div className="timeline-content-landing">
+                            <h3 className="timeline-title-landing">Track Progress</h3>
+                            <p className="timeline-description-landing">Monitor your advancement through detailed analytics and receive AI-generated insights to continuously improve your learning efficiency.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Testimonials Section */}
+            <section className="testimonials-landing">
+                <h2 className="section-title-landing">What Our Users Say</h2>
+                <div className="testimonials-container-landing">
+                    <div className="testimonial-card-landing">
+                        <p className="testimonial-quote-landing">NeurAI completely transformed how I approach learning. The personalized content and AI tutoring helped me master complex topics in half the time it would have taken otherwise.</p>
+                        <div className="testimonial-author-landing">
+                            <div className="author-avatar-landing">JD</div>
+                            <div className="author-info-landing">
+                                <div className="author-name-landing">James Davis</div>
+                                <div className="author-position-landing">Software Engineer</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="testimonial-card-landing">
+                        <p className="testimonial-quote-landing">As an educator, I've integrated NeurAI into my classroom with amazing results. My students are more engaged and show significantly better comprehension of difficult concepts.</p>
+                        <div className="testimonial-author-landing">
+                            <div className="author-avatar-landing">SL</div>
+                            <div className="author-info-landing">
+                                <div className="author-name-landing">Sarah Liu</div>
+                                <div className="author-position-landing">High School Teacher</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="testimonial-card-landing">
+                        <p className="testimonial-quote-landing">The progress analytics feature has been a game-changer for me. Being able to see exactly where I need to focus has made my study time incredibly efficient and effective.</p>
+                        <div className="testimonial-author-landing">
+                            <div className="author-avatar-landing">MR</div>
+                            <div className="author-info-landing">
+                                <div className="author-name-landing">Michael Rodriguez</div>
+                                <div className="author-position-landing">Medical Student</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Pricing Section */}
+            <section className="pricing-landing">
+                <h2 className="section-title-landing">Choose Your Plan</h2>
+                <div className="pricing-container-landing">
+                    <div className="pricing-card-landing">
+                        <h3 className="pricing-title-landing">Basic</h3>
+                        <div className="pricing-price-landing">$19<span>/month</span></div>
+                        <ul className="pricing-features-landing">
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Personalized learning path</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Basic AI tutoring</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Progress tracking</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> 5 courses per month</li>
+                            <li className="pricing-feature-landing"><i className="ri-close-line"></i> Advanced analytics</li>
+                        </ul>
+                        <a href="#" className="pricing-button-landing">Get Started</a>
+                    </div>
+                    <div className="pricing-card-landing popular-landing">
+                        <div className="pricing-badge-landing">Most Popular</div>
+                        <h3 className="pricing-title-landing">Pro</h3>
+                        <div className="pricing-price-landing">$49<span>/month</span></div>
+                        <ul className="pricing-features-landing">
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Personalized learning path</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Advanced AI tutoring</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Detailed progress analytics</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Unlimited courses</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Collaborative learning tools</li>
+                        </ul>
+                        <a href="#" className="pricing-button-landing">Get Started</a>
+                    </div>
+                    <div className="pricing-card-landing">
+                        <h3 className="pricing-title-landing">Enterprise</h3>
+                        <div className="pricing-price-landing">$199<span>/month</span></div>
+                        <ul className="pricing-features-landing">
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> All Pro features</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Custom learning solutions</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> API access</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Dedicated support</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Team management tools</li>
+                        </ul>
+                        <a href="#" className="pricing-button-landing">Contact Sales</a>
+                    </div>
+                </div>
+            </section>
+
+            {/* Final CTA Section */}
+            <section className="final-cta-landing">
+                <div className="final-cta-content-landing">
+                    <h2 className="final-cta-title-landing">Ready to Transform Your Learning?</h2>
+                    <p className="final-cta-description-landing">Join thousands of learners who have already revolutionized their education with our AI-powered platform.</p>
+                    <form className="email-form-landing">
+                        <input type="email" className="email-input-landing" placeholder="Enter your email address" />
+                        <button type="submit" className="email-button-landing">Get Started</button>
+                    </form>
+                </div>
+            </section>
+
+            {/* Footer */}
+            <footer className="footer-landing">
+                <div className="footer-links-landing">
+                    <a href="#" className="footer-link-landing">About Us</a>
+                    <a href="#" className="footer-link-landing">Features</a>
+                    <a href="#" className="footer-link-landing">Pricing</a>
+                    <a href="#" className="footer-link-landing">Blog</a>
+                    <a href="#" className="footer-link-landing">Contact</a>
+                    <a href="#" className="footer-link-landing">Privacy Policy</a>
+                    <a href="#" className="footer-link-landing">Terms of Service</a>
+                </div>
+                <div className="social-links-landing">
+                    <a href="#" className="social-link-landing"><i className="ri-twitter-fill"></i></a>
+                    <a href="#" className="social-link-landing"><i className="ri-facebook-fill"></i></a>
+                    <a href="#" className="social-link-landing"><i className="ri-instagram-line"></i></a>
+                    <a href="#" className="social-link-landing"><i className="ri-linkedin-fill"></i></a>
+                    <a href="#" className="social-link-landing"><i className="ri-youtube-fill"></i></a>
+                </div>
+                <div className="copyright-landing">
+                    © 2023 NeurAI. All rights reserved.
+                </div>
+            </footer>
+        </div>
+    );
+};
+
+export default LandingPage;
