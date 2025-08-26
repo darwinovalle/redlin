@@ -26,7 +26,10 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #F5F7FA;
+  /* Fallback solid color */
+  background: #1A2A3A;
+  /* Requested gradient from #20C997 to sidebar blue #1A2A3A */
+  background: linear-gradient(135deg, #20C997 0%, #1A2A3A 70%);
   font-family: 'AlibabaSans', system-ui, sans-serif;
   overflow: hidden;
 }

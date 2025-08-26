@@ -1,11 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
-import Paper from '@mui/material/Paper';
 import { useAuth } from '../../context/AuthContext';
+import './Home.css';
 
-// Small helper to track a simple daily streak locally (no backend dependency)
+// Local streak hook (unchanged core logic)
 function useDailyStreak(userId) {
   const key = useMemo(() => `streak:${userId}`, [userId]);
   const [streak, setStreak] = useState(0);
@@ -23,19 +20,17 @@ function useDailyStreak(userId) {
     } catch {}
   }, [key, userId]);
 
-  // Touch today to maintain the streak (opening Home counts as engagement)
   useEffect(() => {
     if (!userId) return;
     const today = new Date();
-    const toISO = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
-    const todayISO = toISO(today);
-    const lastISO = last;
-    if (lastISO === todayISO) return; // already counted today
+    const dateFloor = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
+    const todayISO = dateFloor(today);
+    if (last === todayISO) return;
     let next = 1;
-    if (lastISO) {
-      const lastDate = new Date(lastISO);
-      const diffDays = Math.round((today - lastDate) / (1000 * 60 * 60 * 24));
-      next = diffDays === 1 ? (streak || 0) + 1 : 1;
+    if (last) {
+      const lastDate = new Date(last);
+      const diff = Math.round((today - lastDate) / 86400000);
+      next = diff === 1 ? (streak || 0) + 1 : 1;
     }
     setStreak(next);
     setLast(todayISO);
@@ -45,15 +40,40 @@ function useDailyStreak(userId) {
   return streak;
 }
 
+const milestonesSeed = [
+  { label: 'Basics', status: 'completed' },
+  { label: 'ML Concepts', status: 'completed' },
+  { label: 'Neural Networks', status: 'completed' },
+  { label: 'Deep Learning', status: 'current' },
+  { label: 'NLP', status: 'pending' },
+  { label: 'Final Project', status: 'pending' }
+];
+
+const upcomingSeed = [
+  { day: 15, month: 'Jun', title: 'Deep Learning Fundamentals', time: '10:00 AM - 11:30 AM' },
+  { day: 18, month: 'Jun', title: 'Neural Networks Workshop', time: '2:00 PM - 4:00 PM' }
+];
+
+const accessSeed = [
+  { icon: 'ri-file-text-line', title: 'Deep Learning Fundamentals', info: 'Last accessed 2 hours ago' },
+  { icon: 'ri-video-line', title: 'Neural Networks Video Tutorial', info: 'Last accessed yesterday' },
+  { icon: 'ri-file-list-3-line', title: 'ML Algorithms Study Sheet', info: 'Last accessed 3 days ago' },
+  { icon: 'ri-question-answer-line', title: 'AI Ethics Quiz', info: 'Last accessed 1 week ago' }
+];
+
+const achievementsSeed = [
+  { icon: 'ri-medal-line', color: '#4A90E2', title: 'First Milestone', desc: 'Completed Basics Module' },
+  { icon: 'ri-fire-line', color: '#7F63F4', title: (s)=> `${s}-Day Streak`, desc: 'Keep it going!' },
+  { icon: 'ri-book-mark-line', color: '#20C997', title: 'Knowledge Hunter', desc: 'Completed 5 lessons' }
+];
+
 const Home = () => {
   const { user } = useAuth();
   const streak = useDailyStreak(user?.id);
 
-  // Local daily goal progress (simple local storage state)
   const goalKey = useMemo(() => `goal:${user?.id}:today`, [user?.id]);
   const [done, setDone] = useState(0);
-  const dailyGoal = 1; // minimal viable: 1 action per day
-
+  const dailyGoal = 1;
   useEffect(() => {
     if (!user) return;
     try {
@@ -70,93 +90,174 @@ const Home = () => {
     } catch {}
   }, [goalKey, user]);
 
-//   const markOne = () => {
-//     const today = new Date();
-//     const todayISO = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-//     const next = Math.min(done + 1, dailyGoal);
-//     setDone(next);
-//     try { localStorage.setItem(goalKey, JSON.stringify({ date: todayISO, count: next })); } catch {}
-//     const last = localStorage.getItem('lastDocSlug');
-//     if (last) {
-//       navigate(`/documents/${last}`);
-//     } else {
-//       navigate('/documents/primero');
-//     }
-//   };
+  // Build calendar week (Mon-Sun) simple representation 1..7 with active today index
+  const weekdays = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const todayIndex = ((new Date().getDay() + 6) % 7); // convert Sunday(0) -> 6
+
+  const percent = Math.min(100, (done / dailyGoal) * 100);
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 1000, display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
-          {/* Welcome */}
-          <Box>
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 900,
-                background: 'linear-gradient(90deg, #0f172a 0%, #111827 30%, #2563eb 80%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              {`Bienvenido${user?.username ? ',' : ''} ${user?.username || ''}`}
-            </Typography>
-            <Typography variant="subtitle1" sx={{ color: 'text.secondary', mt: 0.5 }}>
-              Tu racha actual: {streak} {streak === 1 ? 'día' : 'días'} 🔥
-            </Typography>
-          </Box>
+    <div className="home-main-content">
+      {/* Header */}
+      <div className="header">
+        <div className="welcome">
+          <div className="user-avatar">{(user?.username || '?').charAt(0).toUpperCase()}</div>
+          <div className="welcome-text">
+            <h2>Bienvenido{user?.username ? ',' : ''} {user?.username || ''}</h2>
+            <div className="streak">
+              <i className="ri-fire-fill" />
+              <span>Tu racha actual: {streak} {streak === 1 ? 'día' : 'días'}</span>
+            </div>
+          </div>
+        </div>
+        <div className="header-actions">
+          <div className="action-btn"><i className="ri-notification-3-line" /></div>
+          <div className="action-btn"><i className="ri-calendar-line" /></div>
+        </div>
+      </div>
 
-          {/* Daily progress widgets */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, alignItems: 'stretch' }}>
-            {/* Streak calendar */}
-            <Paper elevation={2} sx={{ p: 3, borderRadius: 3, bgcolor: 'background.paper' }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>Progreso diario</Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>Comienza tu streak</Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
-                {['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map((d) => (
-                  <Typography key={d} variant="caption" sx={{ textAlign: 'center', color: 'text.secondary' }}>{d}</Typography>
-                ))}
-                {Array.from({ length: 28 }).map((_, i) => {
-                  const filled = i < Math.min(streak, 28); // simple visual fill
-                  return (
-                    <Box key={i}
-                      sx={{
-                        width: 26, height: 26, borderRadius: '50%', mx: 'auto',
-                        bgcolor: filled ? 'primary.main' : 'action.hover',
-                        opacity: filled ? 0.9 : 0.5,
-                      }}
-                    />
-                  );
-                })}
-              </Box>
-            </Paper>
+      {/* Learning Path */}
+      <div className="learning-path">
+        <div className="path-header">
+          <div className="path-title">Your Learning Journey</div>
+          <div className="section-action">View Details</div>
+        </div>
+        <p>Track your progress through the AI fundamentals course</p>
+        <div className="path-timeline">
+          {milestonesSeed.map(m => (
+            <div key={m.label} className={`milestone ${m.status}`}> 
+              <div className="milestone-dot" />
+              <div className="milestone-label" title={m.label}>{m.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
-            {/* Daily goal ring */}
-            <Paper elevation={2} sx={{ p: 3, borderRadius: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>Meta diaria</Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>Pregunta para tu streak</Typography>
-              <Box sx={{ position: 'relative', display: 'inline-flex', mb: 2 }}>
-                <CircularProgress variant="determinate" value={(done / dailyGoal) * 100} size={160} thickness={5} />
-                <Box
-                  sx={{
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    right: 0,
-                    position: 'absolute',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Box>
-                    <Typography variant="h4" sx={{ textAlign: 'center', fontWeight: 900 }}>{dailyGoal}</Typography>
-                    <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', color: 'text.secondary' }}>pregunta</Typography>
-                  </Box>
-                </Box>
-              </Box>
-              {/* <Button variant="contained" onClick={markOne} sx={{ borderRadius: 999, px: 4 }}>Aprender</Button> */}
-            </Paper>
-          </Box>
-    </Box>
+      {/* Progress Section */}
+      <div className="progress-section">
+        <div className="card progress-card">
+          <div className="progress-card-header"><h3>Progreso diario</h3></div>
+          <div className="progress-card-content">
+            <div className="calendar">
+              {weekdays.map((d, idx) => {
+                const dayNum = idx + 1;
+                const active = idx === todayIndex;
+                const completed = idx < todayIndex; // naive representation
+                return (
+                  <div key={d} className="calendar-day">
+                    <div className="day-label">{d}</div>
+                    <div className={`day-circle ${active ? 'active' : ''} ${completed ? 'completed' : ''}`}>{dayNum}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        <div className="card progress-card">
+          <div className="progress-card-header"><h3>Meta diaria</h3></div>
+          <div className="progress-card-content">
+            <div className="goal-progress">
+              <div className="circular-progress" style={{ background: `conic-gradient(#20C997 0% ${percent}%, #F5F7FA ${percent}%, #F5F7FA 100%)` }}>
+                <div className="progress-value">{done}/{dailyGoal}</div>
+              </div>
+              <div className="goal-text">{done >= dailyGoal ? 'Has completado tu meta diaria' : 'Progreso hacia tu meta'}</div>
+              <div className="goal-label">{dailyGoal} pregunta{dailyGoal!==1?'s':''}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Upcoming Sessions */}
+      <div className="section upcoming-section">
+        <div className="section-header">
+          <h3 className="section-title">Upcoming Sessions</h3>
+          <div className="section-action">View All</div>
+        </div>
+        <div className="timeline">
+          {upcomingSeed.map(item => (
+            <div key={item.title} className="timeline-item">
+              <div className="timeline-date">
+                <div className="date-day">{item.day}</div>
+                <div className="date-month">{item.month}</div>
+              </div>
+              <div className="timeline-content">
+                <div className="timeline-info">
+                  <h4>{item.title}</h4>
+                  <p>{item.time}</p>
+                </div>
+                <div className="timeline-actions">
+                  <button><i className="ri-notification-line" /></button>
+                  <button><i className="ri-calendar-check-line" /></button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Two Column (only stats for now) */}
+      <div className="two-column">
+        <div className="card stats-card">
+          <div className="stats-header">
+            <h3>Learning Stats</h3>
+            <div className="stats-tabs">
+              <div className="stats-tab active">Week</div>
+              <div className="stats-tab">Month</div>
+            </div>
+          </div>
+          <div className="stats-chart">
+            {[40,65,85,55,70,30,20].map((h,i) => (
+              <div key={i} className="chart-bar">
+                <div className="bar" style={{ height: `${h}%` }} />
+                <div className="bar-label">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{marginTop:20, textAlign:'center', color:'#666666', fontSize:14}}>
+            <p>Average study time: 1.5 hours/day</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Access */}
+      <div className="section quick-access">
+        <div className="section-header">
+          <h3 className="section-title">Quick Access</h3>
+          <div className="section-action">View All</div>
+        </div>
+        <div className="access-cards">
+          {accessSeed.map(a => (
+            <div key={a.title} className="access-card">
+              <div className="access-thumbnail"><i className={a.icon} /></div>
+              <div className="access-content">
+                <h4>{a.title}</h4>
+                <p><i className="ri-time-line" /> {a.info}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Achievements */}
+      <div className="gradient-bg">
+        <div className="section-header">
+          <h3 className="section-title">Your Achievements</h3>
+          <div className="section-action">View All</div>
+        </div>
+        <div className="achievements-wrap">
+          {achievementsSeed.map(a => {
+            const title = typeof a.title === 'function' ? a.title(streak) : a.title;
+            return (
+              <div key={title} className="achievement-card">
+                <div className="achievement-icon" style={{ color: a.color }}><i className={a.icon} /></div>
+                <h4>{title}</h4>
+                <p>{a.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 };
 
