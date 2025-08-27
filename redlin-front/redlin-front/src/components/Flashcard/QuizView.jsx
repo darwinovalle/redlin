@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -12,11 +12,6 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import {
-  ArrowBack as ArrowBackIcon,
-  ArrowForward as ArrowForwardIcon,
-} from '@mui/icons-material';
-import { AutoAwesome as AutoAwesomeIcon } from '@mui/icons-material';
 import { documentService } from '../../services/api';
 
 const shuffleArray = (array) => {
@@ -36,6 +31,13 @@ const QuizView = ({ documentId }) => {
   const [isQuizActive, setIsQuizActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [feedback, setFeedback] = useState(null); // 'correct' | 'incorrect' | null
+  const [finished, setFinished] = useState(false);
+  const [score, setScore] = useState(0);
+  
+  // Audio refs
+  const correctAudioRef = useRef(null);
+  const wrongAudioRef = useRef(null);
 
   useEffect(() => {
     if (!documentId) {
@@ -54,11 +56,10 @@ const QuizView = ({ documentId }) => {
         
         // Transform MCQ data
         const transformedQuestions = mcqs.map((mcq, index) => {
-          // Explicitly use correct_answer, option_2, and option_3 from backend
-          // This bypasses the backend issue where option_1 is a duplicate of correct_answer
-          const options = [mcq.correct_answer, mcq.option_2, mcq.option_3];
+          // Include all 4 options: correct_answer, option_1, option_2, and option_3
+          const options = [mcq.correct_answer, mcq.option_1, mcq.option_2, mcq.option_3];
           
-          // Shuffle the final 3 options
+          // Shuffle all 4 options
           const shuffledOptions = shuffleArray([...options]); 
           const correctOptionIndex = shuffledOptions.findIndex(opt => opt === mcq.correct_answer);
           
@@ -80,6 +81,9 @@ const QuizView = ({ documentId }) => {
         setCurrentQuestionIndex(0);
         setUserAnswers({});
         setIsQuizActive(false);
+        setFeedback(null);
+        setFinished(false);
+        setScore(0);
 
       } catch (err) {
         console.error("Failed to fetch quiz data:", err);
@@ -98,31 +102,49 @@ const QuizView = ({ documentId }) => {
         setCurrentQuestionIndex(0);
         setUserAnswers({});
         setIsQuizActive(true);
+        setFeedback(null);
+        setFinished(false);
+        setScore(0);
     }
   };
 
   const endQuizHandler = () => {
     setIsQuizActive(false);
+    setFinished(false);
+    setFeedback(null);
   };
 
-  const handleOptionChange = (event) => {
-    const selectedOptionIndex = parseInt(event.target.value, 10);
+  const handleOptionChange = (selectedOptionIndex) => {
+    // avoid double answers
+    if (userAnswers[currentQuestionIndex] !== undefined) return;
+    
+    const currentCard = quizQuestions[currentQuestionIndex];
+    const correct = selectedOptionIndex === currentCard.correctOptionIndex;
+    
     setUserAnswers(prevAnswers => ({
       ...prevAnswers,
       [currentQuestionIndex]: selectedOptionIndex,
     }));
-  };
-
-  const nextQuestionHandler = () => {
-    if (currentQuestionIndex < quizQuestions.length - 1) {
-      setCurrentQuestionIndex(prevIndex => prevIndex + 1);
+    
+    setFeedback(correct ? 'correct' : 'incorrect');
+    if (correct) setScore(s => s + 1);
+    
+    // audio feedback only
+    if (correct) {
+      correctAudioRef.current && correctAudioRef.current.play().catch(()=>{});
+    } else {
+      wrongAudioRef.current && wrongAudioRef.current.play().catch(()=>{});
     }
-  };
-
-  const previousQuestionHandler = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prevIndex => prevIndex - 1);
-    }
+    
+    // advance after brief delay
+    setTimeout(() => {
+      setFeedback(null);
+      if (currentQuestionIndex < quizQuestions.length - 1) {
+        setCurrentQuestionIndex(i => i + 1);
+      } else {
+        setFinished(true); // show results
+      }
+    }, 1200);
   };
 
   if (isLoading) {
@@ -144,6 +166,17 @@ const QuizView = ({ documentId }) => {
   const totalQuestions = quizQuestions.length;
   const currentCard = quizQuestions[currentQuestionIndex];
 
+  // Results screen
+  if (finished) {
+    return (
+      <Box sx={{ p:3, textAlign:'center' }}>
+        <Typography variant="h5" sx={{ mb:2, fontWeight:'bold' }} color="black">Results</Typography>
+        <Typography variant="body1" sx={{ mb:3 }} color="black">Score: {score} / {totalQuestions}</Typography>
+        <Button variant="contained" onClick={endQuizHandler} sx={{ borderRadius:'20px', px:4, backgroundColor: '#6be0a6'}}>Exit</Button>
+      </Box>
+    );
+  }
+
   if (!isQuizActive) {
     const canStart = totalQuestions > 0;
     const quizTitle = "Test Your Knowledge";
@@ -160,7 +193,7 @@ const QuizView = ({ documentId }) => {
           textAlign: 'center'
         }}
       >
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }} color="black">
           {quizTitle}
         </Typography>
         {documentId && (
@@ -197,12 +230,12 @@ const QuizView = ({ documentId }) => {
   }
 
   const getProgressSegmentColor = (index) => {
-    if (index === currentQuestionIndex) return 'action.active';
+    if (index === currentQuestionIndex && !finished) return 'primary.main';
     const answerIndex = userAnswers[index];
     if (answerIndex !== undefined) {
       return answerIndex === quizQuestions[index]?.correctOptionIndex ? 'success.light' : 'error.light'; 
     }
-    return 'action.disabledBackground';
+    return 'grey.500'; // unanswered
   };
 
   return (
@@ -219,6 +252,14 @@ const QuizView = ({ documentId }) => {
         overflowY: 'auto'
       }}
     >
+      {/* Hidden audio elements */}
+      <audio ref={correctAudioRef} preload="auto">
+        <source src="data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA/////////////////////////////wAAAA8AAAAGAAAGuQCh/////////////////////////////wAAAA8AAAACAAACcQCA/////////////////////////////wAAAA8AAAAGAAAGuQCh/////////////////////////////8AAAANAAAADgAAABH//wAAACQBwAABAgAUABQAAAECAOE4AQABcQQAAcEEAAH//wAAAAgAZGF0Yf//AAD//w==" type="audio/mpeg" />
+      </audio>
+      <audio ref={wrongAudioRef} preload="auto">
+        <source src="data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA/////////////////////////////wAAAA8AAAAGAAAGuQCh/////////////////////////////wAAAA8AAAACAAACcQCA/////////////////////////////wAAAA8AAAAGAAAGuQCh/////////////////////////////8AAAANAAAADgAAABH//wAAACQBwAABAgAUABQAAAECAOE4AQABcQQAAcEEAAH//wAAAAgAZGF0Yf//AAD//w==" type="audio/mpeg" />
+      </audio>
+
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, width: '100%', justifyContent: 'center' }}>
         <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 700 }}>
           {currentQuestionIndex + 1} of {totalQuestions}
@@ -244,70 +285,69 @@ const QuizView = ({ documentId }) => {
         {currentCard.question}
       </Typography>
 
-      <RadioGroup
-        aria-label="quiz-options"
-        name="quiz-options-group"
-        value={userAnswers[currentQuestionIndex] !== undefined ? userAnswers[currentQuestionIndex].toString() : ''}
-        onChange={handleOptionChange}
-        sx={{ width: '100%' }} 
-      >
-        {(currentCard.options && currentCard.options.length > 0) ? currentCard.options.map((option, index) => (
-          <Card
-            key={index}
-            sx={{
-              mb: 1.5,
-              borderRadius: '12px',
-              border: '1px solid',
-              borderColor: userAnswers[currentQuestionIndex] === index ? 'primary.main' : 'divider',
-              boxShadow: userAnswers[currentQuestionIndex] === index ? 3 : 0,
-              transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
-              backgroundColor: 'background.paper' 
-            }}
-          >
-            <CardActionArea onClick={() => handleOptionChange({ target: { value: index.toString() } })}>
-              <FormControlLabel
-                value={index.toString()} 
-                control={<Radio sx={{ ml: 1 }} />} 
-                label={option || '(No option text)'}
-                sx={{ width: '100%', m: 0, p: 1.5 }} 
-              />
-            </CardActionArea>
-          </Card>
-        )) : (
-          <Typography color="text.secondary" textAlign="center">This card has no options for a quiz.</Typography>
+      <Box sx={{ position:'relative', width: '100%' }}>
+        {/* Feedback overlay */}
+        {feedback && (
+          <Box sx={{
+            position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center',
+            zIndex:10, pointerEvents:'none',
+            '& .fx': { fontSize:90, animation:'pop 0.9s ease forwards', color: feedback === 'correct' ? 'inherit' : '#ff0000', fontWeight: 'bold' },
+            '@keyframes pop': { '0%':{ transform:'scale(.2)', opacity:0 }, '40%':{ transform:'scale(1.05)', opacity:1 }, '100%':{ transform:'scale(1)', opacity:0 } }
+          }}>
+            <span className="fx">{feedback === 'correct' ? '👏' : '✖'}</span>
+          </Box>
         )}
-      </RadioGroup>
 
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, width: '100%', maxWidth: '500px' }}>
-        <Button
-          variant="contained"
-          startIcon={<ArrowBackIcon />}
-          onClick={previousQuestionHandler} 
-          disabled={currentQuestionIndex === 0}
-          sx={{ borderRadius: '20px', px: 3 , backgroundColor: '#6be0a6'}}
+        <RadioGroup
+          aria-label="quiz-options"
+          name="quiz-options-group"
+          value={userAnswers[currentQuestionIndex] !== undefined ? userAnswers[currentQuestionIndex].toString() : ''}
+          sx={{ width: '100%' }} 
         >
-        </Button>
-        <Button
-          variant="contained" 
-          onClick={endQuizHandler} 
-          sx={{
-            borderRadius: '20px', 
-            mx: 1 ,
-            backgroundColor: '#ff5454',
-          }} 
-        >
-         exit 
-        </Button>
-        <Button
-          variant="contained"
-          endIcon={<ArrowForwardIcon />}
-          onClick={nextQuestionHandler} 
-          disabled={currentQuestionIndex === totalQuestions - 1}
-          sx={{ borderRadius: '20px', px: 3 , backgroundColor: '#6be0a6'}}
-        >
-        </Button>
+          {(currentCard.options && currentCard.options.length > 0) ? currentCard.options.map((option, index) => (
+            <Card
+              key={index}
+              sx={{
+                mb: 1.5,
+                borderRadius: '12px',
+                border: '1px solid',
+                borderColor: userAnswers[currentQuestionIndex] === index ? 
+                  (userAnswers[currentQuestionIndex] === currentCard.correctOptionIndex ? 'success.main' : 'error.main') : 'divider',
+                boxShadow: userAnswers[currentQuestionIndex] === index ? 3 : 0,
+                opacity: userAnswers[currentQuestionIndex] !== undefined && userAnswers[currentQuestionIndex] !== index ? 0.6 : 1,
+                transition: 'all .3s',
+                backgroundColor: 'background.paper' 
+              }}
+            >
+              <CardActionArea 
+                disabled={userAnswers[currentQuestionIndex] !== undefined} 
+                onClick={() => handleOptionChange(index)}
+              >
+                <FormControlLabel
+                  value={index.toString()} 
+                  control={<Radio sx={{ ml: 1 }} />} 
+                  label={option || '(No option text)'}
+                  sx={{ width: '100%', m: 0, p: 1.5 }} 
+                />
+              </CardActionArea>
+            </Card>
+          )) : (
+            <Typography color="text.secondary" textAlign="center">This card has no options for a quiz.</Typography>
+          )}
+        </RadioGroup>
+
+        <Box sx={{ mt: 3, textAlign: 'center' }}>
+          <Button 
+            size="small" 
+            variant="contained" 
+            color="inherit" 
+            onClick={endQuizHandler} 
+            sx={{ backgroundColor: '#6be0a6' }}
+          >
+            Exit
+          </Button>
+        </Box>
       </Box>
-
     </Box>
   );
 };

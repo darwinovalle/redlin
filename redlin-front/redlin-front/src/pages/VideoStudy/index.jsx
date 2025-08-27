@@ -4,6 +4,7 @@ import { videoService } from '../../services/api/video';
 import { Box, Typography, CircularProgress, Chip, Tabs, Tab, Divider } from '@mui/material';
 import VideoSummary from '../../components/Video/VideoSummary';
 import VideoQuiz from '../../components/Video/VideoQuiz';
+import '../Dashboard/dashboard.css';
 
 const VideoStudy = () => {
   const { videoId } = useParams();
@@ -37,14 +38,14 @@ const VideoStudy = () => {
   return (
     <Box sx={{ width:'100%', display:'flex', flexDirection:'row', height:'100vh', overflow:'hidden' }}>
       {/* Center video area similar to PDF viewer slot */}
-      <Box sx={{ flex:1, width: '1000', height:'100%', overflow:'auto', p:3 }}>
+      <Box sx={{ flex:1, width: '1000', height:'100%', overflow:'auto'}}>
         {/* <Typography variant="h5" sx={{ mb:1 }}>{video.title || video.video_id || 'Video ' + video.id}</Typography>
         <Box sx={{ display:'flex', alignItems:'center', gap:1, mb:2 }}>
           <Chip size="small" label={video.processing_status} color={video.processing_status==='completed' ? 'success':'default'} />
           <Typography variant="caption" color="text.secondary">Snippets: {video.snippet_count}</Typography>
         </Box> */}
         {embedSrc && (
-          <Box sx={{ position:'relative', pb:'56.25%', borderRadius:2, overflow:'hidden' }}>
+          <Box sx={{ position:'relative', pb:'56.25%',  overflow:'hidden' }}>
             <iframe
               src={embedSrc}
               title="YouTube video"
@@ -56,21 +57,37 @@ const VideoStudy = () => {
           </Box>
         )}
       </Box>
-      {/* Right study panel mimic Dashboard right column */}
-      <Box sx={{ width:400, height:'100%', overflow:'auto', borderLeft:'1px solid #eee', display:'flex', flexDirection:'column', backgroundColor: '#1e1e1e' }}>
-        <Tabs value={tab} onChange={(e,v)=>setTab(v)} centered sx={{ '& .MuiTabs-indicator': { backgroundColor:'#ffffff' } }}>
-          <Tab label="Summary" sx={{ fontSize: '15px' ,fontWeight: 900, color: '#ffffff', '&.Mui-selected': { color: '#ffffff' } }} />
-          <Tab label="Quiz" sx={{ fontSize: '15px' ,fontWeight: 900, color: '#ffffff', '&.Mui-selected': { color: '#ffffff' } }} />
-        </Tabs>
-        <Box sx={{ flex:1, overflow:'auto', p:2 }}>
+      {/* Right study panel using Dashboard styling */}
+      <div className="study-panel" style={{ width: 550 }}>
+        <div className="study-header">
+          <Tabs
+            value={tab}
+            onChange={(e,v)=>setTab(v)}
+            aria-label="study tabs"
+            variant="scrollable"
+            allowScrollButtonsMobile
+            className="dashboard-tabs"
+          >
+            <Tab label="SUMMARY" />
+            <Tab label="QUIZ" />
+          </Tabs>
+          <div className="progress-strip" data-role="progress">
+            <div className="progress-text">&nbsp;</div>
+            <div className="progress-bar-outer">
+              <div className="progress-bar-fill" style={{ '--progress': '0%' }} />
+            </div>
+            <div className="progress-text">&nbsp;</div>
+          </div>
+        </div>
+        <div className="study-content-scroll">
           {tab===0 && (
             <VideoSummary summary={summary} loading={false} error={null} />
           )}
           {tab===1 && (
             <VideoQuiz mcqs={mcqs} />
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
     </Box>
   );
 };

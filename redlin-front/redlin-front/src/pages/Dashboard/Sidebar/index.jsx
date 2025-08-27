@@ -122,7 +122,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             <div style={{ width:40, height:40, background:'linear-gradient(135deg,#20C997,#4A90E2)', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', marginRight:12, boxShadow:'0 0 20px rgba(32,201,151,0.3)' }}>
               <i className="ri-brain-line" style={{ fontSize:22, color:'#fff' }} />
             </div>
-            <span style={{ fontSize:24, fontWeight:700, background:'linear-gradient(90deg,#FFFFFF,#B0B7C3)', WebkitBackgroundClip:'text', backgroundClip:'text', color:'transparent' }}>LearnSphere</span>
+            <span style={{ fontSize:24, fontWeight:700, background:'linear-gradient(90deg,#FFFFFF,#B0B7C3)', WebkitBackgroundClip:'text', backgroundClip:'text', color:'transparent' }}>Redlin</span>
           </div>
         </div>
         <div style={{ flex:1, overflowY:'auto' }}>

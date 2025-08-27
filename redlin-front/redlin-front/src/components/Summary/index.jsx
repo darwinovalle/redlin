@@ -5,6 +5,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Paper from '@mui/material/Paper';
 import Divider from '@mui/material/Divider';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { documentService } from '../../services/api';
 
 const Summary = ({ documentId }) => {
@@ -60,8 +62,32 @@ const Summary = ({ documentId }) => {
         Summary
       </Typography>
       <Divider sx={{ mb: 2 }} />
-      <Box sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: '1rem' }}>
-        {summary?.content || 'No content'}
+      <Box sx={{
+        lineHeight: 1.6,
+        fontSize: '0.95rem',
+        '& h1, & h2, & h3, & h4': { fontWeight: 600, mt: 3, mb: 1 },
+        '& p': { mb: 2 },
+        '& ul': { pl: 3, mb: 2 },
+        '& ol': { pl: 3, mb: 2 },
+        '& li': { mb: 0.5 },
+        '& pre': { p: 1.5, background: '#f5f5f5', color: '#333', borderRadius: 1, overflow: 'auto', mb: 2 },
+        '& code': { fontFamily: 'monospace', background: '#f5f5f5', color: '#333', px: 0.5, borderRadius: 0.5 },
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            h1: ({node, ...props}) => <Typography variant="h4" {...props} />,
+            h2: ({node, ...props}) => <Typography variant="h5" {...props} />,
+            h3: ({node, ...props}) => <Typography variant="h6" {...props} />,
+            h4: ({node, ...props}) => <Typography variant="subtitle1" {...props} />,
+            p: ({node, ...props}) => <Typography variant="body1" paragraph {...props} />,
+            li: ({node, ordered, ...props}) => <li {...props} />
+          }}
+        >
+          {summary?.content || 'No content'}
+        </ReactMarkdown>
       </Box>
     </Paper>
   );

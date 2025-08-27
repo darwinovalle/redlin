@@ -215,7 +215,7 @@ const DocReview = ({ documentId, onReviewChange = () => {} }) => {
             mx: 'auto'
           }}
         >
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }} color="black">
             Review Your Study Cards
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: '500px' }}>

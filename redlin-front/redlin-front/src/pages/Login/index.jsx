@@ -108,7 +108,7 @@ const Login = () => {
         <div className="login-form-container">
           <div className="logo-container">
             <div className="logo"><i className="ri-brain-line" /></div>
-            <div className="platform-name">LearnSphere</div>
+            <div className="platform-name">Redlin</div>
           </div>
           <h3 className="login-title">Login</h3>
           {error && <div className="error-banner" role="alert">{error}</div>}

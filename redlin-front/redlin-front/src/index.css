@@ -351,7 +351,7 @@ template {
 
 body{
   background-color: #242424;
-  color: white;
+  color: rgb(0, 0, 0);
     font-family: "Titillium Web", serif;
   font-weight: 400;
   font-style: normal;

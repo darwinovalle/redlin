@@ -26,7 +26,7 @@ const VideoSummary = ({ summary, loading, error }) => {
         content:'""',
         position:'absolute',
         inset:0,
-        backgroundImage:`url(${piggy})`,
+        // backgroundImage:`url(${piggy})`,
         backgroundRepeat:'repeat',
         backgroundPosition:'center 180px',
         backgroundSize:'200px',
@@ -45,8 +45,8 @@ const VideoSummary = ({ summary, loading, error }) => {
         '& ul': { pl: 3, mb: 2 },
         '& ol': { pl: 3, mb: 2 },
         '& li': { mb: 0.5 },
-        '& pre': { p:1.5, background:'#111', color:'#fff', borderRadius:1, overflow:'auto', mb:2 },
-  '& code': { fontFamily: 'monospace', background:'#111', color:'#fff', px:0.5, borderRadius:0.5 },
+        '& pre': { p:1.5, background:'#f5f5f5', color:'#333', borderRadius:1, overflow:'auto', mb:2 },
+  '& code': { fontFamily: 'monospace', background:'#f5f5f5', color:'#333', px:0.5, borderRadius:0.5 },
   position:'relative', zIndex:1
       }}>
         <ReactMarkdown

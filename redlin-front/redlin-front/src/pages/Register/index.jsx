@@ -75,7 +75,7 @@ const Register = () => {
         <div className="form-container">
           <div className="logo-container">
             <div className="logo"><i className="ri-brain-line" /></div>
-            <div className="platform-name">LearnSphere</div>
+            <div className="platform-name">Redlin</div>
           </div>
           <h1>Create Your Account</h1>
           {error && <div className="error-banner" role="alert">{error}</div>}

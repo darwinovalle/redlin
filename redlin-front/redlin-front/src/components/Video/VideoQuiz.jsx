@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import confetti from 'canvas-confetti';
 import { Box, Typography, Button, Card, CardActionArea, FormControlLabel, Radio, RadioGroup, Stack, CircularProgress, Alert } from '@mui/material';
 
 // Accepts mcqs array [{id, question, correct_answer, option_1, option_2, option_3}]
@@ -21,8 +20,6 @@ const VideoQuiz = ({ mcqs }) => {
   const [score, setScore] = useState(0);
   const correctAudioRef = useRef(null);
   const wrongAudioRef = useRef(null);
-  const confettiCanvasRef = useRef(null);
-  const confettiInstanceRef = useRef(null);
 
   useEffect(() => {
     if (Array.isArray(mcqs) && mcqs.length) {
@@ -37,28 +34,16 @@ const VideoQuiz = ({ mcqs }) => {
     }
   }, [mcqs]);
 
-  // Confetti instance effect (must stay above any early returns to preserve hook order)
-  useEffect(() => {
-    if (!active) { // reset when leaving active quiz
-      confettiInstanceRef.current = null;
-      return;
-    }
-    if (confettiCanvasRef.current) {
-      confettiInstanceRef.current = confetti.create(confettiCanvasRef.current, { resize: true, useWorker: true });
-    }
-    return () => { confettiInstanceRef.current = null; };
-  }, [active]);
-
   if (!mcqs) return <CircularProgress size={20} />;
 
   if (!active) {
     return (
       <Box sx={{ textAlign:'center', p:3 }}>
-        <Typography variant="h5" sx={{ mb:2, fontWeight:'bold' }}>Test Your Knowledge</Typography>
-        <Typography variant="body2" color="white" sx={{ mb:3 }}>
+        <Typography variant="h4" sx={{ mb:2, fontWeight:'bold' }} color='black'>Test Your Knowledge</Typography>
+        <Typography variant="body1" color="black" sx={{ mb:3 }}>
           {questions.length ? `This quiz has ${questions.length} questions.` : 'No MCQs generated yet.'}
         </Typography>
-        <Button variant="contained" disabled={!questions.length} onClick={()=>setActive(true)} sx={{ borderRadius: '20px', backgroundColor: '#6be0a6'}}>Start Quiz</Button>
+        <Button variant="contained" size="large" disabled={!questions.length} onClick={()=>setActive(true)} sx={{ borderRadius: '20px', backgroundColor: '#000'}}>Start Quiz</Button>
 
       </Box>
     );
@@ -70,13 +55,6 @@ const VideoQuiz = ({ mcqs }) => {
 
   const current = questions[idx];
 
-  const fireConfetti = () => {
-    const api = confettiInstanceRef.current || confetti; // fallback global
-    // origin y relative to MCQ box (0 at top). Slightly above options center.
-    api({ particleCount: 70, spread: 70, startVelocity: 45, origin: { x: 0.5, y: 0.15 } });
-    api({ particleCount: 40, spread: 50, startVelocity: 35, origin: { x: 0.5, y: 0.15 } });
-  };
-
   const handleSelect = (value) => {
     // avoid double answers
     if (answers[idx] !== undefined) return;
@@ -85,9 +63,8 @@ const VideoQuiz = ({ mcqs }) => {
     setAnswers(a => ({ ...a, [idx]: picked }));
     setFeedback(correct ? 'correct' : 'incorrect');
     if (correct) setScore(s => s + 1);
-    // audio + confetti
+    // audio feedback only
     if (correct) {
-      fireConfetti();
       correctAudioRef.current && correctAudioRef.current.play().catch(()=>{});
     } else {
       wrongAudioRef.current && wrongAudioRef.current.play().catch(()=>{});
@@ -112,8 +89,8 @@ const VideoQuiz = ({ mcqs }) => {
   if (finished) {
     return (
       <Box sx={{ p:3, textAlign:'center' }}>
-        <Typography variant="h5" sx={{ mb:2, fontWeight:'bold' }}>Results</Typography>
-        <Typography variant="body1" sx={{ mb:3 }}>Score: {score} / {questions.length}</Typography>
+        <Typography variant="h5" sx={{ mb:2, fontWeight:'bold' }} color="black">Results</Typography>
+        <Typography variant="body1" sx={{ mb:3 }} color="black">Score: {score} / {questions.length}</Typography>
         {/* <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb:3 }}>
           {questions.map((q,i)=> (
             <Box key={i} sx={{ width:14, height:14, borderRadius:'50%', bgcolor: answers[i]===q.correct ? 'success.main':'error.main' }} />
@@ -134,26 +111,24 @@ const VideoQuiz = ({ mcqs }) => {
         <source src="data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA/////////////////////////////wAAAA8AAAAGAAAGuQCh/////////////////////////////wAAAA8AAAACAAACcQCA/////////////////////////////wAAAA8AAAAGAAAGuQCh/////////////////////////////8AAAANAAAADgAAABH//wAAACQBwAABAgAUABQAAAECAOE4AQABcQQAAcEEAAH//wAAAAgAZGF0Yf//AAD//w==" type="audio/mpeg" />
       </audio>
       <Box sx={{ display:'flex', justifyContent:'center', mb:2 }}>
-        <Typography variant="body2" color="white">{idx+1} of {questions.length}</Typography>
+        <Typography variant="body2" color="black">{idx+1} of {questions.length}</Typography>
       </Box>
       <Stack direction="row" spacing={0.5} sx={{ width:'80%', mx:'auto', mb:4}}>
         {questions.map((_,i)=>(
           <Box key={i} sx={{ flexGrow:1, height:8, borderRadius:4, bgcolor: colorSegment(i), transition:'background-color .3s' }} />
         ))}
       </Stack>
-      <Typography variant="h6" textAlign="center" sx={{ mb:3, fontSize:20}}>{current.question}</Typography>
+      <Typography variant="h5" textAlign="center" sx={{ mb:3, fontWeight: 'medium'}} color="black">{current.question}</Typography>
       <Box sx={{ position:'relative' }}>
-        {/* Confetti canvas (behind emoji overlay, above options) */}
-        <Box component="canvas" ref={confettiCanvasRef} sx={{ position:'absolute', inset:0, zIndex:5, pointerEvents:'none' }} />
         {/* Feedback overlay */}
         {feedback && (
           <Box sx={{
             position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center',
             zIndex:10, pointerEvents:'none',
-            '& .fx': { fontSize:90, animation:'pop 0.9s ease forwards' },
+            '& .fx': { fontSize:90, animation:'pop 0.9s ease forwards', color: feedback === 'correct' ? 'inherit' : '#ff0000', fontWeight: 'bold' },
             '@keyframes pop': { '0%':{ transform:'scale(.2)', opacity:0 }, '40%':{ transform:'scale(1.05)', opacity:1 }, '100%':{ transform:'scale(1)', opacity:0 } }
           }}>
-            <span className="fx">{feedback === 'correct' ? '👏' : '❌'}</span>
+            <span className="fx">{feedback === 'correct' ? '👏' : '✖'}</span>
           </Box>
         )}
         <RadioGroup value={answers[idx] !== undefined ? String(answers[idx]) : ''}>

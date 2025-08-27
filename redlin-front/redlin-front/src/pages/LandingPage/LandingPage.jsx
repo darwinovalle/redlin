@@ -37,7 +37,7 @@ const LandingPage = () => {
                         <div className="logo-icon-landing">
                             <i className="ri-brain-line"></i>
                         </div>
-                        NeurAI
+                        Redlin 
                     </div>
                 </div>
                 
@@ -220,7 +220,7 @@ const LandingPage = () => {
                 <h2 className="section-title-landing">What Our Users Say</h2>
                 <div className="testimonials-container-landing">
                     <div className="testimonial-card-landing">
-                        <p className="testimonial-quote-landing">NeurAI completely transformed how I approach learning. The personalized content and AI tutoring helped me master complex topics in half the time it would have taken otherwise.</p>
+                        <p className="testimonial-quote-landing">Redlin completely transformed how I approach learning. The personalized content and AI tutoring helped me master complex topics in half the time it would have taken otherwise.</p>
                         <div className="testimonial-author-landing">
                             <div className="author-avatar-landing">JD</div>
                             <div className="author-info-landing">
@@ -230,7 +230,7 @@ const LandingPage = () => {
                         </div>
                     </div>
                     <div className="testimonial-card-landing">
-                        <p className="testimonial-quote-landing">As an educator, I've integrated NeurAI into my classroom with amazing results. My students are more engaged and show significantly better comprehension of difficult concepts.</p>
+                        <p className="testimonial-quote-landing">As an educator, I've integrated Redlin into my classroom with amazing results. My students are more engaged and show significantly better comprehension of difficult concepts.</p>
                         <div className="testimonial-author-landing">
                             <div className="author-avatar-landing">SL</div>
                             <div className="author-info-landing">
@@ -327,7 +327,7 @@ const LandingPage = () => {
                     <a href="#" className="social-link-landing"><i className="ri-youtube-fill"></i></a>
                 </div>
                 <div className="copyright-landing">
-                    © 2023 NeurAI. All rights reserved.
+                    © 2025 Redlin. All rights reserved.
                 </div>
             </footer>
         </div>
