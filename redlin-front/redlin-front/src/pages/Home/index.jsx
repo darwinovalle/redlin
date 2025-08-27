@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useHomeAnimations } from '../../hooks/useHomeAnimations';
 import './Home.css';
 
 // Local streak hook (unchanged core logic)
@@ -74,6 +75,29 @@ const Home = () => {
   const goalKey = useMemo(() => `goal:${user?.id}:today`, [user?.id]);
   const [done, setDone] = useState(0);
   const dailyGoal = 1;
+
+  const mainContentRef = useRef(null);
+  const welcomeRef = useRef(null);
+  const learningPathRef = useRef(null);
+  const progressSectionRef = useRef(null);
+  const upcomingSectionRef = useRef(null);
+  const statsCardRef = useRef(null);
+  const quickAccessRef = useRef(null);
+  const achievementsRef = useRef(null);
+
+  const animationRefs = {
+    mainContentRef,
+    welcomeRef,
+    learningPathRef,
+    progressSectionRef,
+    upcomingSectionRef,
+    statsCardRef,
+    quickAccessRef,
+    achievementsRef
+  };
+
+  useHomeAnimations(animationRefs);
+
   useEffect(() => {
     if (!user) return;
     try {
@@ -97,9 +121,9 @@ const Home = () => {
   const percent = Math.min(100, (done / dailyGoal) * 100);
 
   return (
-    <div className="home-main-content">
+    <div className="home-main-content" ref={mainContentRef}>
       {/* Header */}
-      <div className="header">
+      <div className="header" ref={welcomeRef}>
         <div className="welcome">
           <div className="user-avatar">{(user?.username || '?').charAt(0).toUpperCase()}</div>
           <div className="welcome-text">
@@ -117,7 +141,7 @@ const Home = () => {
       </div>
 
       {/* Learning Path */}
-      <div className="learning-path">
+      <div className="learning-path" ref={learningPathRef}>
         <div className="path-header">
           <div className="path-title">Your Learning Journey</div>
           <div className="section-action">View Details</div>
@@ -134,7 +158,7 @@ const Home = () => {
       </div>
 
       {/* Progress Section */}
-      <div className="progress-section">
+      <div className="progress-section" ref={progressSectionRef}>
         <div className="card progress-card">
           <div className="progress-card-header"><h3>Progreso diario</h3></div>
           <div className="progress-card-content">
@@ -168,7 +192,7 @@ const Home = () => {
       </div>
 
       {/* Upcoming Sessions */}
-      <div className="section upcoming-section">
+      <div className="section upcoming-section" ref={upcomingSectionRef}>
         <div className="section-header">
           <h3 className="section-title">Upcoming Sessions</h3>
           <div className="section-action">View All</div>
@@ -197,7 +221,7 @@ const Home = () => {
 
       {/* Two Column (only stats for now) */}
       <div className="two-column">
-        <div className="card stats-card">
+        <div className="card stats-card" ref={statsCardRef}>
           <div className="stats-header">
             <h3>Learning Stats</h3>
             <div className="stats-tabs">
@@ -220,7 +244,7 @@ const Home = () => {
       </div>
 
       {/* Quick Access */}
-      <div className="section quick-access">
+      <div className="section quick-access" ref={quickAccessRef}>
         <div className="section-header">
           <h3 className="section-title">Quick Access</h3>
           <div className="section-action">View All</div>
@@ -239,7 +263,7 @@ const Home = () => {
       </div>
 
       {/* Achievements */}
-      <div className="gradient-bg">
+      <div className="gradient-bg" ref={achievementsRef}>
         <div className="section-header">
           <h3 className="section-title">Your Achievements</h3>
           <div className="section-action">View All</div>
