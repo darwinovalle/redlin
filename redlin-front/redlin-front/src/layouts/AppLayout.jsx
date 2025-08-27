@@ -11,7 +11,7 @@ const AppLayout = () => {
 
   return (
   <Box sx={{ position: 'relative', display: 'flex', height: '100vh', zIndex: 5,
-    background: 'linear-gradient(180deg, #5fffaf 70%, #ffffff 93%)'
+    background: '#e9e9e9 '
    }}>
       {/* <WavyBackground waveHeight="60vh" offsetY={0} /> */}
       

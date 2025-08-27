@@ -7,12 +7,34 @@ import re
 import time
 import random
 from django.db import transaction
+
 # Configure the Gemini API
 load_dotenv()
 
 # Configure Gemini
 genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-2.5-pro")
+
+SPANISH_COMMON = {"el","la","de","que","y","en","a","los","se","del","las","un","por","con","una","su","para","es","al","lo","como","más","pero","sus","le"}
+ENGLISH_COMMON = {"the","and","to","of","in","that","it","is","for","on","as","are","was","with","this","by","an","be","or","from"}
+
+def detect_language(text: str) -> str:
+    """
+    Heurística ligera: compara frecuencia de palabras funcionales.
+    Devuelve 'en', 'es' u 'other'.
+    """
+    if not text:
+        return "other"
+    words = re.findall(r"[a-záéíóúüñ]+", text.lower())
+    if not words:
+        return "other"
+    es_count = sum(1 for w in words if w in SPANISH_COMMON)
+    en_count = sum(1 for w in words if w in ENGLISH_COMMON)
+    if es_count >= 3 and es_count > en_count * 1.2:
+        return "es"
+    if en_count >= 3 and en_count > es_count * 1.2:
+        return "en"
+    return "other"
 
 
 def _parse_retry_delay_seconds(error_message: str) -> int | None:
@@ -75,28 +97,140 @@ def process_pdf(document_id):
             print("No text extracted from PDF.")
             raise ValueError("Could not extract text from PDF")
 
+        # Detect language
+        dominant = detect_language(text)
+        if dominant in ("en", "es"):
+            target_lang = dominant
+        else:
+            target_lang = "en"
+
+        lang_label = "English" if target_lang == "en" else "Spanish"
+        output_lang_instruction = (
+            "Produce la salida en Español." if target_lang == "es" else "Produce the output in English."
+        )
+
         # ---- Generate Comprehensive Summary ----
         print("Generating summary...")
-        summary_prompt = f"Provide a comprehensive and detailed summary of the following text, capturing the main points, key arguments, and important details. Aim for a thorough overview suitable for someone wanting to understand the core content without reading the entire document:\n\n{text}"
+        doc_title = (document.title or "Document").strip()
+        summary_prompt = f"""
+You are an expert academic summarizer. {output_lang_instruction}
+
+GOAL
+Produce a high-signal, chapter/section-structured summary that captures the core intellectual substance of the source.
+
+OUTPUT FORMAT (Pure Markdown only)
+- First line MUST be exactly an H1 with the document title:
+  # {doc_title}
+- After the title, output the structured summary only. No preamble, no meta text, no “analysis”.
+- Use section headings as H2 (“##”), each starting with ONE emoji + space + concise heading (no trailing punctuation).
+- Under each heading, use dense bullets ("- ") OR tight mini paragraphs.
+- Final section must be:
+  ## ⭐ Key Takeaways
+  - 5–12 distilled bullets (no redundancy).
+
+CONTENT RULES (Absolute)
+- Omit front matter: copyright notices, ISBN, disclaimers, dedications, acknowledgments (unless containing indispensable definitions).
+- Preserve the source’s logic and argument flow; merge or skip low-value sections.
+- No hallucinations. Only include concepts supported by the source.
+- Remove repetition and ornamental filler; keep mechanisms, definitions, claims, evidence, results, implications, limitations.
+- Include concrete numbers, definitions, and conditions when present; keep units and constraints.
+- Use brief emphasis for pivotal terms (bold) sparingly. Use inline code `like_this` for terms, variables, or API names when appropriate.
+- Tables are allowed if they clarify comparisons or taxonomies.
+- Forbidden phrases anywhere: "Here is", "This book", "The document", "This section".
+- Output language: {lang_label}
+- If negligible substance after filtering: output:
+  # {doc_title}
+
+  (No substantive content found in provided excerpt.)
+
+STRUCTURE GUIDANCE (Use as applicable)
+- Start with the most structural or conceptual sections first (map to chapters/sections if present).
+- For empirical work: Methods, Data, Results, Interpretation, Limitations.
+- For theory: Core Claims, Definitions, Mechanisms, Propositions, Implications.
+- For math/proofs: Theorem/Claim, Assumptions, Sketch of Proof, Corollaries, Scope.
+- For code/APIs: Components, Interfaces, Invariants, Complexity, Example Usage.
+- For dialogues/debates: Positions by speaker/side, Points of agreement, Disagreements, Evidence.
+- For literature/essays: Thesis, Motifs/Themes, Structure/Arc, Key Passages (quoted minimally), Interpretation.
+
+DENSITY & LENGTH
+- Favor high information density; avoid sentence padding.
+- Generally 4–10 sections total; 2–8 bullets per section depending on source length.
+
+QUALITY CHECK (silent, do not output)
+- H1 title present and correct.
+- Headings are “## ” + one emoji + space + concise title.
+- No preamble/meta/explanations.
+- No forbidden phrases.
+- No unsupported claims; numbers/definitions preserved.
+- Ends with “## ⭐ Key Takeaways” (5–12 bullets).
+
+SOURCE TEXT (for analysis; paraphrase in output)
+{text}
+"""
         try:
             summary_response = generate_with_retry(summary_prompt, max_attempts=3)
             summary_content = summary_response.text
-            Summary.objects.update_or_create(
-                document=document,
-                defaults={'content': summary_content}
-            )
-            print("Summary created/updated.")
         except Exception as e:
+            summary_content = f"Title: {doc_title}\n\n(No substantive content found due to generation error.)"
             print(f"[Error] Failed to generate summary: {e}")
-            # Decide if you want to fail the whole process or continue
+        Summary.objects.update_or_create(
+            document=document,
+            defaults={'content': summary_content}
+        )
+        print("Summary created/updated.")
 
         # ---- Generate Flashcards ----
         print("Generating flashcards...")
-        flashcard_prompt = f"Generate as many relevant flashcards as possible based on the key terms, concepts, and definitions in the following text. Focus on the most important information. Format each flashcard strictly as: Term: [key term]\nDefinition: [definition]\n\nSeparate each flashcard block (Term and Definition) with exactly one blank line.\n\n{text}"
+        flashcard_prompt = f"""
+You are an expert in cognitive science and educational material design. Your task is to extract ALL learnable knowledge from the provided text and convert it into optimal flashcards.
+
+Language: {lang_label}
+
+CRITICAL REQUIREMENTS:
+
+1. **COMPREHENSIVE EXTRACTION** (MANDATORY):
+   - Create flashcards for EVERY significant piece of knowledge in the text
+   - Systematic coverage: terms → concepts → relationships → principles → applications
+   - If something is worth knowing, it needs a flashcard
+
+2. **FLASHCARD TYPES** (use all that apply):
+   - **Term/Definition**: Core vocabulary and concepts
+   - **Fact/Explanation**: Important statements and their significance
+   - **Question/Answer**: Critical relationships and causations
+   - **Principle/Application**: Rules and how they work in practice
+
+3. **QUALITY STANDARDS**:
+   - Front side: Specific, testable prompt (1-7 words ideal)
+   - Back side: Complete but concise answer (1-3 sentences max)
+   - Each card tests ONE atomic piece of knowledge
+   - No ambiguity - the answer must be clear and unique
+
+4. **CONTENT RULES**:
+   - INCLUDE: All definitions, formulas, processes, key relationships, important facts
+   - EXCLUDE: Publication metadata, author bios, dedications, trivial examples
+   - Transform complex ideas into multiple simple cards
+
+5. **OPTIMIZATION FOR MEMORY**:
+   - Use active recall format (not just passive definitions)
+   - Include context clues when necessary
+   - Break compound concepts into atomic units
+
+6. **EXACT FORMAT** (no deviations):
+   Term: <Front of card - what to recall>
+   Definition: <Back of card - the answer>
+
+   [blank line between each flashcard]
+
+7. **COVERAGE CHECK**:
+   Before finalizing, verify: Have I captured every important concept, relationship, and fact from the text?
+
+DOCUMENT TEXT:
+{text}
+"""
         try:
             flashcard_response = generate_with_retry(flashcard_prompt, max_attempts=3)
             flashcards_raw = flashcard_response.text
-            flashcard_blocks = flashcards_raw.strip().split('\n\n')  # Split by blank lines
+            flashcard_blocks = flashcards_raw.strip().split('\n\n')
 
             # Parse first into in-memory objects
             new_flashcards = []
@@ -128,11 +262,62 @@ def process_pdf(document_id):
 
         except Exception as e:
             print(f"[Error] Failed to generate or parse flashcards: {e}")
-            # Decide if you want to fail the whole process or continue
 
         # ---- Generate MCQs ----
         print("Generating MCQs...")
-        mcq_prompt = f"Generate as many relevant multiple choice questions as possible based on the key concepts in the provided text. Focus on important information.\nFor each question, provide the question, the single correct answer, and three distinct incorrect distractors.\nFormat each question strictly as follows, with each part on a new line:\nQ: [Question text]\nA: [Correct Answer]\nB: [Incorrect Option 1]\nC: [Incorrect Option 2]\nD: [Incorrect Option 3]\n\nSeparate each complete question block (Q, A, B, C, D) with exactly one blank line.\n\n{text}"
+        mcq_prompt = f"""
+You are an expert assessment designer specializing in educational content analysis.
+
+TASK: Extract and convert ALL testable knowledge from the provided text into multiple-choice questions.
+
+Language: {lang_label}
+
+CRITICAL REQUIREMENTS:
+
+1. **EXHAUSTIVE COVERAGE** (MANDATORY):
+   - Create questions for EVERY significant concept, fact, relationship, or principle in the text
+   - If a concept can be tested, it MUST have a question
+   - Scan systematically: definitions → processes → relationships → applications → implications
+
+2. **ACCURACY GUARANTEE**:
+   - Double-check each correct answer against the source text
+   - The correct answer must be 100% verifiable from the text
+   - If uncertain about factual accuracy, skip that question
+
+3. **QUESTION TYPES** (use all that apply):
+   - Definitional: "What is X?"
+   - Causal: "Why does X lead to Y?"
+   - Comparative: "How does X differ from Y?"
+   - Applied: "In situation Z, what would happen?"
+   - Analytical: "Which statement best explains X?"
+
+4. **DISTRACTOR RULES**:
+   - Each incorrect option must be plausible but definitively wrong
+   - Use common misconceptions, partial truths, or related-but-different concepts
+   - Never use nonsensical or obviously wrong distractors
+
+5. **FORBIDDEN CONTENT**:
+   - NO questions about: publication dates, ISBN, publisher, author bio, dedications, acknowledgments
+   - NO "All/None of the above" or combination options
+   - NO negatively-phrased questions ("Which is NOT...")
+
+6. **EXACT FORMAT** (no deviations):
+   Q: <Question text>
+   A: <Correct Answer>
+   B: <Incorrect Option 1>
+   C: <Incorrect Option 2>
+   D: <Incorrect Option 3>
+
+   [blank line between each question block]
+
+7. **QUALITY CHECKS**:
+   - Before outputting, verify: Is the correct answer unambiguously right?
+   - Are all distractors clearly wrong but believable?
+   - Have I covered ALL major concepts from the text?
+
+DOCUMENT TEXT:
+{text}
+"""
         try:
             mcq_response = generate_with_retry(mcq_prompt, max_attempts=3)
             mcqs_raw = mcq_response.text
@@ -177,8 +362,7 @@ def process_pdf(document_id):
 
         except Exception as e:
             print(f"[Error] Failed to generate or parse MCQs: {e}")
-            # Decide if you want to fail the whole process or continue
-        
+
         # ---- Finalize ----
         document.processing_status = 'completed'
         document.save()
