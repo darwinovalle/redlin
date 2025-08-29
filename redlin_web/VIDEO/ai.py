@@ -12,7 +12,7 @@ from .transcript_yt_dlp import fetch_transcript_yt_dlp, TranscriptError
 
 load_dotenv()
 genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
-_model = genai.GenerativeModel("gemini-1.5-flash")
+_model = genai.GenerativeModel("gemini-2.5-flash")
 
 _RE_RETRY = re.compile(r"retry_delay\s*\{\s*seconds:\s*(\d+)", re.I)
 
@@ -121,24 +121,59 @@ def process_video(video_id_db: int, languages: List[str] | None = None):
         target_mcq_count = _compute_target_mcq_count(full_text)
 
         summary_prompt = f"""
-You are an expert educator. {summary_heading_note}
-Create an engaging, well-structured video summary with:
-1. A clear title (include a relevant emoji).
-2. Thematic sections. Each section title MUST start with an emoji (distinct per section).
-3. Bullet points or short paragraphs easy to scan.
-4. Each factual statement or concept MUST include at least one timestamp in [mm:ss] format referencing the provided transcript timestamps.
-5. A 'Key Takeaways' section with concise bullets (each bullet with a timestamp).
-6. A 'Timeline Highlights' section listing major moments chronologically (timestamp first, then short description).
-7. Avoid hallucinations; only use provided transcript content.
-8. Keep language natural and accessible.
 
-Language to use: {lang_label}
+You are an expert academic summarizer. {summary_heading_note}
 
-TRANSCRIPT TIMESTAMP REFERENCE (do not rewrite this verbatim, only cite needed timestamps):
-{timestamp_ref}
+GOAL
+Produce a high-signal, chapter/section-structured summary that captures the core intellectual substance of the source.
 
-RAW TRANSCRIPT (for context):
+OUTPUT FORMAT (Pure Markdown only)
+- First line MUST be exactly an H1 with the document title:
+- After the title, output the structured summary only. No preamble, no meta text, no “analysis”.
+- Use section headings as H2 (“##”), each starting with ONE emoji + space + concise heading (no trailing punctuation).
+- Under each heading, use dense bullets ("- ") OR tight mini paragraphs.
+- Final section must be:
+  ## ⭐ Key Takeaways
+  - 5–12 distilled bullets (no redundancy).
+
+CONTENT RULES (Absolute)
+- Omit front matter: copyright notices, ISBN, disclaimers, dedications, acknowledgments (unless containing indispensable definitions).
+- Preserve the source’s logic and argument flow; merge or skip low-value sections.
+- No hallucinations. Only include concepts supported by the source.
+- Remove repetition and ornamental filler; keep mechanisms, definitions, claims, evidence, results, implications, limitations.
+- Include concrete numbers, definitions, and conditions when present; keep units and constraints.
+- Use brief emphasis for pivotal terms (bold) sparingly. Use inline code `like_this` for terms, variables, or API names when appropriate.
+- Tables are allowed if they clarify comparisons or taxonomies.
+- Forbidden phrases anywhere: "Here is", "This book", "The document", "This section".
+- Output language: {lang_label}
+- If negligible substance after filtering: output:
+
+  (No substantive content found in provided excerpt.)
+
+STRUCTURE GUIDANCE (Use as applicable)
+- Start with the most structural or conceptual sections first (map to chapters/sections if present).
+- For empirical work: Methods, Data, Results, Interpretation, Limitations.
+- For theory: Core Claims, Definitions, Mechanisms, Propositions, Implications.
+- For math/proofs: Theorem/Claim, Assumptions, Sketch of Proof, Corollaries, Scope.
+- For code/APIs: Components, Interfaces, Invariants, Complexity, Example Usage.
+- For dialogues/debates: Positions by speaker/side, Points of agreement, Disagreements, Evidence.
+- For literature/essays: Thesis, Motifs/Themes, Structure/Arc, Key Passages (quoted minimally), Interpretation.
+
+DENSITY & LENGTH
+- Favor high information density; avoid sentence padding.
+- Generally 4–10 sections total; 2–8 bullets per section depending on source length.
+
+QUALITY CHECK (silent, do not output)
+- H1 title present and correct.
+- Headings are “## ” + one emoji + space + concise title.
+- No preamble/meta/explanations.
+- No forbidden phrases.
+- No unsupported claims; numbers/definitions preserved.
+- Ends with “## ⭐ Key Takeaways” (5–12 bullets).
+
+SOURCE TEXT (for analysis; paraphrase in output)
 {full_text}
+
 """
         try:
             summary_resp = generate_with_retry(summary_prompt)
@@ -151,32 +186,56 @@ RAW TRANSCRIPT (for context):
             print(f"[Video Error] Summary: {e}")
 
         mcq_prompt = f"""
-You are an assessment designer. Generate EXACTLY {target_mcq_count} high-quality multiple choice questions
-covering ALL the key concepts of the video transcript (concept coverage is more important than quantity).
-Language: {lang_label}. If the transcript language is neither English nor Spanish you MUST still write MCQs in English.
-Rules:
-- Difficulty varied (easy, medium, a few challenging).
-- No trivia about greetings or filler; focus on meaningful concepts.
-- Each distractor must be plausible but clearly incorrect.
-- Do NOT repeat questions or answers.
-- Avoid options like "All of the above" or "None of the above".
-- Format EXACTLY per question block:
+You are an expert assessment designer specializing in educational content analysis.
 
-Q: <question>
-A: <correct answer>
-B: <distractor 1>
-C: <distractor 2>
-D: <distractor 3>
+TASK: Extract and convert ALL testable knowledge from the provided text into multiple-choice questions.
 
-- Separate blocks with ONE blank line.
-- No extra commentary.
+Language: {lang_label}
 
-Reference timestamps when helpful by appending (mm:ss) within the question ONLY if it aids clarity.
+CRITICAL REQUIREMENTS:
 
-TRANSCRIPT TIMESTAMP REFERENCE:
-{timestamp_ref}
+1. **EXHAUSTIVE COVERAGE** (MANDATORY):
+   - Create questions for EVERY significant concept, fact, relationship, or principle in the text
+   - If a concept can be tested, it MUST have a question
+   - Scan systematically: definitions → processes → relationships → applications → implications
 
-RAW TRANSCRIPT (for context):
+2. **ACCURACY GUARANTEE**:
+   - Double-check each correct answer against the source text
+   - The correct answer must be 100% verifiable from the text
+   - If uncertain about factual accuracy, skip that question
+
+3. **QUESTION TYPES** (use all that apply):
+   - Definitional: "What is X?"
+   - Causal: "Why does X lead to Y?"
+   - Comparative: "How does X differ from Y?"
+   - Applied: "In situation Z, what would happen?"
+   - Analytical: "Which statement best explains X?"
+
+4. **DISTRACTOR RULES**:
+   - Each incorrect option must be plausible but definitively wrong
+   - Use common misconceptions, partial truths, or related-but-different concepts
+   - Never use nonsensical or obviously wrong distractors
+
+5. **FORBIDDEN CONTENT**:
+   - NO questions about: publication dates, ISBN, publisher, author bio, dedications, acknowledgments
+   - NO "All/None of the above" or combination options
+   - NO negatively-phrased questions ("Which is NOT...")
+
+6. **EXACT FORMAT** (no deviations):
+   Q: <Question text>
+   A: <Correct Answer>
+   B: <Incorrect Option 1>
+   C: <Incorrect Option 2>
+   D: <Incorrect Option 3>
+
+   [blank line between each question block]
+
+7. **QUALITY CHECKS**:
+   - Before outputting, verify: Is the correct answer unambiguously right?
+   - Are all distractors clearly wrong but believable?
+   - Have I covered ALL major concepts from the text?
+
+DOCUMENT TEXT:
 {full_text}
 """
         try:

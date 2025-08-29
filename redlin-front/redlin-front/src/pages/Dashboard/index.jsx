@@ -1,10 +1,10 @@
-import * as React from 'react'; 
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
-import Tabs from '@mui/material/Tabs'; 
-import Tab from '@mui/material/Tab';   
-import Typography from '@mui/material/Typography'; 
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Typography from '@mui/material/Typography';
 import { FlashcardProvider } from '../../context/FlashcardContext';
 import Flashcard from '../../components/Flashcard/Flashcard';
 import DocReview from '../../components/Flashcard/DocReview';
@@ -13,6 +13,7 @@ import { documentService } from '../../services/api';
 import Summary from '../../components/Summary';
 import PdfViewer from '../../components/PdfViewer/PdfViewer';
 import { useAuth } from '../../context/AuthContext';
+import './dashboard.css';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -149,39 +150,40 @@ const Dashboard = ({ user }) => {
   };
 
   return (
-  <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-
-      {/* Three-column layout: center PDF, right Study panel; left sidebar is outside in app shell */}
+    <div className="dashboard-root">
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', gap: 0, p: 0, m: 0, height: '100%', overflow: 'hidden' }}>
-        {/* Middle: PDF Viewer */}
+        {/* PDF Viewer reverted to original styling */}
         <Box sx={{ flex: 1, minWidth: 480, maxWidth: 'calc(100% - 700px)', height: '100%', overflow: 'hidden', borderRight: '1px solid #eee' }}>
           <PdfViewer url={selectedDocumentId ? `${import.meta.env?.VITE_API_URL || 'http://127.0.0.1:8000/api'}/documents/${selectedDocumentId}/file/` : null} />
         </Box>
-        {/* Right: Study panel, fixed width 700px */}
-        <Box sx={{ width: 700, height: '100%', overflow: 'auto' }}>
-          <Box sx={{ width: '100%', flexShrink: 0 }}>
-            <Tabs 
-              value={activeTab} 
-              onChange={handleTabChange} 
-              aria-label="study tabs" 
-              textColor="inherit"
-              centered
-              sx={{ 
-                '& .MuiTabs-indicator': { backgroundColor: '#ffffff' }, 
-                '& .MuiTabs-flexContainer': { justifyContent: 'center' },
-                p: 0, m: 0 
-              }}
-            > 
-              <Tab label="Flashcards" sx={{ fontSize: '15px' ,fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
-              <Tab label="Review" sx={{ fontSize: '15px' ,fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
-              <Tab label="Quiz" sx={{ fontSize: '15px' ,fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
-              <Tab label="Summary" sx={{ fontSize: '15px' ,fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#000' } }} />
+        {/* Study / Flashcard Panel retains new style */}
+        <div className="study-panel" style={{ width: 700 }}>
+          <div className="study-header">
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              aria-label="study tabs"
+              variant="scrollable"
+              allowScrollButtonsMobile
+              className="dashboard-tabs"
+            >
+              <Tab label="FLASHCARDS" />
+              <Tab label="REVIEW" />
+              <Tab label="QUIZ" />
+              <Tab label="SUMMARY" />
             </Tabs>
-          </Box>
-          <Box sx={{ height: 'calc(100% - 48px)', overflow: 'auto' }}>
+            <div className="progress-strip" data-role="progress">
+              <div className="progress-text">&nbsp;</div>
+              <div className="progress-bar-outer">
+                <div className="progress-bar-fill" style={{ '--progress': '0%' }} />
+              </div>
+              <div className="progress-text">&nbsp;</div>
+            </div>
+          </div>
+          <div className="study-content-scroll">
             <TabPanel value={activeTab} index={0}>
               <FlashcardProvider>
-                <Flashcard documentId={selectedDocumentId} refreshKey={flashcardsRefreshKey} /> 
+                <Flashcard documentId={selectedDocumentId} refreshKey={flashcardsRefreshKey} />
               </FlashcardProvider>
             </TabPanel>
             <TabPanel value={activeTab} index={1}>
@@ -193,10 +195,10 @@ const Dashboard = ({ user }) => {
             <TabPanel value={activeTab} index={3}>
               <Summary documentId={selectedDocumentId} />
             </TabPanel>
-          </Box>
-        </Box>
+          </div>
+        </div>
       </Box>
-    </Box>
+    </div>
   );
 };
 

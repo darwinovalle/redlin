@@ -15,6 +15,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import DescriptionIcon from '@mui/icons-material/Description';
+import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import { csvService } from '../../services/api/csv';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
@@ -26,6 +27,7 @@ import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
 // - onImportSheet?: (file: File) => void
 // - onCreateTutorial?: () => void
 // - onCreateKanban?: () => void
+// - onCreateVideo?: ({ url: string, languages?: string[] }) => void
 const AddSpaceModal = ({
   open,
   onClose,
@@ -33,15 +35,20 @@ const AddSpaceModal = ({
   onImportSheet,
   // onCreateTutorial,
   onCreateKanban,
+  onCreateVideo,
+  creatingVideo = false,
 }) => {
-  const [selected, setSelected] = useState('document'); // 'document' | 'sheet' | 'tutorial' | 'kanban'
+  const [selected, setSelected] = useState('document'); // 'document' | 'sheet' | 'video' | 'kanban'
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoLangs, setVideoLangs] = useState(''); // comma separated languages
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
   const options = useMemo(
     () => [
       { key: 'document', label: 'Import Document', icon: <InsertDriveFileIcon fontSize="small" /> },
-      { key: 'sheet', label: 'Import Sheet', icon: <DescriptionIcon fontSize="small" /> },
+  { key: 'sheet', label: 'Import Sheet', icon: <DescriptionIcon fontSize="small" /> },
+  { key: 'video', label: 'Add YouTube Video', icon: <OndemandVideoIcon fontSize="small" /> },
       // { key: 'tutorial', label: 'Create Tutorial', icon: <MenuBookIcon fontSize="small" /> },
       { key: 'kanban', label: 'Create Kanban Task', icon: <ViewKanbanIcon fontSize="small" /> },
     ],
@@ -53,7 +60,7 @@ const AddSpaceModal = ({
   const handleFiles = async (files) => {
     if (!files || files.length === 0) return;
     const file = files[0];
-    if (selected === 'document') {
+  if (selected === 'document') {
       onImportDocument?.(file);
     } else if (selected === 'sheet') {
       // CSV import path
@@ -261,6 +268,56 @@ const AddSpaceModal = ({
                 <Button variant="contained" onClick={onCreateTutorial}>Create</Button>
               </Box>
             )} */}
+
+            {selected === 'video' && (
+              <Box sx={{ maxWidth: 520, width: '100%' }}>
+                <Typography variant="h6" sx={{ mb: 1.5 }}>Add a YouTube Video</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Paste a YouTube URL. We will fetch transcript, summary and MCQs.
+                </Typography>
+                <Box component="form" onSubmit={(e)=>{e.preventDefault(); onCreateVideo?.({ url: videoUrl.trim(), languages: videoLangs.split(',').map(l=>l.trim()).filter(Boolean) });}}>
+                  <input
+                    type="text"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={videoUrl}
+                    onChange={(e)=>setVideoUrl(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: 8,
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      background: 'rgba(255,255,255,0.04)',
+                      color: 'white',
+                      marginBottom: 12,
+                      fontSize: 14
+                    }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Preferred languages (comma separated, e.g. en,es)"
+                    value={videoLangs}
+                    onChange={(e)=>setVideoLangs(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      background: 'rgba(255,255,255,0.04)',
+                      color: 'white',
+                      marginBottom: 16,
+                      fontSize: 13
+                    }}
+                  />
+                  <Button
+                    variant="contained"
+                    disabled={!videoUrl || creatingVideo}
+                    onClick={()=> onCreateVideo?.({ url: videoUrl.trim(), languages: videoLangs.split(',').map(l=>l.trim()).filter(Boolean) })}
+                  >
+                    {creatingVideo ? 'Creating...' : 'Add Video'}
+                  </Button>
+                </Box>
+              </Box>
+            )}
 
             {selected === 'kanban' && (
               <Box sx={{ textAlign: 'center', maxWidth: 520 }}>

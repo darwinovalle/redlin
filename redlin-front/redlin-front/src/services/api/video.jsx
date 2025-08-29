@@ -1,0 +1,69 @@
+import api from './index.jsx';
+
+// Helper to extract a plausible YouTube video id from a URL (frontend validation only)
+function extractVideoId(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtube.com')) {
+      if (u.searchParams.get('v')) return u.searchParams.get('v');
+      // Shorts format /shorts/{id}
+      const shortsMatch = u.pathname.match(/\/shorts\/([a-zA-Z0-9_-]{6,})/);
+      if (shortsMatch) return shortsMatch[1];
+    }
+    if (u.hostname === 'youtu.be') {
+      const id = u.pathname.slice(1);
+      if (id) return id;
+    }
+  } catch {}
+  // Basic fallback regex
+  const m = url.match(/(?:v=|youtu.be\/|shorts\/)([a-zA-Z0-9_-]{6,})/);
+  return m ? m[1] : null;
+}
+
+export const videoService = {
+  createVideo: async ({ url, languages } = {}) => {
+    if (!url) throw new Error('URL is required');
+    const resp = await api.post('/video/videos/', { url, languages });
+    return resp.data; // returns video object
+  },
+
+  listVideos: async () => {
+    const resp = await api.get('/video/videos/');
+    return Array.isArray(resp.data) ? resp.data : [];
+  },
+
+  getVideo: async (id) => {
+    if (!id) throw new Error('id required');
+    const resp = await api.get(`/video/videos/${id}/`);
+    return resp.data;
+  },
+
+  getVideoSummary: async (id) => {
+    const resp = await api.get(`/video/videos/${id}/summary/`);
+    return resp.data; // { id, video, content }
+  },
+
+  getVideoMCQs: async (id) => {
+    const resp = await api.get(`/video/videos/${id}/mcqs/`);
+    return Array.isArray(resp.data) ? resp.data : [];
+  },
+
+  getFullDetails: async (id) => {
+    const resp = await api.get(`/video/videos/${id}/full_details/`);
+    return resp.data; // { video: {...}, summary: {...} | null, mcqs: [] }
+  },
+
+  reprocessVideo: async (id, { languages } = {}) => {
+    const resp = await api.post(`/video/videos/${id}/reprocess/`, { languages });
+    return resp.data;
+  },
+
+  extractVideoId,
+  embedUrl: (video) => {
+    const id = typeof video === 'string' ? video : (video?.video_id || extractVideoId(video?.url));
+    return id ? `https://www.youtube.com/embed/${id}` : null;
+  }
+};
+
+export default videoService;

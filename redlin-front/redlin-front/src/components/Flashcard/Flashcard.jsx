@@ -1,27 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  IconButton,
-  LinearProgress,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-} from '@mui/material';
-import {
-  ArrowBack as ArrowBackIcon,
-  ArrowForward as ArrowForwardIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
+import { Box, Typography, Button, IconButton, LinearProgress, Divider, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, ArrowForward as ArrowForwardIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { documentService } from '../../services/api';
 import FlashcardCard from './FlashcardCard';
 import FlashcardModal from './FlashcardModal';
@@ -248,7 +227,7 @@ const Flashcard = ({ documentId, refreshKey = 0 }) => {
   // console.log('Current Card Data:', currentCard);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', px: 3, py: 3, height: '100%', overflow: 'hidden', boxSizing: 'border-box', gap: 0 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', px: 1, py: 2, height: '100%', overflow: 'hidden', boxSizing: 'border-box', gap: 0 }}>
       {/* Progress Indicator */}
       <Box sx={{ width: '80%', maxWidth: '600px', mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
@@ -268,30 +247,29 @@ const Flashcard = ({ documentId, refreshKey = 0 }) => {
         />
       </Box>
 
-      <Box sx={{ position: 'relative', width: '90%', maxWidth: '500px', mb: 4 }}>
+  <Box sx={{ position: 'relative', width: '92%', maxWidth: '640px', mb: 3 }}>
+        {/* Botones fuera visualmente de la carta (la carta se estrecha) */}
         <IconButton
           aria-label="previous card"
           onClick={previousCard}
           disabled={currentCardIndex === 0}
           sx={{
             position: 'absolute',
-            left: { xs: -43, sm: -55, md: -71 },
+            left: 0,
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 4,
-            width: 44,
-            height: 44,
+            width: 38,
+            height: 38,
             borderRadius: '50%',
             color: 'common.white',
             bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(38,38,38,0.75)',
             boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
             border: '1px solid rgba(255,255,255,0.06)',
-            '&:hover': {
-              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)',
-            },
+            '&:hover': { bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)' },
           }}
         >
-          <ArrowBackIcon fontSize="medium" />
+          <ArrowBackIcon fontSize="small" />
         </IconButton>
         <IconButton
           aria-label="next card"
@@ -299,94 +277,75 @@ const Flashcard = ({ documentId, refreshKey = 0 }) => {
           disabled={currentCardIndex === flashcards.length - 1}
           sx={{
             position: 'absolute',
-            right: { xs: -43, sm: -55, md: -71 },
+            right: 0,
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 4,
-            width: 44,
-            height: 44,
+            width: 38,
+            height: 38,
             borderRadius: '50%',
             color: 'common.white',
             bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(38,38,38,0.75)',
             boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
             border: '1px solid rgba(255,255,255,0.06)',
-            '&:hover': {
-              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)',
-            },
+            '&:hover': { bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)' },
           }}
         >
-          <ArrowForwardIcon fontSize="medium" />
+          <ArrowForwardIcon fontSize="small" />
         </IconButton>
         <Box sx={{ transition: isRun ? 'transform 200ms ease, opacity 200ms ease' : 'none', transform: isPrep ? `translateX(${offset}px)` : 'translateX(0px)', opacity: isPrep ? 0 : 1 }}>
-          <FlashcardCard card={currentCard} isFlipped={isFlipped} onToggleFlip={handleFlip} blink={false} size="md" showHint={!isFlipped} />
+          <FlashcardCard
+            card={currentCard}
+            isFlipped={isFlipped}
+            onToggleFlip={handleFlip}
+            blink={false}
+            size="sm"
+            showHint={!isFlipped}
+            sx={{ width: { xs: 'calc(100% - 110px)', sm: 'calc(100% - 130px)' }, mx: 'auto', minWidth: 260 }}
+          />
         </Box>
       </Box>
 
-      <Divider sx={{ width: '90%', maxWidth: '600px', my: 2 }} />
-
-      <Box
-        sx={{
-          width: '90%',
-          maxWidth: '600px',
-          maxHeight: '27.5vh',
-          overflowY: 'auto',
-          mb: 2,
-          scrollbarWidth: 'thin',
-          scrollbarColor: (theme) => `${theme.palette.divider} transparent`,
-          '&::-webkit-scrollbar': { width: 6 },
-          '&::-webkit-scrollbar-track': { backgroundColor: 'transparent' },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: 'divider',
-            borderRadius: 8,
-          },
-        }}
-      >
-        <Typography variant="h6" sx={{ mb: 1, textAlign: 'center', color: 'text.primary' }}>
-          Card Overview
-        </Typography>
-        <List dense sx={{ borderRadius: '8px' }}>
-          {flashcards.map((card, index) => (
-            <ListItem
-              key={card.id || `card-${index}`}
-              secondaryAction={
-                <Box>
-                  <IconButton edge="end" aria-label="edit" onClick={(e) => { e.stopPropagation(); openEdit(index); }}>
-                    <EditIcon sx={{ color: 'text.secondary' }} />
-                  </IconButton>
-                  <IconButton edge="end" aria-label="delete" sx={{ ml: 1 }} onClick={(e) => { e.stopPropagation(); handleDelete(index); }}>
-                    <DeleteIcon sx={{ color: 'text.secondary' }} />
-                  </IconButton>
-                </Box>
-              }
-              disablePadding
-              selected={index === currentCardIndex}
-              sx={{
-                py: 1.5,
-                borderBottom: index < flashcards.length - 1 ? '1px solid' : 'none',
-                borderColor: 'divider',
-                borderRadius: 1,
-                transition: 'background-color 120ms ease',
-                '&:hover': {
-                  backgroundColor: (theme) => theme.palette.mode === 'dark' ? theme.palette.grey[700] : theme.palette.grey[200],
-                },
-                '&.Mui-selected': {
-                  backgroundColor: 'action.selected',
-                },
-                '&.Mui-selected:hover': {
-                  backgroundColor: 'action.selected',
-                },
-              }}
-            >
-              <ListItemButton onClick={() => openModalForIndex(index)} sx={{ pl: 2, pr: 14 }}>
-                <ListItemText
-                  id={`flashcard-list-item-${card.id || index}`}
-                  primary={`${index + 1}. ${card.key_term}`}
-                  primaryTypographyProps={{ color: 'text.primary', noWrap: true }}
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
+      <Divider sx={{ width: '92%', maxWidth: '640px', my: 2 }} />
+      {/* Card Overview grid (new style) */}
+      <Box sx={{ width: '92%', maxWidth: '640px', mb: 2 }}>
+        <div className="card-overview-wrapper">
+          <div className="card-overview-header">
+            <div className="card-overview-title">Card Overview</div>
+            <div className="card-overview-viewall" onClick={() => openModalForIndex(currentCardIndex)}>View Current</div>
+          </div>
+          <div className="card-grid" style={{ maxHeight: '28vh', overflowY: 'auto' }}>
+            {flashcards.map((card, index) => {
+              const preview = (card.definition || '').slice(0, 60) + ((card.definition || '').length > 60 ? '…' : '');
+              return (
+                <div
+                  key={card.id || `mini-${index}`}
+                  className={`card-mini ${index === currentCardIndex ? 'active' : ''}`}
+                  onClick={() => openModalForIndex(index)}
+                >
+                  <div className="card-mini-title">{card.key_term}</div>
+                  <div className="card-mini-preview">{preview}</div>
+                  <div className="card-mini-actions">
+                    <div
+                      className="card-mini-action-btn"
+                      title="Edit"
+                      onClick={(e) => { e.stopPropagation(); openEdit(index); }}
+                    >
+                      <EditIcon sx={{ fontSize: 14 }} />
+                    </div>
+                    <div
+                      className="card-mini-action-btn"
+                      title="Delete"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(index); }}
+                    >
+                      <DeleteIcon sx={{ fontSize: 14 }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </Box>
 
       {/* Modal con navegación (paridad con CSV) */}
