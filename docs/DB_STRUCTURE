@@ -1,0 +1,715 @@
+
+/////////////////////////////////////////////////
+// ENUMS
+/////////////////////////////////////////////////
+Enum space_visibility {
+  private
+  unlisted
+}
+
+Enum progress_status {
+  new
+  learning
+  mastered
+}
+
+Enum session_mode {
+  quick
+  overall
+}
+
+Enum session_method {
+  MCQ
+  CLOZE
+  FEYNMAN
+  MIXED
+}
+
+Enum task_status {
+  new
+  inprogress
+  done
+}
+
+/////////////////////////////////////////////////
+// CORE DJANGO
+/////////////////////////////////////////////////
+Table django_content_type {
+  id int [pk]
+  app_label varchar
+  model varchar
+  Note: 'Tabla estándar de Django para GenericForeignKey'
+  indexes {
+    (app_label, model) [unique, name: 'uniq_app_model']
+  }
+}
+
+/////////////////////////////////////////////////
+// USUARIOS (EXISTENTE)
+/////////////////////////////////////////////////
+Table API_user {
+  id int [pk]
+  username varchar
+  email varchar
+  password varchar
+  created_at datetime
+  updated_at datetime
+  indexes {
+    (email) [unique, name: 'uniq_user_email']
+  }
+}
+
+/////////////////////////////////////////////////
+// DOCUMENTOS (EXISTENTE)
+/////////////////////////////////////////////////
+Table API_document {
+  id int [pk]
+  title varchar
+  upload_date datetime
+  pdf_file varchar
+  user_id int
+  processing_status varchar
+}
+
+Table API_flashcard {
+  id int [pk]
+  key_term varchar
+  definition text
+  status varchar
+  last_reviewed datetime
+  document_id int
+  easiness float
+  interval int
+  next_review_at datetime
+  repetitions int
+  score float
+  times_shown int
+  Note: 'Modelo existente con SR integrado (SM-2 inspirado)'
+  indexes {
+    (document_id, next_review_at) [name: 'idx_flashcard_doc_next']
+    (document_id, status) [name: 'idx_flashcard_doc_status']
+  }
+}
+
+Table API_mcq {
+  id int [pk]
+  question text
+  correct_answer text
+  option_1 text
+  option_2 text
+  option_3 text
+  document_id int
+}
+
+Table API_summary {
+  id int [pk]
+  content text
+  document_id int
+}
+
+/////////////////////////////////////////////////
+// CSV IMPORTS (EXISTENTE)
+/////////////////////////////////////////////////
+Table CSV_csvimport {
+  id int [pk]
+  filename varchar
+  row_count int
+  created_at datetime
+  user_id int
+}
+
+Table CSV_csvflashcard {
+  id int [pk]
+  key_term varchar
+  definition text
+  status varchar
+  last_reviewed datetime
+  next_review_at datetime
+  times_shown int
+  score float
+  repetitions int
+  interval int
+  easiness float
+  user_id int
+  source_id int
+}
+
+/////////////////////////////////////////////////
+// VIDEOS (EXISTENTE)
+/////////////////////////////////////////////////
+Table VIDEO_video {
+  id int [pk]
+  url varchar
+  title varchar
+  created_at datetime
+  processing_status varchar
+  snippet_count int
+  transcript_text text
+  user_id int
+  video_id varchar // YouTube video ID externo
+}
+
+Table VIDEO_videochunk {
+  id int [pk]
+  order int
+  start_time float
+  end_time float
+  text text
+  token_count int
+  video_id int
+}
+
+Table VIDEO_videoflashcard {
+  id int [pk]
+  key_term varchar
+  definition text
+  status varchar
+  last_reviewed datetime
+  next_review_at datetime
+  times_shown int
+  score float
+  repetitions int
+  interval int
+  easiness float
+  user_id int
+  video_id int
+}
+
+Table VIDEO_videomcq {
+  id int [pk]
+  question text
+  correct_answer text
+  option_1 text
+  option_2 text
+  option_3 text
+  video_id int
+}
+
+Table VIDEO_videosummary {
+  id int [pk]
+  content text
+  video_id int
+}
+
+Table VIDEO_videotranscript {
+  id int [pk]
+  language varchar
+  source varchar
+  text text
+  char_count int
+  video_id int
+}
+
+/////////////////////////////////////////////////
+// NUEVOS ITEMS (CLOZE / FEYNMAN)
+/////////////////////////////////////////////////
+Table API_cloze {
+  id int [pk]
+  text_with_blank text
+  answer text
+  context text
+  source_span text [null] // cita o referencia dentro del documento
+  document_id int
+}
+
+Table VIDEO_videocloze {
+  id int [pk]
+  text_with_blank text
+  answer text
+  context text
+  source_span text [null]
+  video_id int
+}
+
+Table API_feynman {
+  id int [pk]
+  prompt text
+  key_points json
+  reference text [null]
+  document_id int
+}
+
+Table VIDEO_videofeynman {
+  id int [pk]
+  prompt text
+  key_points json
+  reference text [null]
+  video_id int
+}
+
+/////////////////////////////////////////////////
+// SPACES (AGRUPADOR DE CONTENIDO HETEROGÉNEO)
+/////////////////////////////////////////////////
+Table core_space {
+  id int [pk]
+  user_id int
+  name varchar
+  description text [null]
+  visibility space_visibility
+  created_at datetime
+}
+
+Table core_space_item {
+  id int [pk]
+  space_id int
+  content_type_id int
+  object_id int // Generic FK a cualquier ítem (MCQ, Flashcard, Cloze, Feynman, etc.)
+  topic varchar [null]
+  importance float
+  added_at datetime
+  Note: 'content_type_id + object_id forman una referencia genérica'
+  indexes {
+    (space_id, content_type_id, object_id) [unique, name: 'uniq_space_item']
+  }
+}
+
+/////////////////////////////////////////////////
+// PROGRESO UNIFICADO + SESIONES/INTENTOS
+/////////////////////////////////////////////////
+Table core_learning_progress {
+  id int [pk]
+  user_id int
+  content_type_id int
+  object_id int
+  status progress_status
+  last_reviewed datetime [null]
+  next_review_at datetime [null]
+  times_shown int
+  score float
+  repetitions int
+  interval int
+  easiness float
+  consecutive_passes int
+  last_quality int
+  indexes {
+    (user_id, next_review_at) [name: 'idx_lp_user_next']
+    (user_id, status) [name: 'idx_lp_user_status']
+    (user_id, content_type_id, object_id) [unique, name: 'uniq_lp_user_item']
+  }
+  Note: 'Progreso SR por usuario-ítem para cualquier método'
+}
+
+Table core_study_session {
+  id int [pk]
+  user_id int
+  space_id int [null]
+  mode session_mode
+  method session_method
+  started_at datetime
+  ended_at datetime [null]
+  items_count int
+  correct_count int
+  percent float
+  passed boolean
+  indexes {
+    (user_id, started_at) [name: 'idx_session_user_started']
+  }
+}
+
+Table core_attempt {
+  id int [pk]
+  user_id int
+  session_id int [null]
+  method session_method
+  content_type_id int
+  object_id int
+  started_at datetime
+  submitted_at datetime [null]
+  latency_ms int [null]
+  correct boolean
+  confidence int [null] // 0..3
+  raw_answer text [null]
+  ai_score float [null] // 0..1
+  ai_feedback json [null]
+  quality int // q ∈ [0..5]
+  indexes {
+    (user_id, session_id) [name: 'idx_attempt_user_session']
+  }
+  Note: 'Intento individual; actualiza SR vía LearningProgress'
+}
+
+/////////////////////////////////////////////////
+// XP / STREAK
+/////////////////////////////////////////////////
+Table core_xp_account {
+  id int [pk]
+  user_id int [unique] // One-to-one con usuario
+  xp_total int
+  level int
+  current_streak int
+  longest_streak int
+  last_active_date date [null]
+}
+
+Table core_xp_award {
+  id int [pk]
+  user_id int
+  session_id int [null]
+  amount int
+  reason varchar // p.ej., quick_pass, overall_pass
+  created_at datetime
+}
+
+/////////////////////////////////////////////////
+// PLAN DE ESTUDIO (KANBAN) + REPORTES
+/////////////////////////////////////////////////
+Table core_study_plan {
+  id int [pk]
+  user_id int
+  space_id int
+  title varchar
+  version int
+  period_start date
+  period_end date
+  created_by_ai boolean
+  created_at datetime
+}
+
+Table core_plan_task {
+  id int [pk]
+  plan_id int
+  title varchar
+  description text [null]
+  status task_status
+  due_date date [null]
+  expected_minutes int
+  priority int
+  topic varchar [null]
+  indexes {
+    (plan_id, status) [name: 'idx_task_plan_status']
+  }
+}
+
+Table core_plan_task_item {
+  id int [pk]
+  task_id int
+  content_type_id int
+  object_id int
+  Note: 'Asigna ítems concretos (lecturas, MCQ, Cloze, Feynman) a la tarea'
+  indexes {
+    (task_id, content_type_id, object_id) [unique, name: 'uniq_task_item']
+  }
+}
+
+Table core_plan_report {
+  id int [pk]
+  plan_id int
+  period_start date
+  period_end date
+  summary json // métricas agregadas, recomendaciones
+  created_at datetime
+}
+
+/////////////////////////////////////////////////
+// SISTEMA DE SUSCRIPCIÓN Y PAGOS
+/////////////////////////////////////////////////
+
+Enum subscription_tier {
+  free
+  premium
+}
+
+Enum subscription_status {
+  active
+  cancelled
+  past_due
+  trialing
+  incomplete
+  incomplete_expired
+}
+
+Enum payment_status {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+Enum credit_transaction_type {
+  purchase
+  usage
+  refund
+  bonus
+  expired
+}
+
+// PLANES DE SUSCRIPCIÓN
+Table subscription_plan {
+  id int [pk]
+  tier subscription_tier
+  name varchar
+  description text
+  
+  // Límites
+  max_documents int // 3 para free, ilimitado (-1) para premium
+  ai_credits_monthly int // 0 para free, 300 para premium
+  has_analytics boolean // false para free, true para premium
+  
+  // Precios (en centavos)
+  price_monthly int // 0 para free, ej: 999 ($9.99) para premium
+  price_yearly int // 0 para free, ej: 9990 ($99.90) para premium
+  
+  // Stripe IDs
+  stripe_product_id varchar [null]
+  stripe_price_monthly_id varchar [null]
+  stripe_price_yearly_id varchar [null]
+  
+  is_active boolean
+  created_at datetime
+  updated_at datetime
+}
+
+// SUSCRIPCIONES DE USUARIO
+Table user_subscription {
+  id int [pk]
+  user_id int
+  plan_id int
+  status subscription_status
+  
+  // Stripe
+  stripe_customer_id varchar [null]
+  stripe_subscription_id varchar [null]
+  
+  // Fechas
+  started_at datetime
+  current_period_start datetime
+  current_period_end datetime
+  cancelled_at datetime [null]
+  trial_end datetime [null]
+  
+  // Billing
+  is_yearly boolean
+  auto_renew boolean
+  
+  created_at datetime
+  updated_at datetime
+  
+  indexes {
+    (user_id) [unique, name: 'uniq_user_subscription']
+    (stripe_subscription_id) [unique, name: 'uniq_stripe_sub']
+  }
+}
+
+// CRÉDITOS DE AI
+Table user_ai_credits {
+  id int [pk]
+  user_id int
+  balance int // Créditos actuales
+  lifetime_purchased int // Total comprado históricamente
+  lifetime_used int // Total usado históricamente
+  
+  // Límites mensuales
+  monthly_limit int
+  monthly_used int
+  monthly_reset_date date
+  
+  updated_at datetime
+  
+  indexes {
+    (user_id) [unique, name: 'uniq_user_credits']
+  }
+}
+
+// TRANSACCIONES DE CRÉDITOS
+Table credit_transaction {
+  id int [pk]
+  user_id int
+  type credit_transaction_type
+  amount int // Positivo para añadir, negativo para usar
+  balance_after int
+  
+  // Metadata
+  description varchar
+  reference_type varchar [null] // 'api_call', 'purchase', etc
+  reference_id varchar [null] // ID de la llamada API, pago, etc
+  
+  // Para consumo de API
+  api_endpoint varchar [null]
+  api_model varchar [null] // 'gpt-4', 'claude-3', etc
+  tokens_used int [null]
+  
+  created_at datetime
+  
+  indexes {
+    (user_id, created_at) [name: 'idx_credit_trans_user_date']
+  }
+}
+
+// LÍMITES DE USO
+Table user_usage_limits {
+  id int [pk]
+  user_id int
+  
+  // Contadores de documentos
+  documents_count int
+  documents_limit int
+  videos_count int
+  videos_limit int
+  
+  // Fecha de reset (para límites mensuales si aplica)
+  reset_date date [null]
+  
+  updated_at datetime
+  
+  indexes {
+    (user_id) [unique, name: 'uniq_user_limits']
+  }
+}
+
+// HISTORIAL DE PAGOS
+Table payment_history {
+  id int [pk]
+  user_id int
+  subscription_id int [null]
+  
+  // Stripe
+  stripe_payment_intent_id varchar [null]
+  stripe_invoice_id varchar [null]
+  
+  amount int // En centavos
+  currency varchar // 'usd', 'eur', etc
+  status payment_status
+  
+  // Metadata
+  description varchar
+  payment_method varchar [null] // 'card', 'paypal', etc
+  
+  paid_at datetime [null]
+  created_at datetime
+  
+  indexes {
+    (user_id, created_at) [name: 'idx_payment_user_date']
+    (stripe_payment_intent_id) [unique, name: 'uniq_stripe_payment']
+  }
+}
+
+// WEBHOOKS DE STRIPE
+Table stripe_webhook_event {
+  id int [pk]
+  stripe_event_id varchar [unique]
+  type varchar // 'payment_intent.succeeded', etc
+  data json
+  processed boolean
+  processed_at datetime [null]
+  error text [null]
+  created_at datetime
+  
+  indexes {
+    (processed, created_at) [name: 'idx_webhook_unprocessed']
+  }
+}
+
+// ANALYTICS (SOLO PREMIUM)
+Table user_analytics_access {
+  id int [pk]
+  user_id int
+  has_access boolean
+  
+  // Vistas de analytics
+  last_viewed_at datetime [null]
+  total_views int
+  
+  // Reportes generados
+  reports_generated int
+  last_report_at datetime [null]
+  
+  indexes {
+    (user_id) [unique, name: 'uniq_user_analytics']
+  }
+}
+
+// NOTIFICACIONES DE LÍMITES
+Table usage_notification {
+  id int [pk]
+  user_id int
+  type varchar // 'approaching_limit', 'limit_reached', 'credits_low'
+  message text
+  threshold_percent int // 80%, 90%, 100%
+  sent_at datetime
+  read_at datetime [null]
+  
+  indexes {
+    (user_id, sent_at) [name: 'idx_notif_user_date']
+  }
+}
+
+/////////////////////////////////////////////////
+// RELACIONES
+/////////////////////////////////////////////////
+// API / DOCUMENT
+Ref: API_document.user_id > API_user.id
+Ref: API_flashcard.document_id > API_document.id
+Ref: API_mcq.document_id > API_document.id
+Ref: API_summary.document_id > API_document.id
+
+// CSV
+Ref: CSV_csvimport.user_id > API_user.id
+Ref: CSV_csvflashcard.user_id > API_user.id
+Ref: CSV_csvflashcard.source_id > CSV_csvimport.id
+
+// VIDEO
+Ref: VIDEO_video.user_id > API_user.id
+Ref: VIDEO_videochunk.video_id > VIDEO_video.id
+Ref: VIDEO_videoflashcard.user_id > API_user.id
+Ref: VIDEO_videoflashcard.video_id > VIDEO_video.id
+Ref: VIDEO_videomcq.video_id > VIDEO_video.id
+Ref: VIDEO_videosummary.video_id > VIDEO_video.id
+Ref: VIDEO_videotranscript.video_id > VIDEO_video.id
+
+// CLOZE / FEYNMAN
+Ref: API_cloze.document_id > API_document.id
+Ref: VIDEO_videocloze.video_id > VIDEO_video.id
+Ref: API_feynman.document_id > API_document.id
+Ref: VIDEO_videofeynman.video_id > VIDEO_video.id
+
+// SPACES
+Ref: core_space.user_id > API_user.id
+Ref: core_space_item.space_id > core_space.id
+Ref: core_space_item.content_type_id > django_content_type.id
+
+// PROGRESO / SESIONES / INTENTOS
+Ref: core_learning_progress.user_id > API_user.id
+Ref: core_learning_progress.content_type_id > django_content_type.id
+Ref: core_study_session.user_id > API_user.id
+Ref: core_study_session.space_id > core_space.id
+Ref: core_attempt.user_id > API_user.id
+Ref: core_attempt.session_id > core_study_session.id
+Ref: core_attempt.content_type_id > django_content_type.id
+
+// XP
+Ref: core_xp_account.user_id > API_user.id
+Ref: core_xp_award.user_id > API_user.id
+Ref: core_xp_award.session_id > core_study_session.id
+
+// PLAN
+Ref: core_study_plan.user_id > API_user.id
+Ref: core_study_plan.space_id > core_space.id
+Ref: core_plan_task.plan_id > core_study_plan.id
+Ref: core_plan_task_item.task_id > core_plan_task.id
+Ref: core_plan_task_item.content_type_id > django_content_type.id
+Ref: core_plan_report.plan_id > core_study_plan.id
+
+/////////////////////////////////////////////////
+// RELACIONES ADICIONALES
+/////////////////////////////////////////////////
+
+// Suscripciones
+Ref: user_subscription.user_id > API_user.id
+Ref: user_subscription.plan_id > subscription_plan.id
+
+// Créditos
+Ref: user_ai_credits.user_id > API_user.id
+Ref: credit_transaction.user_id > API_user.id
+
+// Límites
+Ref: user_usage_limits.user_id > API_user.id
+
+// Pagos
+Ref: payment_history.user_id > API_user.id
+Ref: payment_history.subscription_id > user_subscription.id
+
+// Analytics
+Ref: user_analytics_access.user_id > API_user.id
+
+// Notificaciones
+Ref: usage_notification.user_id > API_user.id
