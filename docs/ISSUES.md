@@ -64,12 +64,12 @@
 
 #### Issue #7: Implementar APIs REST básicas para Spaces
 **Tipo:** Backend | **Prioridad:** High | **Estimación:** 6h
-- [ ] Crear SpaceSerializer
-- [ ] Crear SpaceViewSet con CRUD
-- [ ] Implementar permisos (solo owner)
-- [ ] Agregar paginación
-- [ ] Agregar filtros y búsqueda
-- [ ] Tests de API
+- [x] Crear SpaceSerializer
+- [x] Crear SpaceViewSet con CRUD
+- [x] Implementar permisos (solo owner)
+- [x] Agregar paginación
+- [x] Agregar filtros y búsqueda
+- [x] Tests de API (archivo `CORE/test_api_spaces.py`)
 
 #### Issue #8: Crear tests unitarios base
 **Tipo:** Testing | **Prioridad:** Medium | **Estimación:** 4h
