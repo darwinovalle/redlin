@@ -124,8 +124,8 @@
 - [x] Filtro de duplicados (lemma + casefold)
 - [ ] Servicio `ClozeGenerator.generate(document, max_items)` que persiste
 - [ ] (Opcional) Variante para transcript de Video
-- [ ] Logging básico (n candidatos, descartados, tiempo) 
-- [ ] Tests: genera >=1 ítem con entidad
+- [x] Logging básico (n candidatos, descartados, tiempo) 
+- [x] Tests: genera >=1 ítem con entidad
 - [x] Tests: sin duplicados
 - [x] Tests: distractores no contienen la respuesta
 - [x] Tests: multi-blank mantiene orden de placeholders
