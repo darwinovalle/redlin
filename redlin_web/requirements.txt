@@ -44,3 +44,7 @@ youtube-transcript-api==1.2.2
 yt-dlp==2025.8.20
 celery==5.3.6
 redis==5.0.3
+pytest==8.3.3
+pytest-django==4.9.0
+coverage==7.6.9
+pytest-cov==5.0.0

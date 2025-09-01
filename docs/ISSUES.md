@@ -73,11 +73,11 @@
 
 #### Issue #8: Crear tests unitarios base
 **Tipo:** Testing | **Prioridad:** Medium | **Estimación:** 4h
-- [ ] Setup pytest-django
-- [ ] Tests para modelos
-- [ ] Tests para migraciones
-- [ ] Tests para signals
-- [ ] Configurar coverage reports
+- [x] Setup pytest-django (pytest.ini, conftest.py, requirements)
+- [ ] Tests para modelos (parcial: XP account logic ya cubierto en Django TestCase previo, falta unificar en pytest)
+- [x] Tests para migraciones (test_core_migration_applied)
+- [x] Tests para signals (test_xp_account_signal_creates_account)
+- [x] Configurar coverage reports (.coveragerc, addopts en pytest.ini)
 
 ---
 

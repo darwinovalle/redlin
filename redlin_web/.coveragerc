@@ -1,0 +1,8 @@
+[run]
+branch = True
+source = CORE,API
+omit = */migrations/*,*/tests/*
+
+[report]
+show_missing = True
+skip_covered = True
