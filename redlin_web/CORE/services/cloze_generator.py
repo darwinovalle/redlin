@@ -230,10 +230,76 @@ class ClozeGenerator:
         return selected
 
     def generate(self) -> List[Cloze]:  # pragma: no cover - still stub
-        """Stub: will generate and persist Cloze items.
-        Returns empty list for now.
+        """Generate single-blank Cloze items from document text.
+        Strategy v1: select diverse high-score candidates and replace span with '____'.
+        Returns list of created Cloze objects (may be empty).
         """
-        return []
+        import time
+        start_time = time.time()
+        text = self._get_document_text()
+        if not text or len(text.split()) < 5:
+            logger.info("ClozeGenerator: text too short -> 0 items (doc=%s)", self.document_id if hasattr(self, 'document_id') else self.document.pk)
+            return []
+        nlp = get_nlp("es")
+        base = self._select_base_candidates(text, nlp)
+        self._apply_scoring(base, text, nlp)
+        selected = self._diverse_select(base, self.max_items)
+        created: List[Cloze] = []
+        for cand in selected:
+            answer = cand['text']
+            span_start, span_end = cand['start'], cand['end']
+            blank_text = text[:span_start] + '____' + text[span_end:]
+            difficulty = self._heuristic_difficulty(cand)
+            meta = {
+                'strategy': 'single_blank_v1',
+                'span': [span_start, span_end],
+                'score': cand['score'],
+                'base_score': cand.get('base_score'),
+                'pos': cand.get('pos'),
+                'entity_label': cand.get('entity_label'),
+                'difficulty_calc': difficulty,
+            }
+            cloze = Cloze.objects.create(
+                document=self.document,
+                text_with_blank=blank_text,
+                answer=answer,
+                context='',
+                source_span=text[span_start:span_end],
+                options=[],
+                meta=meta,
+                difficulty=difficulty,
+            )
+            created.append(cloze)
+        logger.info(
+            "ClozeGenerator: created %d items (candidates=%d, selected=%d, time=%.3fs)",
+            len(created), len(base), len(selected), time.time() - start_time
+        )
+        return created
+
+    # --- Helpers ------------------------------------------------------------
+    def _get_document_text(self) -> str:
+        # Use related summary if exists; else try fallback attributes (title)
+        try:
+            if hasattr(self.document, 'summary') and self.document.summary:
+                return getattr(self.document.summary, 'content', '') or ''
+        except Exception:
+            pass
+        # No summary -> attempt attributes that might contain text (custom installs might have 'content')
+        return getattr(self.document, 'content', '') or self.document.title or ''
+
+    def _heuristic_difficulty(self, cand: Candidate) -> str:
+        score = cand.get('score', 1.0)
+        length = len(cand['text'])
+        # Basic rule combining rarity+length+entity
+        if cand.get('entity_label') and score >= 1.2:
+            return 'hard'
+        if length <= 5 and score < 0.9:
+            return 'easy'
+        if score > 1.3 or length > 12:
+            return 'hard'
+        if score < 0.85:
+            return 'easy'
+        return 'medium'
 
 
 __all__ = [
