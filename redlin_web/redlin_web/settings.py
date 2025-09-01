@@ -44,9 +44,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    #MY APPS
     'API',
     'CSV',
     'VIDEO',
+    'CORE',
+    'SUBSCRIPTIONS',
+    'ANALYTICS',
+    #THIRD PARTY APPS
     'nltk',
     'PyPDF2',
     'google.generativeai',
