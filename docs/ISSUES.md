@@ -105,12 +105,35 @@
 **Tipo:** AI/ML | **Prioridad:** High | **Estimación:** 8h
 ```python
 # core/services/cloze_generator.py
-- [ ] Instalar spaCy y descargar modelo
-- [ ] Implementar extracción de entidades
-- [ ] Implementar selección de palabras clave
-- [ ] Crear algoritmo de generación de blanks
-- [ ] Agregar contexto para hints
-- [ ] Tests unitarios del generador
+## Subtareas Detalladas
+- [ ] Migración: extender modelo `Cloze` (fields: `options` JSON, `meta` JSON, `difficulty`)
+- [ ] Actualizar modelo (y decidir si aplicar también en `VideoCloze` o diferir)
+- [ ] Instalar spaCy (lib) en `requirements.txt`
+- [ ] Añadir modelo idioma (ej: `es_core_news_md`) y documentar descarga / wheel
+- [ ] Crear módulo `CORE/services/cloze_generator.py`
+- [ ] Implementar función `get_nlp(lang)` con cache
+- [ ] Implementar extracción candidatos (NER + noun chunks + TF freq) 
+- [ ] Implementar scoring (rarity + entity + length + POS weights)
+- [ ] Implementar selección diversa (evitar lemmas repetidos)
+- [ ] Implementar generación single-blank (placeholder `____`)
+- [ ] Implementar generación distractores (mismo POS / entidad, variaciones numéricas)
+- [ ] Implementar multi-blank por pasaje (placeholders `[[BLANK_i]]` en `text_with_blank`)
+- [ ] Guardar metadata en `meta` (strategy, blanks, spans, source, difficulty)
+- [ ] Heurística de dificultad (easy/medium/hard)
+- [ ] Límite global `max_items` y por pasaje `max_per_passage`
+- [ ] Filtro de duplicados (lemma + casefold)
+- [ ] Servicio `ClozeGenerator.generate(document, max_items)` que persiste
+- [ ] (Opcional) Variante para transcript de Video
+- [ ] Logging básico (n candidatos, descartados, tiempo) 
+- [ ] Tests: genera >=1 ítem con entidad
+- [ ] Tests: sin duplicados
+- [ ] Tests: distractores no contienen la respuesta
+- [ ] Tests: multi-blank mantiene orden de placeholders
+- [ ] Tests: respeta `max_items`
+- [ ] Tests: texto corto devuelve lista vacía
+- [ ] Documentar uso en README interno / comentario módulo
+- [ ] Actualizar Issue #13 dependencia (API generation) con referencia
+- [ ] Revisar cobertura >90% del servicio
 ```
 
 #### Issue #12: Implementar evaluador Feynman con AI
