@@ -108,6 +108,28 @@ class Cloze(models.Model):
     def __str__(self) -> str:  # pragma: no cover - trivial
         return f"Cloze {self.pk} for doc {self.document_id}"
 
+
+class Feynman(models.Model):
+    """User explanation (Feynman technique) tied to a Document.
+
+    prompt: Original question or concept to explain.
+    key_points: Structured JSON (list/dict) of essential points expected.
+    reference: Optional raw text snippet or citation from the document.
+    """
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='feynmans')
+    prompt = models.TextField()
+    key_points = models.JSONField(default=list)  # could be list of strings or dict with weights
+    reference = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['document']),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - simple
+        return f"Feynman {self.pk} doc {self.document_id}"
+
 # Suggested UML Diagram Description:
 # 1. User has a one-to-many relationship with Document.
 # 2. Document has a one-to-one relationship with Summary.

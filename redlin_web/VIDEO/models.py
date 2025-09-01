@@ -54,3 +54,20 @@ class VideoCloze(models.Model):
 
     def __str__(self):  # pragma: no cover - trivial
         return f"VideoCloze {self.pk} for video {self.video_id}"
+
+
+class VideoFeynman(models.Model):
+    """Feynman explanation attempt linked to a Video."""
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='feynmans')
+    prompt = models.TextField()
+    key_points = models.JSONField(default=list)
+    reference = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['video']),
+        ]
+
+    def __str__(self):  # pragma: no cover
+        return f"VideoFeynman {self.pk} video {self.video_id}"

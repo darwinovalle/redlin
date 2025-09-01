@@ -95,11 +95,11 @@
 
 #### Issue #10: Implementar modelos Feynman
 **Tipo:** Backend | **Prioridad:** High | **Estimación:** 4h
-- [ ] Crear modelo API_feynman
-- [ ] Crear modelo VIDEO_videofeynman
-- [ ] Agregar campo JSON para key_points
-- [ ] Crear migraciones
-- [ ] Tests de modelos
+- [x] Crear modelo API_feynman
+- [x] Crear modelo VIDEO_videofeynman
+- [x] Agregar campo JSON para key_points
+- [x] Crear migraciones
+- [x] Tests de modelos
 
 #### Issue #11: Crear generador automático de Cloze
 **Tipo:** AI/ML | **Prioridad:** High | **Estimación:** 8h
