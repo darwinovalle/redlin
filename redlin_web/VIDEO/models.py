@@ -47,6 +47,10 @@ class VideoCloze(models.Model):
     source_span = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    options = models.JSONField(default=list, blank=True)
+    meta = models.JSONField(default=dict, blank=True)
+    difficulty = models.CharField(max_length=10, default='medium', choices=[('easy','Easy'),('medium','Medium'),('hard','Hard')])
+
     class Meta:
         indexes = [
             models.Index(fields=['video']),

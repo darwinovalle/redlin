@@ -22,3 +22,17 @@ venv/
 .vscode/
 .idea/
 .DS_Store
+
+# Testing / Coverage
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# Runtime / Generated
+celerybeat-schedule
+redlin_web/data_backups/*.json
+redlin_web/celerybeat-schedule
+
+# Misc
+*.log
