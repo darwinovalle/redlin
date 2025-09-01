@@ -116,19 +116,19 @@
 - [x] Implementar scoring (rarity + entity + length + POS weights)
 - [x] Implementar selección diversa (evitar lemmas repetidos)
 - [x] Implementar generación single-blank (placeholder `____`)
-- [ ] Implementar generación distractores (mismo POS / entidad, variaciones numéricas)
-- [ ] Implementar multi-blank por pasaje (placeholders `[[BLANK_i]]` en `text_with_blank`)
+- [x] Implementar generación distractores (mismo POS / entidad, variaciones numéricas)
+- [x] Implementar multi-blank por pasaje (placeholders `[[BLANK_i]]` en `text_with_blank`)
 - [x] Guardar metadata en `meta` (strategy, blanks, spans, source, difficulty)
 - [x] Heurística de dificultad (easy/medium/hard)
 - [x] Límite global `max_items` y por pasaje `max_per_passage` (v1 solo global)
-- [ ] Filtro de duplicados (lemma + casefold)
+- [x] Filtro de duplicados (lemma + casefold)
 - [ ] Servicio `ClozeGenerator.generate(document, max_items)` que persiste
 - [ ] (Opcional) Variante para transcript de Video
 - [ ] Logging básico (n candidatos, descartados, tiempo) 
 - [ ] Tests: genera >=1 ítem con entidad
-- [ ] Tests: sin duplicados
-- [ ] Tests: distractores no contienen la respuesta
-- [ ] Tests: multi-blank mantiene orden de placeholders
+- [x] Tests: sin duplicados
+- [x] Tests: distractores no contienen la respuesta
+- [x] Tests: multi-blank mantiene orden de placeholders
 - [x] Tests: respeta `max_items`
 - [x] Tests: texto corto devuelve lista vacía
 - [ ] Documentar uso en README interno / comentario módulo
