@@ -20,19 +20,47 @@ except Exception:  # pragma: no cover
     spacy = None  # type: ignore
 
 from API.models import Document, Cloze
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+_NLP_CACHE: Dict[str, Any] = {}
 
 
 def get_nlp(lang: str = "es"):
     """Lazy load and cache spaCy model.
-    For now we return None if spaCy not installed; logic will be expanded later.
+    Attempts to load installed model (e.g. 'es_core_news_md'); falls back to blank pipeline.
+    Safe to call multiple times; returns same object instance per language.
     """
-    # TODO: implement global cache and model loading (Issue #11)
-    if spacy is None:
+    if lang in _NLP_CACHE:
+        return _NLP_CACHE[lang]
+    if spacy is None:  # library not available
+        logger.warning("spaCy not installed; returning None for NLP model %s", lang)
         return None
-    try:
-        return spacy.blank(lang)  # placeholder until real model added
-    except Exception:
-        return None
+    preferred_models = {
+        "es": ["es_core_news_md", "es_core_news_sm"],
+        "en": ["en_core_web_md", "en_core_web_sm"],
+    }
+    model_names = preferred_models.get(lang, [])
+    nlp_obj = None
+    for name in model_names:
+        try:
+            nlp_obj = spacy.load(name)  # type: ignore
+            logger.info("Loaded spaCy model '%s' for lang=%s", name, lang)
+            break
+        except Exception:
+            continue
+    if nlp_obj is None:
+        # fallback blank
+        try:
+            nlp_obj = spacy.blank(lang)  # type: ignore
+            logger.info("Using blank spaCy pipeline for lang=%s", lang)
+        except Exception:
+            logger.error("Failed to create blank spaCy model for lang=%s", lang)
+            return None
+    _NLP_CACHE[lang] = nlp_obj
+    return nlp_obj
 
 
 Candidate = Dict[str, Any]

@@ -1,6 +1,6 @@
 import pytest
 
-from CORE.services.cloze_generator import extract_candidates, compute_frequency_scores
+from CORE.services.cloze_generator import extract_candidates, compute_frequency_scores, get_nlp
 
 
 def test_extract_candidates_basic_without_spacy():
@@ -22,3 +22,11 @@ def test_compute_frequency_scores_scaling():
     assert freq["alpha"] == 1.0  # most frequent scaled to 1
     assert 0 < freq["beta"] < 1
     assert 0 < freq["gamma"] < 1
+
+
+def test_get_nlp_cache_idempotent():
+    n1 = get_nlp("es")
+    n2 = get_nlp("es")
+    if n1 is None:
+        pytest.skip("spaCy not installed in test environment")
+    assert n1 is n2, "get_nlp should return cached instance for same language"
