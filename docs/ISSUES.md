@@ -113,8 +113,8 @@
 - [x] Crear módulo `CORE/services/cloze_generator.py`
 - [x] Implementar función `get_nlp(lang)` con cache
 - [x] Implementar extracción candidatos (NER + noun chunks + TF freq) 
-- [ ] Implementar scoring (rarity + entity + length + POS weights)
-- [ ] Implementar selección diversa (evitar lemmas repetidos)
+- [x] Implementar scoring (rarity + entity + length + POS weights)
+- [x] Implementar selección diversa (evitar lemmas repetidos)
 - [ ] Implementar generación single-blank (placeholder `____`)
 - [ ] Implementar generación distractores (mismo POS / entidad, variaciones numéricas)
 - [ ] Implementar multi-blank por pasaje (placeholders `[[BLANK_i]]` en `text_with_blank`)
