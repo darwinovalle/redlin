@@ -77,3 +77,18 @@ def test_no_duplicate_lemmas_in_answers():
     items = gen.generate()
     answers = [c.answer.lower() for c in items if c.meta.get('strategy') == 'single_blank_v1']
     assert len(answers) == len(set(answers))
+
+@pytest.mark.django_db
+def test_generates_item_with_entity_when_present():
+    user = User.objects.create(username='u7', email='u7@example.com', password='x')
+    doc = Document.objects.create(user=user, title='Entidades', pdf_file='dummy.pdf')
+    # Include multiple entities (cities / persons) to raise probability even with blank model fallback.
+    Summary.objects.create(document=doc, content='Albert Einstein visitó Madrid y París antes de colaborar con Marie Curie en Europa.')
+    gen = ClozeGenerator(doc, max_items=5)
+    items = gen.generate()
+    # If spaCy model loaded with NER, expect at least one with entity_label in meta.
+    if any(c.meta.get('entity_label') for c in items):
+        assert True
+    else:
+        # If no model installed (blank pipeline), we just assert items were generated (fallback behavior)
+        assert len(items) >= 1

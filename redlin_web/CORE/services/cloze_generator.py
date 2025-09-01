@@ -356,8 +356,10 @@ class ClozeGenerator:
             return []
         nlp = get_nlp("es")
         base = self._select_base_candidates(text, nlp)
+        total_candidates = len(base)
         self._apply_scoring(base, text, nlp)
         selected = self._diverse_select(base, self.max_items, nlp=nlp, text=text)
+        discarded = total_candidates - len(selected)
         created: List[Cloze] = []
         for cand in selected:
             answer = cand['text']
@@ -393,9 +395,17 @@ class ClozeGenerator:
             mb = self._create_multi_blank(text, base, nlp)
             if mb:
                 created.append(mb)
+        multi_count = 1 if any(c.meta.get('strategy') == 'multi_blank_v1' for c in created) else 0
+        total_distractors = sum(len(c.options) for c in created)
         logger.info(
-            "ClozeGenerator: created %d items (candidates=%d, selected=%d, time=%.3fs)",
-            len(created), len(base), len(selected), time.time() - start_time
+            "ClozeGenerator summary doc=%s candidates=%d discarded=%d singles=%d multi=%d distractors=%d time=%.3fs",
+            self.document.pk,
+            total_candidates,
+            discarded,
+            len([c for c in created if c.meta.get('strategy') == 'single_blank_v1']),
+            multi_count,
+            total_distractors,
+            time.time() - start_time,
         )
         return created
 
