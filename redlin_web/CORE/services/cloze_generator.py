@@ -10,7 +10,7 @@ Pipeline (future):
 Current minimal stub returns empty list (placeholder for tests TDD approach).
 """
 from __future__ import annotations
-from typing import List, Optional, Iterable, Dict, Any, Tuple
+from typing import List, Optional, Iterable, Dict, Any, Tuple, Set
 import math
 import re
 
@@ -145,14 +145,16 @@ def extract_candidates(text: str, nlp=None, limit: int = 100) -> List[Candidate]
     candidates: List[Candidate] = []
     for start, end, span_text in spans:
         base = span_text.lower()
-        score = 1.0 - freq_scores.get(base, 0.0) * 0.5  # rarer -> higher
+        rarity = 1.0 - freq_scores.get(base, 0.0) * 0.5  # rarer -> closer to 1
         length_bonus = min(len(span_text) / 15.0, 1.0) * 0.2
-        final_score = score + length_bonus
+        # entity / POS bonuses computed later if doc available; store raw parts
+        base_score = rarity + length_bonus
         candidates.append({
             "text": span_text,
             "start": start,
             "end": end,
-            "score": round(final_score, 4),
+            "base_score": round(base_score, 4),
+            "score": round(base_score, 4),  # may be updated
         })
     # Deduplicate by text + position
     seen = set()
@@ -175,6 +177,57 @@ class ClozeGenerator:
 
     def _select_base_candidates(self, text: str, nlp) -> List[Candidate]:
         return extract_candidates(text, nlp=nlp, limit=self.max_items * 4)
+
+    # --- Scoring & selection -------------------------------------------------
+    def _apply_scoring(self, candidates: List[Candidate], text: str, nlp) -> None:
+        if not candidates:
+            return
+        doc = None
+        if nlp is not None:
+            try:
+                doc = nlp(text)
+            except Exception:
+                doc = None
+        ent_spans = []
+        if doc is not None:
+            ent_spans = [(e.start_char, e.end_char, e.label_) for e in getattr(doc, 'ents', [])]
+        # Build quick index
+        ent_index = {(s, e): label for s, e, label in ent_spans}
+        POS_WEIGHTS = {
+            'PROPN': 0.35,
+            'NOUN': 0.25,
+            'VERB': 0.15,
+            'NUM': 0.10,
+        }
+        for c in candidates:
+            bonus = 0.0
+            if (c['start'], c['end']) in ent_index:
+                bonus += 0.4  # entity bonus
+                c['entity_label'] = ent_index[(c['start'], c['end'])]
+            if doc is not None:
+                # find token covering start
+                try:
+                    span_tokens = [t for t in doc if t.idx >= c['start'] and t.idx + len(t.text) <= c['end']]
+                    if span_tokens:
+                        head_pos = span_tokens[0].pos_  # type: ignore
+                        bonus += POS_WEIGHTS.get(head_pos, 0.0)
+                        c['pos'] = head_pos
+                except Exception:
+                    pass
+            c['score'] = round(c['base_score'] + bonus, 4)
+
+    def _diverse_select(self, candidates: List[Candidate], limit: int) -> List[Candidate]:
+        selected: List[Candidate] = []
+        seen_lemmas: Set[str] = set()
+        for c in sorted(candidates, key=lambda x: x['score'], reverse=True):
+            lemma_key = c['text'].lower()
+            if lemma_key in seen_lemmas:
+                continue
+            seen_lemmas.add(lemma_key)
+            selected.append(c)
+            if len(selected) >= limit:
+                break
+        return selected
 
     def generate(self) -> List[Cloze]:  # pragma: no cover - still stub
         """Stub: will generate and persist Cloze items.

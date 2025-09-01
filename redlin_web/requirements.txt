@@ -50,3 +50,4 @@ coverage==7.6.9
 pytest-cov==5.0.0
 spacy==3.7.4
 spacy-spanish-lemmatizer==0.7.0
+es-core-news-md==3.7.0
