@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import List, Optional, Iterable, Dict, Any, Tuple, Set
 import math
 import re
+import random
 
 try:  # spaCy optional at this stage (tests can patch)
     import spacy  # type: ignore
@@ -216,11 +217,24 @@ class ClozeGenerator:
                     pass
             c['score'] = round(c['base_score'] + bonus, 4)
 
-    def _diverse_select(self, candidates: List[Candidate], limit: int) -> List[Candidate]:
+    def _diverse_select(self, candidates: List[Candidate], limit: int, nlp=None, text: str = "") -> List[Candidate]:
         selected: List[Candidate] = []
         seen_lemmas: Set[str] = set()
+        lemma_map: Dict[Tuple[int,int], str] = {}
+        doc = None
+        if nlp is not None and text:
+            try:
+                doc = nlp(text)
+            except Exception:
+                doc = None
+        if doc is not None:
+            for t in doc:
+                lemma_map[(t.idx, t.idx + len(t.text))] = t.lemma_.lower() if t.lemma_ else t.text.lower()
         for c in sorted(candidates, key=lambda x: x['score'], reverse=True):
             lemma_key = c['text'].lower()
+            # attempt lemma per token
+            if doc is not None:
+                lemma_key = lemma_map.get((c['start'], c['end']), lemma_key)
             if lemma_key in seen_lemmas:
                 continue
             seen_lemmas.add(lemma_key)
@@ -229,7 +243,107 @@ class ClozeGenerator:
                 break
         return selected
 
-    def generate(self) -> List[Cloze]:  # pragma: no cover - still stub
+    # --- Distractors --------------------------------------------------------
+    def _build_distractors(self, answer: str, base_candidates: List[Candidate], cand: Candidate, nlp=None, count: int = 3) -> List[str]:
+        answer_lower = answer.lower()
+        distractors: List[str] = []
+        pos = cand.get('pos')
+        entity_label = cand.get('entity_label')
+        pool: List[str] = []
+        for c in base_candidates:
+            txt = c['text']
+            if txt.lower() == answer_lower:
+                continue
+            if entity_label and c.get('entity_label') != entity_label:
+                continue
+            if pos and c.get('pos') != pos:
+                continue
+            if len(txt.split()) > 4:  # keep distractors concise
+                continue
+            pool.append(txt)
+        # fallback: relax constraints if not enough
+        if len(pool) < count:
+            for c in base_candidates:
+                txt = c['text']
+                if txt.lower() == answer_lower:
+                    continue
+                if txt in pool:
+                    continue
+                if len(txt) < 3 or len(txt.split()) > 5:
+                    continue
+                pool.append(txt)
+                if len(pool) >= count * 4:
+                    break
+        random.shuffle(pool)
+        for p in pool:
+            if p.lower() == answer_lower:
+                continue
+            if p not in distractors:
+                distractors.append(p)
+            if len(distractors) >= count:
+                break
+        # numeric variation case
+        if len(distractors) < count and answer.isdigit():
+            base_num = int(answer)
+            deltas = [1,2,5,10]
+            for d in deltas:
+                variant = str(base_num + d)
+                if variant != answer and variant not in distractors:
+                    distractors.append(variant)
+                if len(distractors) >= count:
+                    break
+        return distractors
+
+    # --- Multi-blank --------------------------------------------------------
+    def _create_multi_blank(self, text: str, candidates: List[Candidate], nlp) -> Optional[Cloze]:
+        usable = sorted(candidates, key=lambda x: x['score'], reverse=True)[:10]
+        usable.sort(key=lambda x: x['start'])
+        chosen: List[Candidate] = []
+        last_end = -1
+        for c in usable:
+            if c['start'] >= last_end:
+                chosen.append(c)
+                last_end = c['end']
+            if len(chosen) >= 3:
+                break
+        if len(chosen) < 2:
+            return None
+        # build text with placeholders [[BLANK_i]]
+        parts = []
+        cursor = 0
+        blanks_meta = []
+        for i, c in enumerate(chosen):
+            parts.append(text[cursor:c['start']])
+            placeholder = f"[[BLANK_{i+1}]]"
+            parts.append(placeholder)
+            blanks_meta.append({
+                'index': i+1,
+                'answer': c['text'],
+                'span': [c['start'], c['end']],
+                'score': c['score'],
+            })
+            cursor = c['end']
+        parts.append(text[cursor:])
+        mb_text = ''.join(parts)
+        meta = {
+            'strategy': 'multi_blank_v1',
+            'blanks': blanks_meta,
+            'count': len(blanks_meta),
+        }
+        difficulty = 'hard' if len(blanks_meta) >= 3 else 'medium'
+        cloze = Cloze.objects.create(
+            document=self.document,
+            text_with_blank=mb_text,
+            answer=blanks_meta[0]['answer'],  # principal
+            context='',
+            source_span=None,
+            options=[],
+            meta=meta,
+            difficulty=difficulty,
+        )
+        return cloze
+
+    def generate(self) -> List[Cloze]:  # pragma: no cover
         """Generate single-blank Cloze items from document text.
         Strategy v1: select diverse high-score candidates and replace span with '____'.
         Returns list of created Cloze objects (may be empty).
@@ -243,13 +357,14 @@ class ClozeGenerator:
         nlp = get_nlp("es")
         base = self._select_base_candidates(text, nlp)
         self._apply_scoring(base, text, nlp)
-        selected = self._diverse_select(base, self.max_items)
+        selected = self._diverse_select(base, self.max_items, nlp=nlp, text=text)
         created: List[Cloze] = []
         for cand in selected:
             answer = cand['text']
             span_start, span_end = cand['start'], cand['end']
             blank_text = text[:span_start] + '____' + text[span_end:]
             difficulty = self._heuristic_difficulty(cand)
+            distractors = self._build_distractors(answer, base, cand, nlp=nlp)
             meta = {
                 'strategy': 'single_blank_v1',
                 'span': [span_start, span_end],
@@ -258,6 +373,7 @@ class ClozeGenerator:
                 'pos': cand.get('pos'),
                 'entity_label': cand.get('entity_label'),
                 'difficulty_calc': difficulty,
+                'distractor_source_size': len(distractors),
             }
             cloze = Cloze.objects.create(
                 document=self.document,
@@ -265,11 +381,18 @@ class ClozeGenerator:
                 answer=answer,
                 context='',
                 source_span=text[span_start:span_end],
-                options=[],
+                options=distractors,
                 meta=meta,
                 difficulty=difficulty,
             )
             created.append(cloze)
+            if len(created) >= self.max_items:
+                break
+        # Multi-blank (count as one) if capacity remains
+        if len(created) < self.max_items:
+            mb = self._create_multi_blank(text, base, nlp)
+            if mb:
+                created.append(mb)
         logger.info(
             "ClozeGenerator: created %d items (candidates=%d, selected=%d, time=%.3fs)",
             len(created), len(base), len(selected), time.time() - start_time
