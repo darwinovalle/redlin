@@ -36,3 +36,21 @@ class VideoMCQ(models.Model):
 
     def __str__(self):
         return self.question
+
+
+class VideoCloze(models.Model):
+    """Fill-in-the-blank generated from a Video transcript/chunk."""
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='clozes')
+    text_with_blank = models.TextField()
+    answer = models.CharField(max_length=255)
+    context = models.TextField(blank=True, default='')
+    source_span = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['video']),
+        ]
+
+    def __str__(self):  # pragma: no cover - trivial
+        return f"VideoCloze {self.pk} for video {self.video_id}"

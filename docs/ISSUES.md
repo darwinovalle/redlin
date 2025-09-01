@@ -87,11 +87,11 @@
 
 #### Issue #9: Implementar modelos Cloze
 **Tipo:** Backend | **Prioridad:** High | **Estimación:** 4h
-- [ ] Crear modelo API_cloze
-- [ ] Crear modelo VIDEO_videocloze
-- [ ] Agregar relaciones con documents/videos
-- [ ] Crear migraciones
-- [ ] Tests de modelos
+- [x] Crear modelo API_cloze
+- [x] Crear modelo VIDEO_videocloze
+- [x] Agregar relaciones con documents/videos
+- [x] Crear migraciones
+- [x] Tests de modelos
 
 #### Issue #10: Implementar modelos Feynman
 **Tipo:** Backend | **Prioridad:** High | **Estimación:** 4h

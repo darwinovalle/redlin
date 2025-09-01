@@ -84,6 +84,30 @@ class MCQ(models.Model):
     def __str__(self):
         return self.question
 
+
+class Cloze(models.Model):
+    """Fill-in-the-blank generated from a Document.
+
+    text_with_blank: Text containing a placeholder (e.g. 'The capital of France is ____.')
+    answer: Correct answer expected to fill the blank
+    context: Optional extended context or explanation snippet
+    source_span: Optional raw citation / substring from the source document
+    """
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='clozes')
+    text_with_blank = models.TextField()
+    answer = models.CharField(max_length=255)
+    context = models.TextField(blank=True, default='')
+    source_span = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['document']),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - trivial
+        return f"Cloze {self.pk} for doc {self.document_id}"
+
 # Suggested UML Diagram Description:
 # 1. User has a one-to-many relationship with Document.
 # 2. Document has a one-to-one relationship with Summary.
