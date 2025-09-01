@@ -106,13 +106,13 @@
 ```python
 # core/services/cloze_generator.py
 ## Subtareas Detalladas
-- [ ] Migración: extender modelo `Cloze` (fields: `options` JSON, `meta` JSON, `difficulty`)
-- [ ] Actualizar modelo (y decidir si aplicar también en `VideoCloze` o diferir)
-- [ ] Instalar spaCy (lib) en `requirements.txt`
+- [x] Migración: extender modelo `Cloze` (fields: `options` JSON, `meta` JSON, `difficulty`)
+- [x] Actualizar modelo (y decidir si aplicar también en `VideoCloze` o diferir) (aplicado también a VideoCloze)
+- [x] Instalar spaCy (lib) en `requirements.txt`
 - [ ] Añadir modelo idioma (ej: `es_core_news_md`) y documentar descarga / wheel
-- [ ] Crear módulo `CORE/services/cloze_generator.py`
-- [ ] Implementar función `get_nlp(lang)` con cache
-- [ ] Implementar extracción candidatos (NER + noun chunks + TF freq) 
+- [x] Crear módulo `CORE/services/cloze_generator.py`
+- [x] Implementar función `get_nlp(lang)` con cache
+- [x] Implementar extracción candidatos (NER + noun chunks + TF freq) 
 - [ ] Implementar scoring (rarity + entity + length + POS weights)
 - [ ] Implementar selección diversa (evitar lemmas repetidos)
 - [ ] Implementar generación single-blank (placeholder `____`)
