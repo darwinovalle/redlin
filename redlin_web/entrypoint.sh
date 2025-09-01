@@ -30,5 +30,12 @@ if [ "${DJANGO_COLLECTSTATIC}" = "1" ]; then
   python manage.py collectstatic --noinput
 fi
 
-# Levanta el servidor de desarrollo
+# Si el primer argumento es 'celery', ejecutar Celery directamente (worker o beat)
+if [ "$1" = "celery" ]; then
+  shift
+  echo "Launching Celery: celery $@"
+  exec celery "$@"
+fi
+
+# Levanta el servidor de desarrollo por defecto
 exec python manage.py runserver 0.0.0.0:8000

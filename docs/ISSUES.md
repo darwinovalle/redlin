@@ -55,12 +55,12 @@
 
 #### Issue #6: Configurar Celery y Redis
 **Tipo:** DevOps | **Prioridad:** High | **Estimación:** 4h
-- [ ] Instalar y configurar Redis localmente
-- [ ] Configurar Celery en Django
-- [ ] Crear celery.py y tasks.py base
-- [ ] Configurar Celery Beat para tareas periódicas
-- [ ] Crear docker-compose para desarrollo
-- [ ] Documentar comandos de Celery
+- [x] Instalar y configurar Redis localmente
+- [x] Configurar Celery en Django
+- [x] Crear celery.py y tasks.py base
+- [x] Configurar Celery Beat para tareas periódicas
+- [x] Crear docker-compose para desarrollo
+- [x] Documentar comandos de Celery
 
 #### Issue #7: Implementar APIs REST básicas para Spaces
 **Tipo:** Backend | **Prioridad:** High | **Estimación:** 6h

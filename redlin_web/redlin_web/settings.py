@@ -204,6 +204,26 @@ SPECTACULAR_SETTINGS = {
     },
 }
 
+# Celery / Redis configuration (Issue #6)
+REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
+REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
+REDIS_DB = int(os.getenv('REDIS_DB', '0'))
+REDIS_URL = os.getenv('REDIS_URL', f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}')
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TIME_LIMIT = 60 * 10  # 10 minutos
+CELERY_TASK_SOFT_TIME_LIMIT = 60 * 8
+CELERY_BEAT_SCHEDULER = 'celery.beat:PersistentScheduler'
+CELERY_BEAT_SCHEDULE_FILENAME = str(BASE_DIR / 'celerybeat-schedule')
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_DEFAULT_QUEUE = 'default'
+
+
 # CSRF trusted origins for cross-site POSTs from the frontend dev server
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
