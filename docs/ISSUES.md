@@ -115,12 +115,12 @@
 - [x] Implementar extracción candidatos (NER + noun chunks + TF freq) 
 - [x] Implementar scoring (rarity + entity + length + POS weights)
 - [x] Implementar selección diversa (evitar lemmas repetidos)
-- [ ] Implementar generación single-blank (placeholder `____`)
+- [x] Implementar generación single-blank (placeholder `____`)
 - [ ] Implementar generación distractores (mismo POS / entidad, variaciones numéricas)
 - [ ] Implementar multi-blank por pasaje (placeholders `[[BLANK_i]]` en `text_with_blank`)
-- [ ] Guardar metadata en `meta` (strategy, blanks, spans, source, difficulty)
-- [ ] Heurística de dificultad (easy/medium/hard)
-- [ ] Límite global `max_items` y por pasaje `max_per_passage`
+- [x] Guardar metadata en `meta` (strategy, blanks, spans, source, difficulty)
+- [x] Heurística de dificultad (easy/medium/hard)
+- [x] Límite global `max_items` y por pasaje `max_per_passage` (v1 solo global)
 - [ ] Filtro de duplicados (lemma + casefold)
 - [ ] Servicio `ClozeGenerator.generate(document, max_items)` que persiste
 - [ ] (Opcional) Variante para transcript de Video
@@ -129,8 +129,8 @@
 - [ ] Tests: sin duplicados
 - [ ] Tests: distractores no contienen la respuesta
 - [ ] Tests: multi-blank mantiene orden de placeholders
-- [ ] Tests: respeta `max_items`
-- [ ] Tests: texto corto devuelve lista vacía
+- [x] Tests: respeta `max_items`
+- [x] Tests: texto corto devuelve lista vacía
 - [ ] Documentar uso en README interno / comentario módulo
 - [ ] Actualizar Issue #13 dependencia (API generation) con referencia
 - [ ] Revisar cobertura >90% del servicio
