@@ -146,24 +146,71 @@
 - [ ] Implementar retry logic
 - [ ] Mock tests para evaluador
 
-#### Issue #13: APIs para Cloze
-**Tipo:** Backend | **Prioridad:** High | **Estimación:** 6h
-- [ ] Endpoint POST `/api/cloze/generate/`
-- [ ] Endpoint GET `/api/cloze/list/`
-- [ ] Endpoint POST `/api/cloze/validate/`
-- [ ] Serializers para Cloze
-- [ ] Paginación y filtros
-- [ ] Tests de integración
- - [x] Dependencia: Generador Cloze (#11) listo (usar `ClozeGenerator.generate(document, max_items)`)
+#### Issue #13: APIs para Interacción con Cloze
+**Tipo:** Backend | **Prioridad:** High | **Estimación:** 4h
+- [x] **Generación Automática:** La generación de Clozes se inicia automáticamente al crear un Documento o Video (ver `Issue #11` y `Issue #14.5`). El endpoint `POST /api/cloze/generate/` es obsoleto.
+- [x] **Listado de Clozes:** Los Clozes se obtienen a través de los endpoints existentes: `GET /api/documents/{id}/clozes/` y `GET /api/video/videos/{id}/clozes/`. El endpoint genérico `/api/cloze/list/` no es necesario.
+ - [x] **Endpoint de Validación:** Implementar `POST /api/cloze/validate/` para verificar la respuesta de un usuario a un Cloze específico durante una sesión de estudio. (Implementado, tests verdes)
+ - [x] **Serializers:** Crear `ClozeSerializer` y `VideoClozeSerializer` si aún no existen, para los endpoints de listado y validación. (Separados por app, sin duplicación cruzada)
+ - [x] **Tests de Integración:** Añadir tests para el endpoint de validación. (API y VIDEO cubiertos; legacy duplicados eliminados)
+ - [x] Dependencia: Generador Cloze (#11) listo y integrado en el pipeline de ingesta.
 
-#### Issue #14: APIs para Feynman
-**Tipo:** Backend | **Prioridad:** High | **Estimación:** 6h
-- [ ] Endpoint POST `/api/feynman/evaluate/`
-- [ ] Endpoint GET `/api/feynman/prompts/`
-- [ ] Endpoint GET `/api/feynman/history/`
-- [ ] Serializers para Feynman
-- [ ] Guardar intentos en CoreAttempt
-- [ ] Tests de integración
+#### Issue #14: APIs para Feynman (Documentos y Videos)
+**Tipo:** Backend | **Prioridad:** High | **Estimación:** 8h
+- [ ] **API (Documentos):**
+    - [ ] Endpoint POST `/api/documents/{id}/feynman/evaluate/`
+    - [ ] Endpoint GET `/api/documents/{id}/feynman/prompts/`
+    - [ ] Endpoint GET `/api/documents/{id}/feynman/history/`
+- [ ] **VIDEO (Videos):**
+    - [ ] Endpoint POST `/api/video/videos/{id}/feynman/evaluate/`
+    - [ ] Endpoint GET `/api/video/videos/{id}/feynman/prompts/`
+    - [ ] Endpoint GET `/api/video/videos/{id}/feynman/history/`
+- [ ] **Componentes Comunes:**
+    - [ ] Serializers para `APIFeynman` y `VideoFeynman`.
+    - [ ] Lógica para guardar intentos en `CoreAttempt`.
+    - [ ] Tests de integración para ambas rutas.
+
+#### Issue #14.5: Pipeline Asíncrono de Ingesta de Video (Escalabilidad y Cloze Automático)
+**Tipo:** Backend/DevOps | **Prioridad:** High | **Estimación:** 10h
+Objetivo: Transformar el procesamiento síncrono actual de videos (summary + MCQs) en un pipeline robusto y extensible que incluya generación automática de VideoCloze y soporte futuro para Feynman, manejando picos (≥1000 requests) sin bloquear el API.
+
+Subtareas Técnicas:
+- [ ] Arquitectura Celery definida (diagramita + doc interna) (colas: video_ingest, video_ai, nlp_local)
+- [ ] Crear `VIDEO/tasks.py` con tareas: `fetch_transcript`, `generate_summary`, `generate_mcqs`, `generate_clozes`, `generate_feynman` (stub), `finalize`
+- [ ] Encadenar tareas (chain / chord) `fetch -> (summary|mcqs en paralelo opcional) -> clozes -> feynman(stub) -> finalize`
+- [ ] Añadir generación automática de `VideoCloze` (usa `VideoClozeGenerator`) en tarea `generate_clozes`
+- [ ] Ajustar `VideoViewSet.perform_create` para encolar `process_full_pipeline.delay(video_id)` y responder rápido (estado `pending`)
+- [ ] Implementar lock/idempotencia (prevent doble ejecución) (campo DB o Redis SETNX)
+- [ ] Extender modelo `Video` o meta JSON para flags de progreso: `transcript_ok`, `summary_ok`, `mcqs_ok`, `clozes_ok`, `feynman_ok`, `errors` (lista)
+- [ ] Actualizar `processing_status` granular (pending, processing, partial, completed, failed)
+- [ ] Retries con backoff para errores de rate limit LLM (usar countdown exponencial / parse retry hint)
+- [ ] Configurar rutas Celery (`CELERY_TASK_ROUTES`) y concurrencia específica por cola
+- [ ] Cargar spaCy solo una vez por worker (lazy global) para performance
+- [ ] Manejo de fallos parciales: continuar si summary o mcqs fallan; registrar en `errors`
+- [ ] Endpoint/acción status: reutilizar `full_details` o nuevo `/api/video/videos/{id}/status/` devolviendo progreso
+- [ ] Incluir `clozes` en `full_details` (además de mcqs y summary)
+- [ ] Filtro `?video=<id>` en `/api/cloze/` para listar `VideoCloze` (sin romper filtros existentes)
+- [ ] Parámetros para escalado: `MAX_VIDEO_MCQS`, `MAX_VIDEO_CLOZES` (settings)
+- [ ] Logging estructurado (JSON) con tiempos y conteos (summary_tokens, mcq_count, cloze_count)
+- [ ] Métricas básicas (duración etapas) guardadas en meta para futura analytics
+- [ ] Tests modo Celery eager: pipeline completo crea summary, mcqs y clozes
+- [ ] Tests de fallo (transcript vacío, rate limit simulado) verifican estado `failed` o `partial`
+- [ ] Test filtro `/api/cloze/?video=` devuelve solo `VideoCloze`
+- [ ] Documentar pipeline y reprocess en README interno / comentario módulo
+- [ ] Acción `reprocess` ajustada: re‑enqueue solo pasos faltantes (si transcript_ok True salta fetch)
+- [ ] Validar cobertura >80% en `VIDEO/tasks.py` y nueva lógica
+
+Fase Futuro (no bloquear este issue):
+- [ ] Integrar generación/evaluación Feynman real (depende Issue #14)
+- [ ] WebSocket/Server-Sent Events para progreso en tiempo real
+- [ ] Cuota/consumo de créditos AI (dependerá Issue #34)
+
+Riesgos / Mitigaciones:
+- Carga LLM masiva → limitar concurrencia cola `video_ai`
+- Duplicación de pipeline → lock/idempotencia
+- Bloqueo DB por batch inserts → usar `bulk_create` y transacciones atómicas por etapa
+- Retries excesivos → límite global de reintentos + registro en `errors`
+
 
 #### Issue #15: Frontend componente Cloze
 **Tipo:** Frontend | **Prioridad:** High | **Estimación:** 8h
