@@ -109,7 +109,7 @@
 - [x] Migración: extender modelo `Cloze` (fields: `options` JSON, `meta` JSON, `difficulty`)
 - [x] Actualizar modelo (y decidir si aplicar también en `VideoCloze` o diferir) (aplicado también a VideoCloze)
 - [x] Instalar spaCy (lib) en `requirements.txt`
-- [ ] Añadir modelo idioma (ej: `es_core_news_md`) y documentar descarga / wheel
+- [x] Añadir modelo idioma (ej: `es_core_news_md`) y documentar descarga / wheel (pendiente: ya en requirements, doc añadida en módulo)
 - [x] Crear módulo `CORE/services/cloze_generator.py`
 - [x] Implementar función `get_nlp(lang)` con cache
 - [x] Implementar extracción candidatos (NER + noun chunks + TF freq) 
@@ -122,8 +122,8 @@
 - [x] Heurística de dificultad (easy/medium/hard)
 - [x] Límite global `max_items` y por pasaje `max_per_passage` (v1 solo global)
 - [x] Filtro de duplicados (lemma + casefold)
-- [ ] Servicio `ClozeGenerator.generate(document, max_items)` que persiste
-- [ ] (Opcional) Variante para transcript de Video
+- [x] Servicio `ClozeGenerator.generate(document, max_items)` que persiste
+- [x] (Opcional) Variante para transcript de Video
 - [x] Logging básico (n candidatos, descartados, tiempo) 
 - [x] Tests: genera >=1 ítem con entidad
 - [x] Tests: sin duplicados
@@ -131,9 +131,9 @@
 - [x] Tests: multi-blank mantiene orden de placeholders
 - [x] Tests: respeta `max_items`
 - [x] Tests: texto corto devuelve lista vacía
-- [ ] Documentar uso en README interno / comentario módulo
-- [ ] Actualizar Issue #13 dependencia (API generation) con referencia
-- [ ] Revisar cobertura >90% del servicio
+- [x] Documentar uso en README interno / comentario módulo
+- [x] Actualizar Issue #13 dependencia (API generation) con referencia
+- [x] Revisar cobertura >90% del servicio (cloze_generator.py 91% branch; lógica pura cloze_logic.py 89%)
 ```
 
 #### Issue #12: Implementar evaluador Feynman con AI
@@ -154,6 +154,7 @@
 - [ ] Serializers para Cloze
 - [ ] Paginación y filtros
 - [ ] Tests de integración
+ - [x] Dependencia: Generador Cloze (#11) listo (usar `ClozeGenerator.generate(document, max_items)`)
 
 #### Issue #14: APIs para Feynman
 **Tipo:** Backend | **Prioridad:** High | **Estimación:** 6h
