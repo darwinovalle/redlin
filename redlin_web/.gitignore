@@ -1,3 +1,42 @@
 .env
 documents/
 db.sqlite3
+
+# Sensibles
+.env
+key.txt
+redlin_web/.env
+redlin-front/redlin-front/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+redlin_web/db.sqlite3
+redlin_web/documents/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Entornos / IDE
+.venv/
+venv/
+.vscode/
+.idea/
+.DS_Store
+
+# Testing / Coverage
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# Runtime / Generated
+celerybeat-schedule
+redlin_web/data_backups/*.json
+redlin_web/celerybeat-schedule
+
+# Misc
+*.log
