@@ -4,6 +4,7 @@ import { videoService } from '../../services/api/video';
 import { Box, Typography, CircularProgress, Chip, Tabs, Tab, Divider } from '@mui/material';
 import VideoSummary from '../../components/Video/VideoSummary';
 import VideoQuiz from '../../components/Video/VideoQuiz';
+import VideoClozePanel from '../../components/Video/VideoClozePanel';
 import '../Dashboard/dashboard.css';
 
 const VideoStudy = () => {
@@ -70,6 +71,7 @@ const VideoStudy = () => {
           >
             <Tab label="SUMMARY" />
             <Tab label="QUIZ" />
+            <Tab label="CLOZE" />
           </Tabs>
           <div className="progress-strip" data-role="progress">
             <div className="progress-text">&nbsp;</div>
@@ -83,9 +85,8 @@ const VideoStudy = () => {
           {tab===0 && (
             <VideoSummary summary={summary} loading={false} error={null} />
           )}
-          {tab===1 && (
-            <VideoQuiz mcqs={mcqs} />
-          )}
+          {tab===1 && <VideoQuiz mcqs={mcqs} />}
+          {tab===2 && <VideoClozePanel videoId={video.id} />}
         </div>
       </div>
     </Box>

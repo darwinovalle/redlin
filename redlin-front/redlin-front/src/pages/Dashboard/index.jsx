@@ -13,6 +13,7 @@ import { documentService } from '../../services/api';
 import Summary from '../../components/Summary';
 import PdfViewer from '../../components/PdfViewer/PdfViewer';
 import { useAuth } from '../../context/AuthContext';
+import ClozePanel from '../../components/Cloze/ClozePanel';
 import './dashboard.css';
 
 function TabPanel(props) {
@@ -167,10 +168,11 @@ const Dashboard = ({ user }) => {
               allowScrollButtonsMobile
               className="dashboard-tabs"
             >
+              <Tab label="SUMMARY" />
               <Tab label="FLASHCARDS" />
               <Tab label="REVIEW" />
               <Tab label="QUIZ" />
-              <Tab label="SUMMARY" />
+              <Tab label="CLOZE" />
             </Tabs>
             <div className="progress-strip" data-role="progress">
               <div className="progress-text">&nbsp;</div>
@@ -182,18 +184,21 @@ const Dashboard = ({ user }) => {
           </div>
           <div className="study-content-scroll">
             <TabPanel value={activeTab} index={0}>
+              <Summary documentId={selectedDocumentId} />
+            </TabPanel>
+            <TabPanel value={activeTab} index={1}>
               <FlashcardProvider>
                 <Flashcard documentId={selectedDocumentId} refreshKey={flashcardsRefreshKey} />
               </FlashcardProvider>
             </TabPanel>
-            <TabPanel value={activeTab} index={1}>
+            <TabPanel value={activeTab} index={2}>
               <DocReview documentId={selectedDocumentId} onReviewChange={handleReviewChange} />
             </TabPanel>
-            <TabPanel value={activeTab} index={2}>
+            <TabPanel value={activeTab} index={3}>
               <QuizView documentId={selectedDocumentId} />
             </TabPanel>
-            <TabPanel value={activeTab} index={3}>
-              <Summary documentId={selectedDocumentId} />
+            <TabPanel value={activeTab} index={4}>
+              <ClozePanel documentId={selectedDocumentId} />
             </TabPanel>
           </div>
         </div>
