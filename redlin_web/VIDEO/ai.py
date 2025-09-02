@@ -2,13 +2,15 @@ import os
 import re
 import time
 import random
+import json
 from typing import List
 from dotenv import load_dotenv
 import google.generativeai as genai
 
 from django.db import transaction
-from .models import Video, VideoSummary, VideoMCQ
+from .models import Video, VideoSummary, VideoMCQ, VideoCloze
 from .transcript_yt_dlp import fetch_transcript_yt_dlp, TranscriptError
+from CORE.services.cloze_generator import VideoClozeGenerator
 
 load_dotenv()
 genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
@@ -82,6 +84,149 @@ def _compute_target_mcq_count(full_text: str) -> int:
     target = max(5, min(25, len(words)//120 or 5))
     return target
 
+# ---------------------------------------------------------------------------
+# AI Cloze helpers (paridad con documentos)
+# ---------------------------------------------------------------------------
+def _extract_json_block(text: str, key_hint: str) -> str | None:
+    starts = [m.start() for m in re.finditer(r'\{', text)]
+    for s in starts:
+        if key_hint not in text[s:]:
+            continue
+        depth = 0
+        for i, ch in enumerate(text[s:], start=s):
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    cand = text[s:i+1].strip()
+                    if key_hint in cand:
+                        return cand
+                    break
+    return None
+
+def _clean_ai_json(raw: str) -> dict | None:
+    raw = raw.strip()
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except Exception:
+        pass
+    if raw.startswith("```"):
+        parts = raw.split("```")
+        raw = "\n".join(p for p in parts if 'clozes' in p or '{' in p).strip()
+    block = _extract_json_block(raw, '"clozes"')
+    if block:
+        try:
+            return json.loads(block)
+        except Exception:
+            return None
+    return None
+
+def _ai_video_cloze_prompt(source_text: str, *, desired_count: int, words_per_item: int, lang_label: str) -> str:
+    language_line = "Idioma de salida: Español" if lang_label == "Spanish" else "Output language: English"
+    snippet = source_text[:16000]
+    return (
+        "You are an expert educational content generator.\n"
+        "Generate as many high-quality fill-in-the-blank items (Cloze) as there are DISTINCT key concepts in the SOURCE TEXT.\n"
+        f"Guideline: about 1 item per ~{words_per_item} words (estimated target ≈ {desired_count}). Continue until additional items would be redundant.\n"
+        "Prioritize: core definitions → causal relations → processes → contrasts → implications.\n"
+        "Skip trivial filler (articles, pronouns, purely structural verbs, generic words like 'thing', 'people').\n"
+        "Each answer must be pedagogically valuable (concept, entity, process, mechanism, quantitative fact).\n"
+        "Avoid making blanks out of stopwords, common verbs (be/have/do), or numbers unless they are key data points.\n\n"
+        "REQUIREMENTS:\n"
+        "- Each item has exactly one blank represented by the four underscores token: ____\n"
+        "- Sentence must be concise, pedagogically meaningful (avoid over-long verbatim copying).\n"
+        "- Blank hides a key term/concept present EXACTLY in the text.\n"
+        "- All 3 distractors also appear in the text and share semantic / POS class with answer.\n"
+        "- No duplicate answers or duplicate sentences.\n"
+        "- Difficulty: easy | medium | hard.\n"
+        "- Provide a MIX of difficulties; harder = abstraction, multi-step reasoning, rarity.\n"
+        "- Stop BEFORE producing near-duplicates or overly narrow paraphrases.\n\n"
+        "OUTPUT STRICT JSON ONLY (no markdown fences) with schema:\n"
+        "{\n  \"clozes\": [\n     {\n       \"text\": \"La célula contiene ____ que protege el material genético.\",\n       \"answer\": \"núcleo\",\n       \"distractors\": [\"citoplasma\",\"membrana\",\"ribosoma\"],\n       \"difficulty\": \"medium\"\n     }\n  ]\n}\n\n"
+        "VALIDATION RULES:\n"
+        "- 'text' has exactly one '____'.\n"
+        "- answer + distractors all appear in SOURCE TEXT.\n"
+        "- Exactly 3 distractors.\n"
+        "- Answer is NOT a stopword / trivial function word.\n"
+        "- No trailing commas, no extra keys, no wrapper prose.\n\n"
+        f"{language_line}\n\nSOURCE TEXT (truncated):\n{snippet}"
+    )
+
+def generate_ai_video_clozes(video: Video, source_text: str, lang_label: str, *, max_items: int, words_per_item: int) -> list[VideoCloze]:
+    debug = os.getenv("AI_CLOZE_DEBUG", "0").lower() in {"1","true","yes","on"}
+    desired = max_items if max_items > 0 else 1000
+    prompt = _ai_video_cloze_prompt(source_text, desired_count=desired, words_per_item=words_per_item, lang_label=lang_label)
+    attempts = [
+        ("primary", prompt),
+        ("strict", prompt + "\n\nIMPORTANT: Output ONLY the JSON object. Absolutely no prose, no fences."),
+    ]
+    payload = None
+    last_raw = ""
+    for label, p in attempts:
+        try:
+            resp = generate_with_retry(p, max_attempts=2)
+        except Exception as e:
+            print(f"[AI Video Cloze] {label} fail: {e}")
+            continue
+        last_raw = getattr(resp, 'text', '') or ''
+        if debug:
+            print(f"[AI Video Cloze][{label}] Raw first 250: {last_raw[:250]!r}")
+        payload = _clean_ai_json(last_raw)
+        if payload and isinstance(payload, dict) and isinstance(payload.get('clozes'), list):
+            break
+        payload = None
+    if not payload:
+        print("[AI Video Cloze] Invalid JSON; falling back")
+        if debug and last_raw:
+            print(f"[AI Video Cloze][debug] tail: {last_raw[-250:]}")
+        return []
+    created: list[VideoCloze] = []
+    seen: set[str] = set()
+    lowered_source = source_text.lower()
+    limit = None if max_items <= 0 else max_items
+    for item in (payload['clozes'] if limit is None else payload['clozes'][:limit]):
+        if not isinstance(item, dict):
+            continue
+        text_val = str(item.get('text') or '').strip()
+        answer = str(item.get('answer') or '').strip()
+        distractors = item.get('distractors') or []
+        difficulty = str(item.get('difficulty') or 'medium').lower()
+        if text_val.count('____') != 1:
+            continue
+        if len(answer) < 2:
+            continue
+        if len(distractors) != 3 or any(not isinstance(d, str) or len(d.strip()) < 2 for d in distractors):
+            continue
+        if answer.lower() not in lowered_source:
+            continue
+        if any(d.lower() not in lowered_source for d in distractors):
+            continue
+        norm = text_val.lower()
+        if norm in seen:
+            continue
+        seen.add(norm)
+        if difficulty not in {"easy","medium","hard"}:
+            difficulty = "medium"
+        try:
+            vc = VideoCloze.objects.create(
+                video=video,
+                text_with_blank=text_val,
+                answer=answer,
+                context='',
+                source_span=answer,
+                options=distractors,
+                meta={"source":"ai","distractor_count": len(distractors)},
+                difficulty=difficulty,
+            )
+            created.append(vc)
+        except Exception as e:
+            print(f"[AI Video Cloze] persist err: {e}")
+    print(f"[AI Video Cloze] Created {len(created)} (requested {max_items}).")
+    return created
+
 def process_video(video_id_db: int, languages: List[str] | None = None):
     video = Video.objects.get(id=video_id_db)
     if video.processing_status == 'completed':
@@ -117,9 +262,10 @@ def process_video(video_id_db: int, languages: List[str] | None = None):
         summary_heading_note = (
             "Produce la salida en Español." if target_lang == "es" else "Produce the output in English."
         )
-        timestamp_ref = _build_timestamp_reference(snippets)
         target_mcq_count = _compute_target_mcq_count(full_text)
 
+        # ---------------- Summary ----------------
+        summary_text = ""
         summary_prompt = f"""
 
 You are an expert academic summarizer. {summary_heading_note}
@@ -185,6 +331,7 @@ SOURCE TEXT (for analysis; paraphrase in output)
         except Exception as e:
             print(f"[Video Error] Summary: {e}")
 
+        # ---------------- MCQs ----------------
         mcq_prompt = f"""
 You are an expert assessment designer specializing in educational content analysis.
 
@@ -272,6 +419,35 @@ DOCUMENT TEXT:
                 print("[Video] No se parsearon MCQs válidos.")
         except Exception as e:
             print(f"[Video Error] MCQs: {e}")
+
+        # -------------------------------------------------------------------
+        # Cloze (AI-first con fallback local)
+        # -------------------------------------------------------------------
+        try:
+            print("[Video] Generating Cloze items (AI-first)...")
+            ai_enabled = os.getenv("AI_CLOZE_ENABLED", "false").lower() in {"1","true","yes","on"}
+            words = full_text.split()
+            words_per_item = int(os.getenv("AI_CLOZE_WORDS_PER_ITEM", "120"))
+            unlimited = os.getenv("AI_CLOZE_MAX", "").strip() == "0"
+            estimated = max(4, len(words)//words_per_item) if not unlimited else 0
+            max_cap_env = os.getenv("AI_CLOZE_MAX", "")
+            if max_cap_env.isdigit() and int(max_cap_env) > 0:
+                estimated = min(estimated, int(max_cap_env))
+            approx_items = estimated if estimated else 0  # 0 => ilimitado
+            created_ai: list[VideoCloze] = []
+            if ai_enabled:
+                combined_source = (summary_text or "") + "\n\n" + full_text[:10000]
+                created_ai = generate_ai_video_clozes(video, combined_source, lang_label, max_items=approx_items, words_per_item=words_per_item)
+            if approx_items > 0 and len(created_ai) < max(1, approx_items // 2):
+                print("[AI Video Cloze] Fallback local generation...")
+                remaining = approx_items - len(created_ai)
+                if remaining > 0:
+                    vgen = VideoClozeGenerator(video, max_items=remaining)
+                    local_items = vgen.generate()
+                    print(f"[VideoCloze Fallback] Added {len(local_items)} local items.")
+            print(f"[Video] Cloze total: {video.clozes.count()}")
+        except Exception as e:
+            print(f"[Video Error] Cloze gen: {e}")
 
         video.processing_status = "completed"
         video.save()

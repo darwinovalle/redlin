@@ -2,8 +2,14 @@ from rest_framework import viewsets, status
 from django.utils import timezone
 from django.db import models
 from django.shortcuts import get_object_or_404
-from .models import User, Document, Summary, Flashcard, MCQ
-from .serializer import UserSerializer, DocumentSerializer, SummarySerializer, FlashcardSerializer, MCQSerializer, ReviewSerializer
+from .models import User, Document, Summary, Flashcard, MCQ, Cloze
+from .serializer import (
+    UserSerializer, DocumentSerializer, SummarySerializer, FlashcardSerializer, MCQSerializer,
+    ReviewSerializer, ClozeSerializer, ClozeGenerateSerializer, ClozeValidateSerializer
+)
+from VIDEO.serializers import VideoClozeSerializer
+from CORE.services.cloze_generator import ClozeGenerator, VideoClozeGenerator
+from VIDEO.models import Video, VideoCloze
 from .utils import apply_review
 
 
@@ -108,7 +114,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
                 document.flashcards.all().order_by('next_review_at', 'score', 'times_shown', 'id'),
                 many=True
             ).data,
-            'mcqs': MCQSerializer(document.mcqs.all(), many=True).data
+            'mcqs': MCQSerializer(document.mcqs.all(), many=True).data,
+            'clozes': ClozeSerializer(document.clozes.all().order_by('-id'), many=True).data,
         })
 
     @action(detail=True, methods=['get'])
@@ -128,6 +135,13 @@ class DocumentViewSet(viewsets.ModelViewSet):
     def summary(self, request, pk=None):
         document = self.get_object()
         return Response(SummarySerializer(document.summary).data)
+
+    @action(detail=True, methods=['get'])
+    def clozes(self, request, pk=None):
+        """Listar Clozes del documento (sub-recurso consistente con flashcards/mcqs/summary)."""
+        document = self.get_object()
+        qs = document.clozes.all().order_by('-id')
+        return Response(ClozeSerializer(qs, many=True).data)
 
 class SummaryViewSet(viewsets.ModelViewSet):
     queryset = Summary.objects.all()
@@ -204,6 +218,95 @@ class MCQViewSet(viewsets.ModelViewSet):
     serializer_class = MCQSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+
+class ClozeViewSet(viewsets.ReadOnlyModelViewSet):
+    """List & generate Cloze items for Documents or Videos.
+
+    Acciones:
+      - list: /api/cloze/ (filtros opcionales por document, video, difficulty)
+      - POST /api/cloze/generate/ {document|video, max_items}
+      - POST /api/cloze/validate/ {cloze, answer}
+    """
+    queryset = Cloze.objects.all().order_by('-id')
+    serializer_class = ClozeSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Base queryset for Document-based clozes only.
+
+        Nota: El filtrado por video se maneja en list() porque mezcla modelos.
+        """
+        qs = Cloze.objects.filter(document__user=self.request.user).order_by('-id')
+        document_id = self.request.query_params.get('document')
+        if document_id:
+            try:
+                qs = qs.filter(document_id=int(document_id))
+            except ValueError:
+                pass
+        difficulty = self.request.query_params.get('difficulty')
+        if difficulty in {'easy','medium','hard'}:
+            qs = qs.filter(difficulty=difficulty)
+        return qs
+
+    def list(self, request, *args, **kwargs):  # override para soportar video
+        video_id = request.query_params.get('video')
+        difficulty = request.query_params.get('difficulty')
+        if video_id:
+            # List video clozes (solo VideoCloze)
+            try:
+                vid = int(video_id)
+            except ValueError:
+                return Response([], status=200)
+            vqs = VideoCloze.objects.filter(video__user=request.user, video_id=vid).order_by('-id')
+            if difficulty in {'easy','medium','hard'}:
+                vqs = vqs.filter(difficulty=difficulty)
+            data = VideoClozeSerializer(vqs, many=True).data
+            return Response(data)
+        # Default: document clozes
+        return super().list(request, *args, **kwargs)
+
+    @action(detail=False, methods=['post'])
+    def generate(self, request):
+        serializer = ClozeGenerateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        max_items = data.get('max_items', 6)
+        created = []
+        if data.get('document'):
+            doc = get_object_or_404(Document, pk=data['document'], user=request.user)
+            gen = ClozeGenerator(doc, max_items=max_items)
+            created = gen.generate()
+            return Response(ClozeSerializer(created, many=True).data, status=201)
+        else:
+            video = get_object_or_404(Video, pk=data['video'], user=request.user)
+            vgen = VideoClozeGenerator(video, max_items=max_items)
+            v_created = vgen.generate()
+            return Response(VideoClozeSerializer(v_created, many=True).data, status=201)
+
+    @action(detail=False, methods=['post'])
+    def validate(self, request):
+        """Validate a Cloze or VideoCloze answer (explicit type required)."""
+        serializer = ClozeValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        cloze_id = serializer.validated_data['cloze_id']
+        answer = serializer.validated_data['answer']
+        ctype = serializer.validated_data['cloze_type']
+
+        def _cmp(expected: str, provided: str) -> bool:
+            return expected.strip().lower() == provided.strip().lower()
+
+        if ctype == 'document':
+            obj = Cloze.objects.filter(id=cloze_id, document__user=request.user).first()
+            if not obj:
+                return Response({'detail': 'Cloze no encontrado'}, status=404)
+            return Response({'cloze_id': obj.id, 'correct': _cmp(obj.answer, answer), 'type': 'document'})
+        # ctype == 'video'
+        vobj = VideoCloze.objects.filter(id=cloze_id, video__user=request.user).first()
+        if not vobj:
+            return Response({'detail': 'Cloze no encontrado'}, status=404)
+        return Response({'cloze_id': vobj.id, 'correct': _cmp(vobj.answer, answer), 'type': 'video'})
 
 
 @extend_schema(

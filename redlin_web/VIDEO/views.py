@@ -3,8 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from API.jwt_auth import JWTAuthentication
-from .models import Video, VideoSummary, VideoMCQ
-from .serializers import VideoSerializer, VideoSummarySerializer, VideoMCQSerializer
+from .models import Video, VideoSummary, VideoMCQ, VideoCloze
+from .serializers import VideoSerializer, VideoSummarySerializer, VideoMCQSerializer, VideoClozeSerializer
 from .ai import process_video
 
 class VideoViewSet(viewsets.ModelViewSet):
@@ -58,6 +58,13 @@ class VideoViewSet(viewsets.ModelViewSet):
         qs = video.mcqs.all()
         return Response(VideoMCQSerializer(qs, many=True).data)
 
+    @action(detail=True, methods=['get'])
+    def clozes(self, request, pk=None):
+        """Listar VideoCloze del video (sub-recurso para simetría)."""
+        video = self.get_object()
+        vqs = video.clozes.all().order_by('-id')
+        return Response(VideoClozeSerializer(vqs, many=True).data)
+
     @action(detail=True, methods=['post'])
     def reprocess(self, request, pk=None):
         video = self.get_object()
@@ -77,7 +84,8 @@ class VideoViewSet(viewsets.ModelViewSet):
         data = {
             "video": VideoSerializer(video).data,
             "summary": VideoSummarySerializer(video.summary).data if hasattr(video,'summary') else None,
-            "mcqs": VideoMCQSerializer(video.mcqs.all(), many=True).data
+            "mcqs": VideoMCQSerializer(video.mcqs.all(), many=True).data,
+            "clozes": VideoClozeSerializer(video.clozes.all(), many=True).data,
         }
         return Response(data)
 

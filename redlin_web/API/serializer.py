@@ -1,7 +1,18 @@
-from .models import User, Document , Summary, Flashcard, MCQ
+"""Serializers for API app.
+
+Cleaned after corruption introduced by previous automated edits.
+
+Endpoint semantics (Issue #13):
+  - Validation endpoint expects fields:
+      cloze_id: int (id of Cloze or VideoCloze)
+      answer: str (user provided answer)
+    cloze_type: REQUIRED 'document' | 'video'. (Opción B: explícito, sin auto-detección)
+  - Response returns:
+      cloze_id, correct (bool), type ('document' | 'video')
+"""
+
 from rest_framework import serializers
-
-
+from .models import User, Document, Summary, Flashcard, MCQ, Cloze
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -33,6 +44,14 @@ class MCQSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ClozeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cloze
+        fields = ['id','document','text_with_blank','answer','options','meta','difficulty','created_at']
+        read_only_fields = ['id','created_at']
+
+
+
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
@@ -55,3 +74,26 @@ class RegisterSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.Serializer):
     # SM-2 quality response 0..5
     quality = serializers.IntegerField(min_value=0, max_value=5)
+
+
+class ClozeGenerateSerializer(serializers.Serializer):
+    document = serializers.IntegerField(required=False)
+    video = serializers.IntegerField(required=False)
+    max_items = serializers.IntegerField(required=False, min_value=1, max_value=20, default=6)
+
+    def validate(self, attrs):
+        if not attrs.get('document') and not attrs.get('video'):
+            raise serializers.ValidationError('Debe enviar document o video.')
+        if attrs.get('document') and attrs.get('video'):
+            raise serializers.ValidationError('Envíe solo uno: document o video.')
+        return attrs
+
+
+class ClozeValidateSerializer(serializers.Serializer):
+    cloze_id = serializers.IntegerField()
+    answer = serializers.CharField()
+    cloze_type = serializers.ChoiceField(choices=['document', 'video'], required=True)
+
+    def validate_answer(self, value: str) -> str:  # simple normalization opportunity
+        return value.strip()
+

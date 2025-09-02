@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Video, VideoSummary, VideoMCQ
+from .models import Video, VideoSummary, VideoMCQ, VideoCloze
 
 class VideoSerializer(serializers.ModelSerializer):
     languages = serializers.ListField(
@@ -30,3 +30,14 @@ class VideoMCQSerializer(serializers.ModelSerializer):
     class Meta:
         model = VideoMCQ
         fields = '__all__'
+
+class VideoClozeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VideoCloze
+        fields = '__all__'
+
+
+class ClozeValidateSerializer(serializers.Serializer):
+    cloze_id = serializers.IntegerField()
+    answer = serializers.CharField()
+    cloze_type = serializers.ChoiceField(choices=['document', 'video'])
