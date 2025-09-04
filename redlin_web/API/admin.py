@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Document, Summary, Flashcard, MCQ, User, Cloze
+from .models import Document, Summary, Flashcard, MCQ, User, Cloze, Feynman, FeynmanAttempt
 
 admin.site.register(Document)
 admin.site.register(Summary)
@@ -29,3 +29,28 @@ class FlashcardAdmin(admin.ModelAdmin):
     )
     list_filter = ("status", "document")
     search_fields = ("key_term", "definition", "document__title")
+
+
+@admin.register(Feynman)
+class FeynmanAdmin(admin.ModelAdmin):
+    list_display = ("id", "document", "short_prompt", "created_at", "attempts_count")
+    search_fields = ("prompt", "document__title", "document__user__username")
+    list_filter = ("document",)
+    readonly_fields = ("created_at",)
+
+    def short_prompt(self, obj):  # pragma: no cover
+        p = obj.prompt or ""
+        return (p[:70] + "...") if len(p) > 70 else p
+    short_prompt.short_description = "Prompt"
+
+    def attempts_count(self, obj):  # pragma: no cover
+        return obj.attempts.count()
+    attempts_count.short_description = "Intentos"
+
+
+@admin.register(FeynmanAttempt)
+class FeynmanAttemptAdmin(admin.ModelAdmin):
+    list_display = ("id", "feynman", "user", "score", "tier", "key_points_coverage", "created_at")
+    search_fields = ("feynman__prompt", "user__username", "answer_text")
+    list_filter = ("tier", "score", "user")
+    readonly_fields = ("created_at", "updated_at", "score", "tier", "breakdown", "key_points_coverage")

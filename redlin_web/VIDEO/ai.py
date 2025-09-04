@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 
 from django.db import transaction
-from .models import Video, VideoSummary, VideoMCQ, VideoCloze
+from .models import Video, VideoSummary, VideoMCQ, VideoCloze, VideoFeynman, VideoFeynmanAttempt
 from .transcript_yt_dlp import fetch_transcript_yt_dlp, TranscriptError
 from CORE.services.cloze_generator import VideoClozeGenerator
 
@@ -83,6 +83,221 @@ def _compute_target_mcq_count(full_text: str) -> int:
     # Aproximación: 1 MCQ por ~120 palabras. Límites 5..25
     target = max(5, min(25, len(words)//120 or 5))
     return target
+
+# ---------------------------------------------------------------------------
+# Video Feynman generation & evaluation
+# ---------------------------------------------------------------------------
+def _video_feynman_prompt(source_text: str, *, lang_label: str, soft_cap: int | None) -> str:
+    use_full = os.getenv("VIDEO_FEYNMAN_FULL", "0").lower() in {"1","true","yes","on"}
+    # If unlimited/full requested, avoid truncation (model may still truncate internally)
+    if use_full or not soft_cap or soft_cap <= 0:
+        snippet = source_text
+    else:
+        snippet = source_text[:16000]
+    cap_text = (
+        f"Aim for at most ~{soft_cap} prompts if justified; stop early when coverage complete." if soft_cap and soft_cap>0
+        else "Generate exhaustive distinct Feynman explanation prompts covering ALL non-trivial concepts; stop ONLY when further prompts would be redundant."
+    )
+    language_line = "Idioma de salida: Español" if lang_label == "Spanish" else "Output language: English"
+    return (
+        "You are an expert learning assistant.\n"
+        "TASK: Derive concise Feynman explanation prompts from the VIDEO TRANSCRIPT.\n"
+        f"{cap_text}\n"
+        "RULES:\n- Prompts <= 140 chars (hard cut 180).\n- Each targets a distinct concept/mechanism/process/relationship.\n"
+        "- Provide 3-8 key_points per prompt (atomic, declarative).\n- Assign weight (1.0 default, up to 1.5).\n"
+        "- No duplicates, no numbering, no quotes, no trivial surface-level prompts.\n"
+        "OUTPUT STRICT JSON ONLY:\n{\n  \"items\": [ { \"prompt\": \"...\", \"key_points\": [ {\"point\": \"...\", \"weight\": 1.0} ] } ]\n}\n"
+        f"{language_line}\n\nVIDEO TRANSCRIPT (truncated):\n{snippet}"
+    )
+
+def _clean_video_feynman_json(raw: str):
+    raw = raw.strip()
+    try:
+        data = json.loads(raw)
+        if isinstance(data, dict) and 'items' in data:
+            return data
+    except Exception:
+        pass
+    if raw.startswith('```'):
+        parts = raw.split('```')
+        raw = '\n'.join(p for p in parts if 'items' in p or '{' in p)
+    start = raw.find('{')
+    while start != -1:
+        depth = 0
+        for i,ch in enumerate(raw[start:], start=start):
+            if ch=='{': depth+=1
+            elif ch=='}':
+                depth-=1
+                if depth==0:
+                    block = raw[start:i+1]
+                    if 'items' in block:
+                        try:
+                            data = json.loads(block)
+                            if 'items' in data:
+                                return data
+                        except Exception:
+                            pass
+                    break
+        start = raw.find('{', start+1)
+    return None
+
+def generate_video_feynman(video: Video, source_text: str, lang_label: str, *, soft_cap: int | None, regenerate: bool=False):
+    existing = video.feynmans.count()
+    if existing>0 and not regenerate:
+        print(f"[VideoFeynman] Existing {existing}; skip (regenerate off)")
+        return []
+    # If soft_cap <=0 or None => unlimited (subject to payload size)
+    unlimited = (soft_cap is None) or (isinstance(soft_cap, int) and soft_cap <= 0)
+    safe_cap = soft_cap if (soft_cap and soft_cap>0) else (100000 if unlimited else 60)
+    base = _video_feynman_prompt(source_text, lang_label=lang_label, soft_cap=safe_cap)
+    attempts=[('primary', base), ('strict', base+"\nIMPORTANT: JSON only.")]
+    payload=None
+    for label,pmt in attempts:
+        try:
+            resp = generate_with_retry(pmt, max_attempts=2)
+            raw = getattr(resp,'text','') or ''
+            debug = os.getenv("VIDEO_FEYNMAN_DEBUG","0").lower() in {"1","true","yes","on"}
+            if debug:
+                print(f"[VideoFeynman][{label}] Raw (first 280 chars): {raw[:280]!r}")
+            payload=_clean_video_feynman_json(raw)
+            if payload: break
+        except Exception as e:
+            print(f"[VideoFeynman] {label} fail: {e}")
+    if not payload:
+        if os.getenv("VIDEO_FEYNMAN_DEBUG","0").lower() in {"1","true","yes","on"}:
+            print("[VideoFeynman][debug] Could not parse JSON after attempts.")
+    if not payload:
+        print('[VideoFeynman] Could not parse JSON.')
+        return []
+    created=[]
+    seen=set()
+    items_iter = payload.get('items', [])
+    # Only slice if not unlimited
+    if not unlimited:
+        items_iter = items_iter[:safe_cap]
+    for item in items_iter:
+        if not isinstance(item, dict):
+            continue
+        prompt = str(item.get('prompt') or '').strip()
+        if not prompt:
+            continue
+        norm=prompt.lower()
+        if norm in seen:
+            continue
+        seen.add(norm)
+        if len(prompt)>180: prompt=prompt[:180].rstrip()
+        if len(prompt)>140: prompt=prompt[:140].rstrip()
+        raw_points=item.get('key_points') or []
+        if not isinstance(raw_points,list):
+            continue
+        points=[]
+        for kp in raw_points:
+            if isinstance(kp, dict):
+                pt=str(kp.get('point') or '').strip()
+                if not pt: continue
+                try: wt=float(kp.get('weight',1.0))
+                except Exception: wt=1.0
+                wt=1.0 if wt<=0 else (1.5 if wt>1.5 else wt)
+                points.append({'id': len(points)+1, 'point': pt, 'weight': round(wt,2)})
+            elif isinstance(kp,str):
+                pt=kp.strip()
+                if pt:
+                    points.append({'id': len(points)+1, 'point': pt, 'weight':1.0})
+        if len(points)<2:
+            continue
+        try:
+            obj=VideoFeynman.objects.create(video=video, prompt=prompt, key_points=points, reference=None)
+            created.append(obj)
+        except Exception as e:
+            print(f"[VideoFeynman] Persist error: {e}")
+    print(f"[VideoFeynman] Created {len(created)} prompts.")
+    return created
+
+def evaluate_video_feynman_attempt(f_obj: VideoFeynman, answer: str, user) -> VideoFeynmanAttempt:
+    attempt = VideoFeynmanAttempt.objects.create(
+        video=f_obj.video,
+        feynman=f_obj,
+        user=user,
+        answer_text=' '.join(answer.strip().split())
+    )
+    lang = detect_language(f_obj.prompt + ' ' + ' '.join(k['point'] for k in f_obj.key_points))
+    rubric_lang_prefix = 'Devuelve la respuesta en Español.' if lang=='es' else 'Return the feedback in English.'
+    prompt = f"""
+You are an expert tutor applying a strict explanation rubric.
+{rubric_lang_prefix}
+SCORING 1-100 integer. TIERS: <60 deficiente | 60-79 aceptable | 80-100 sobresaliente.
+RUBRIC: coverage(40), accuracy(25), clarity(15), simplicity(10), -misconceptions(10), -hallucination(10).
+KEY POINTS: {json.dumps(f_obj.key_points, ensure_ascii=False)}
+ANSWER: {attempt.answer_text}
+STRICT JSON ONLY:
+{{"score":88,"coverage":0.75,"accuracy":0.8,"clarity":0.9,"simplicity":0.85,"misconceptions_penalty":0.0,"hallucination_penalty":0.0,"matched_key_points":[1,2],"missing_key_points":[3],"feedback":"Short feedback."}}
+"""
+    try:
+        debug = os.getenv("VIDEO_FEYNMAN_EVAL_DEBUG","0").lower() in {"1","true","yes","on"}
+        resp = generate_with_retry(prompt, max_attempts=2)
+        raw = getattr(resp,'text','') or ''
+        if debug:
+            print(f"[VideoFeynmanEval][raw first 300] {raw[:300]!r}")
+        data = None
+        # 1) Direct load
+        try:
+            data = json.loads(raw.strip())
+        except Exception:
+            pass
+        # 2) Inside fenced code blocks
+        if data is None and raw.startswith('```'):
+            parts = raw.split('```')
+            for p in parts:
+                p = p.strip()
+                if not p:
+                    continue
+                if p.startswith('{') and 'score' in p:
+                    try:
+                        data = json.loads(p)
+                        break
+                    except Exception:
+                        continue
+        # 3) Find first JSON object containing "score"
+        if data is None:
+            start_positions = [m.start() for m in re.finditer(r'\{', raw)]
+            for s in start_positions:
+                segment = raw[s:]
+                # naive bracket balance
+                depth = 0
+                for i,ch in enumerate(segment):
+                    if ch == '{': depth += 1
+                    elif ch == '}':
+                        depth -= 1
+                        if depth == 0:
+                            candidate = segment[:i+1]
+                            if 'score' in candidate:
+                                try:
+                                    data = json.loads(candidate)
+                                    break
+                                except Exception:
+                                    pass
+                            break
+                if data is not None:
+                    break
+        if data is None or 'score' not in data:
+            attempt.breakdown = {'raw': raw, 'parse_error': True}
+            attempt.save()
+            if debug:
+                print('[VideoFeynmanEval] Failed to parse JSON for evaluation.')
+            return attempt
+        # Normalize & clamp
+        attempt.score = int(max(1, min(100, data.get('score', 1))))
+        attempt.breakdown = data
+        matched = data.get('matched_key_points') or []
+        total = len(f_obj.key_points)
+        if total > 0 and isinstance(matched, list):
+            attempt.key_points_coverage = max(0.0, min(1.0, len(matched)/total))
+        attempt.save()
+    except Exception as e:
+        print(f"[VideoFeynmanEval] Error: {e}")
+        attempt.breakdown = {'error': str(e)}
+        attempt.save()
+    return attempt
 
 # ---------------------------------------------------------------------------
 # AI Cloze helpers (paridad con documentos)
@@ -335,7 +550,7 @@ SOURCE TEXT (for analysis; paraphrase in output)
         mcq_prompt = f"""
 You are an expert assessment designer specializing in educational content analysis.
 
-TASK: Extract and convert ALL testable knowledge from the provided text into multiple-choice questions.
+TASK: Extract and convert ALL testable knowledge from the provided video/cc information into multiple-choice questions.
 
 Language: {lang_label}
 
@@ -367,6 +582,7 @@ CRITICAL REQUIREMENTS:
    - NO questions about: publication dates, ISBN, publisher, author bio, dedications, acknowledgments
    - NO "All/None of the above" or combination options
    - NO negatively-phrased questions ("Which is NOT...")
+   - NO questions that begings like "According to the text", or "In the text", because this information is related to a video.
 
 6. **EXACT FORMAT** (no deviations):
    Q: <Question text>
@@ -419,6 +635,37 @@ DOCUMENT TEXT:
                 print("[Video] No se parsearon MCQs válidos.")
         except Exception as e:
             print(f"[Video Error] MCQs: {e}")
+
+        # ---------------- Feynman Prompts ----------------
+        try:
+            fe_enabled = os.getenv("VIDEO_FEYNMAN_ENABLED", "1").lower() in {"1","true","yes","on"}
+            if fe_enabled:
+                print("[Video] Generating Feynman prompts...")
+                regenerate = os.getenv("VIDEO_FEYNMAN_REGENERATE", "0").lower() in {"1","true","yes","on"}
+                words = full_text.split()
+                max_env = os.getenv("VIDEO_FEYNMAN_MAX", "").strip()
+                unlimited = (max_env == "0") or (max_env == "")
+                if unlimited:
+                    est = None  # pasamos ilimitado
+                else:
+                    # Heurística: ~1 prompt cada 280 palabras, límites 6..60 antes de aplicar max
+                    est_calc = max(6, min(60, len(words)//280 or 6))
+                    if max_env.isdigit():
+                        est_calc = min(est_calc, int(max_env))
+                    est = est_calc
+                f_created = generate_video_feynman(
+                    video,
+                    source_text=full_text,
+                    lang_label=lang_label,
+                    soft_cap=est,
+                    regenerate=regenerate
+                )
+                goal_txt = 'unlimited' if est is None else est
+                print(f"[Video] Feynman prompts creados: {len(f_created)} (objetivo {goal_txt})")
+            else:
+                print("[Video] Feynman generation disabled by VIDEO_FEYNMAN_ENABLED.")
+        except Exception as e:
+            print(f"[Video Error] Feynman: {e}")
 
         # -------------------------------------------------------------------
         # Cloze (AI-first con fallback local)

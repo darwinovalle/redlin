@@ -138,12 +138,12 @@
 
 #### Issue #12: Implementar evaluador Feynman con AI
 **Tipo:** AI/ML | **Prioridad:** Critical | **Estimación:** 10h
-- [ ] Configurar cliente OpenAI
-- [ ] Crear prompt template para evaluación
-- [ ] Implementar scoring (0-1)
-- [ ] Generar feedback estructurado
-- [ ] Manejar errores de API
-- [ ] Implementar retry logic
+- [x] Configurar cliente OpenAI
+- [x] Crear prompt template para evaluación
+- [x] Implementar scoring (0-1)
+- [x] Generar feedback estructurado
+- [x] Manejar errores de API
+- [x] Implementar retry logic
 - [ ] Mock tests para evaluador
 
 #### Issue #13: APIs para Interacción con Cloze
@@ -157,17 +157,17 @@
 
 #### Issue #14: APIs para Feynman (Documentos y Videos)
 **Tipo:** Backend | **Prioridad:** High | **Estimación:** 8h
-- [ ] **API (Documentos):**
-    - [ ] Endpoint POST `/api/documents/{id}/feynman/evaluate/`
-    - [ ] Endpoint GET `/api/documents/{id}/feynman/prompts/`
-    - [ ] Endpoint GET `/api/documents/{id}/feynman/history/`
-- [ ] **VIDEO (Videos):**
-    - [ ] Endpoint POST `/api/video/videos/{id}/feynman/evaluate/`
-    - [ ] Endpoint GET `/api/video/videos/{id}/feynman/prompts/`
-    - [ ] Endpoint GET `/api/video/videos/{id}/feynman/history/`
+- [x] **API (Documentos):**
+    - [x] Endpoint POST `/api/documents/{id}/feynman/evaluate/`
+    - [x] Endpoint GET `/api/documents/{id}/feynman/prompts/`
+    - [x] Endpoint GET `/api/documents/{id}/feynman/history/`
+- [x] **VIDEO (Videos):**
+    - [x] Endpoint POST `/api/video/videos/{id}/feynman/evaluate/`
+    - [x] Endpoint GET `/api/video/videos/{id}/feynman/prompts/`
+    - [x] Endpoint GET `/api/video/videos/{id}/feynman/history/`
 - [ ] **Componentes Comunes:**
-    - [ ] Serializers para `APIFeynman` y `VideoFeynman`.
-    - [ ] Lógica para guardar intentos en `CoreAttempt`.
+    - [x] Serializers para `APIFeynman` y `VideoFeynman`.
+    - [x] Lógica para guardar intentos en `CoreAttempt`.
     - [ ] Tests de integración para ambas rutas.
 
 #### Issue #14.5: Pipeline Asíncrono de Ingesta de Video (Escalabilidad y Cloze Automático)
@@ -216,8 +216,8 @@ Riesgos / Mitigaciones:
 **Tipo:** Frontend | **Prioridad:** High | **Estimación:** 8h
 ```javascript
 // Components a crear:
-- [ ] ClozeCard.jsx
-- [ ] ClozeSession.jsx
+- [x] ClozeCard.jsx
+- [x] ClozeSession.jsx
 - [ ] HintSystem.jsx
 - [ ] Animaciones de drag & drop
 - [ ] Feedback visual de correcto/incorrecto

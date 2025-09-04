@@ -2,10 +2,14 @@ from rest_framework import viewsets, status
 from django.utils import timezone
 from django.db import models
 from django.shortcuts import get_object_or_404
-from .models import User, Document, Summary, Flashcard, MCQ, Cloze
+from .models import User, Document, Summary, Flashcard, MCQ, Cloze, Feynman, FeynmanAttempt
+from CORE.models import CoreAttempt
+from django.contrib.contenttypes.models import ContentType
+import json
 from .serializer import (
     UserSerializer, DocumentSerializer, SummarySerializer, FlashcardSerializer, MCQSerializer,
-    ReviewSerializer, ClozeSerializer, ClozeGenerateSerializer, ClozeValidateSerializer
+    ReviewSerializer, ClozeSerializer, ClozeGenerateSerializer, ClozeValidateSerializer,
+    FeynmanSerializer, FeynmanAttemptSerializer, FeynmanAttemptCreateSerializer
 )
 from VIDEO.serializers import VideoClozeSerializer
 from CORE.services.cloze_generator import ClozeGenerator, VideoClozeGenerator
@@ -17,6 +21,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .task_2 import process_pdf
+from .feynman_ai import evaluate_document_feynman_attempt
 
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from .serializer import LoginSerializer, RegisterSerializer
@@ -116,7 +121,53 @@ class DocumentViewSet(viewsets.ModelViewSet):
             ).data,
             'mcqs': MCQSerializer(document.mcqs.all(), many=True).data,
             'clozes': ClozeSerializer(document.clozes.all().order_by('-id'), many=True).data,
+            'feynman': FeynmanSerializer(document.feynmans.all().order_by('id'), many=True).data,
         })
+
+    # ---------------- Feynman Nested Endpoints (Issue #14) ----------------
+    @action(detail=True, methods=['get'], url_path='feynman/prompts')
+    def feynman_prompts(self, request, pk=None):
+        doc = self.get_object()
+        qs = doc.feynmans.all().order_by('id')
+        return Response(FeynmanSerializer(qs, many=True).data)
+
+    @action(detail=True, methods=['get'], url_path='feynman/history')
+    def feynman_history(self, request, pk=None):
+        doc = self.get_object()
+        attempts = FeynmanAttempt.objects.filter(document=doc, user=request.user).order_by('-id')
+        return Response(FeynmanAttemptSerializer(attempts, many=True).data)
+
+    @action(detail=True, methods=['post'], url_path='feynman/evaluate')
+    def feynman_evaluate(self, request, pk=None):
+        doc = self.get_object()
+        feynman_id = request.data.get('feynman_id')
+        answer = request.data.get('answer') or ''
+        if not feynman_id:
+            return Response({'detail':'feynman_id requerido'}, status=400)
+        try:
+            fid = int(feynman_id)
+        except ValueError:
+            return Response({'detail':'feynman_id inválido'}, status=400)
+        f_obj = Feynman.objects.filter(id=fid, document=doc).first()
+        if not f_obj:
+            return Response({'detail':'Feynman no encontrado'}, status=404)
+        attempt = evaluate_document_feynman_attempt(f_obj, answer, request.user)
+        # Registrar en CoreAttempt
+        try:
+            ct = ContentType.objects.get_for_model(FeynmanAttempt)
+            CoreAttempt.objects.create(
+                user=request.user,
+                method='FEYNMAN',
+                content_type=ct,
+                object_id=attempt.id,
+                raw_answer=attempt.answer_text,
+                ai_score=attempt.score,
+                ai_feedback=attempt.breakdown or {},
+                correct=(attempt.score or 0) >= 60,
+            )
+        except Exception as e:
+            print(f"[CoreAttempt] Error creando registro: {e}")
+        return Response(FeynmanAttemptSerializer(attempt).data, status=201)
 
     @action(detail=True, methods=['get'])
     def flashcards(self, request, pk=None):
@@ -307,6 +358,62 @@ class ClozeViewSet(viewsets.ReadOnlyModelViewSet):
         if not vobj:
             return Response({'detail': 'Cloze no encontrado'}, status=404)
         return Response({'cloze_id': vobj.id, 'correct': _cmp(vobj.answer, answer), 'type': 'video'})
+
+
+class FeynmanViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Feynman.objects.all().order_by('id')
+    serializer_class = FeynmanSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = Feynman.objects.filter(document__user=self.request.user).order_by('id')
+        document_id = self.request.query_params.get('document')
+        if document_id:
+            try:
+                qs = qs.filter(document_id=int(document_id))
+            except ValueError:
+                pass
+        return qs
+
+    @action(detail=False, methods=['get'])
+    def attempts(self, request):
+        f_id = request.query_params.get('feynman')
+        if not f_id:
+            return Response([], status=200)
+        try:
+            fid = int(f_id)
+        except ValueError:
+            return Response({'detail': 'id inválido'}, status=400)
+        attempts = FeynmanAttempt.objects.filter(feynman__id=fid, user=request.user).order_by('-id')
+        return Response(FeynmanAttemptSerializer(attempts, many=True).data)
+
+    @action(detail=False, methods=['post'])
+    def attempt(self, request):
+        serializer = FeynmanAttemptCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        f_id = serializer.validated_data['feynman_id']
+        answer = serializer.validated_data['answer']
+        f_obj = Feynman.objects.filter(id=f_id, document__user=request.user).first()
+        if not f_obj:
+            return Response({'detail': 'Feynman no encontrado'}, status=404)
+        attempt = evaluate_document_feynman_attempt(f_obj, answer, request.user)
+        # CoreAttempt registro
+        try:
+            ct = ContentType.objects.get_for_model(FeynmanAttempt)
+            CoreAttempt.objects.create(
+                user=request.user,
+                method='FEYNMAN',
+                content_type=ct,
+                object_id=attempt.id,
+                raw_answer=attempt.answer_text,
+                ai_score=attempt.score,
+                ai_feedback=attempt.breakdown or {},
+                correct=(attempt.score or 0) >= 60,
+            )
+        except Exception as e:
+            print(f"[CoreAttempt] Error creando registro: {e}")
+        return Response(FeynmanAttemptSerializer(attempt).data, status=201)
 
 
 @extend_schema(

@@ -135,6 +135,44 @@ class Feynman(models.Model):
     def __str__(self) -> str:  # pragma: no cover - simple
         return f"Feynman {self.pk} doc {self.document_id}"
 
+
+class FeynmanAttempt(models.Model):
+    """User's explanation attempt for a Feynman prompt.
+
+    Stores raw answer, LLM scoring (1-100), tier classification, and structured breakdown.
+    key_points_coverage: optional normalized coverage (0..1) for quick filtering.
+    """
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='feynman_attempts')
+    feynman = models.ForeignKey(Feynman, on_delete=models.CASCADE, related_name='attempts')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='feynman_attempts')
+    answer_text = models.TextField()
+    score = models.PositiveIntegerField(null=True, blank=True)  # 1..100; null if eval failed
+    tier = models.CharField(max_length=20, blank=True, default='')  # deficient|acceptable|outstanding
+    breakdown = models.JSONField(default=dict, blank=True)  # {coverage, accuracy, clarity, simplicity, misconceptions_penalty, hallucination_penalty, feedback, prompt_log}
+    key_points_coverage = models.FloatField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['document','user','feynman']),
+            models.Index(fields=['score']),
+        ]
+
+    def classify_tier(self) -> str:
+        if self.score is None:
+            return ''
+        if self.score < 60:
+            return 'Poor'
+        if self.score < 80:
+            return 'Satisfactory'
+        return 'Excellent'
+
+    def save(self, *args, **kwargs):  # pragma: no cover - small logic
+        if self.score is not None:
+            self.tier = self.classify_tier()
+        super().save(*args, **kwargs)
+
 # Suggested UML Diagram Description:
 # 1. User has a one-to-many relationship with Document.
 # 2. Document has a one-to-one relationship with Summary.

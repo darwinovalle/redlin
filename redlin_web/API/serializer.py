@@ -12,7 +12,7 @@ Endpoint semantics (Issue #13):
 """
 
 from rest_framework import serializers
-from .models import User, Document, Summary, Flashcard, MCQ, Cloze
+from .models import User, Document, Summary, Flashcard, MCQ, Cloze, Feynman, FeynmanAttempt
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -49,6 +49,32 @@ class ClozeSerializer(serializers.ModelSerializer):
         model = Cloze
         fields = ['id','document','text_with_blank','answer','options','meta','difficulty','created_at']
         read_only_fields = ['id','created_at']
+
+
+class FeynmanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feynman
+        fields = ['id','document','prompt','key_points','reference','created_at']
+        read_only_fields = ['id','created_at']
+
+
+class FeynmanAttemptSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FeynmanAttempt
+        fields = ['id','document','feynman','user','answer_text','score','tier','breakdown','key_points_coverage','created_at']
+        read_only_fields = ['id','score','tier','breakdown','key_points_coverage','created_at','document','user']
+
+
+class FeynmanAttemptCreateSerializer(serializers.Serializer):
+    feynman_id = serializers.IntegerField()
+    answer = serializers.CharField()
+
+    def validate_answer(self, value: str) -> str:
+        # Basic sanitization (strip, collapse whitespace)
+        cleaned = ' '.join(value.strip().split())
+        if len(cleaned) < 5:
+            raise serializers.ValidationError('Respuesta demasiado corta.')
+        return cleaned
 
 
 

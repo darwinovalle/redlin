@@ -75,3 +75,37 @@ class VideoFeynman(models.Model):
 
     def __str__(self):  # pragma: no cover
         return f"VideoFeynman {self.pk} video {self.video_id}"
+
+
+class VideoFeynmanAttempt(models.Model):
+    """User explanation attempt for a VideoFeynman prompt."""
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='feynman_attempts')
+    feynman = models.ForeignKey(VideoFeynman, on_delete=models.CASCADE, related_name='attempts')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='video_feynman_attempts')
+    answer_text = models.TextField()
+    score = models.PositiveIntegerField(null=True, blank=True)
+    tier = models.CharField(max_length=20, blank=True, default='')
+    breakdown = models.JSONField(default=dict, blank=True)
+    key_points_coverage = models.FloatField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['video','user','feynman']),
+            models.Index(fields=['score']),
+        ]
+
+    def classify_tier(self) -> str:  # pragma: no cover
+        if self.score is None:
+            return ''
+        if self.score < 60:
+            return 'deficiente'
+        if self.score < 80:
+            return 'aceptable'
+        return 'sobresaliente'
+
+    def save(self, *args, **kwargs):  # pragma: no cover
+        if self.score is not None:
+            self.tier = self.classify_tier()
+        super().save(*args, **kwargs)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Video, VideoSummary, VideoMCQ, VideoCloze
+from .models import Video, VideoSummary, VideoMCQ, VideoCloze, VideoFeynman, VideoFeynmanAttempt
 
 class VideoSerializer(serializers.ModelSerializer):
     languages = serializers.ListField(
@@ -35,6 +35,31 @@ class VideoClozeSerializer(serializers.ModelSerializer):
     class Meta:
         model = VideoCloze
         fields = '__all__'
+
+
+class VideoFeynmanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VideoFeynman
+        fields = ['id','video','prompt','key_points','reference','created_at']
+        read_only_fields = ['id','created_at']
+
+
+class VideoFeynmanAttemptSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VideoFeynmanAttempt
+        fields = ['id','video','feynman','user','answer_text','score','tier','breakdown','key_points_coverage','created_at']
+        read_only_fields = ['id','video','user','score','tier','breakdown','key_points_coverage','created_at']
+
+
+class VideoFeynmanAttemptCreateSerializer(serializers.Serializer):
+    feynman_id = serializers.IntegerField()
+    answer = serializers.CharField()
+
+    def validate_answer(self, value: str) -> str:
+        cleaned = ' '.join(value.strip().split())
+        if len(cleaned) < 5:
+            raise serializers.ValidationError('Answer too short.')
+        return cleaned
 
 
 class ClozeValidateSerializer(serializers.Serializer):
