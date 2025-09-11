@@ -15,6 +15,7 @@ import PdfViewer from '../../components/PdfViewer/PdfViewer';
 import { useAuth } from '../../context/AuthContext';
 import ClozePanel from '../../components/Cloze/ClozePanel';
 import './dashboard.css';
+const FeynmanPanelLazy = React.lazy(()=> import('../../components/Feynman/FeynmanPanel'));
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -173,6 +174,7 @@ const Dashboard = ({ user }) => {
               <Tab label="REVIEW" />
               <Tab label="QUIZ" />
               <Tab label="CLOZE" />
+              <Tab label="FEYNMAN" />
             </Tabs>
             <div className="progress-strip" data-role="progress">
               <div className="progress-text">&nbsp;</div>
@@ -199,6 +201,14 @@ const Dashboard = ({ user }) => {
             </TabPanel>
             <TabPanel value={activeTab} index={4}>
               <ClozePanel documentId={selectedDocumentId} />
+            </TabPanel>
+            <TabPanel value={activeTab} index={5}>
+              {/* Feynman Panel */}
+              {selectedDocumentId && (
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <FeynmanPanelLazy documentId={selectedDocumentId} />
+                </React.Suspense>
+              )}
             </TabPanel>
           </div>
         </div>
