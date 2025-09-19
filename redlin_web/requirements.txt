@@ -42,3 +42,13 @@ drf-spectacular-sidecar
 PyJWT>=2.9.0
 youtube-transcript-api==1.2.2
 yt-dlp==2025.8.20
+celery==5.3.6
+redis==5.0.3
+pytest==8.3.3
+pytest-django==4.9.0
+coverage==7.6.9
+pytest-cov==5.0.0
+spacy==3.7.4
+spacy-spanish-lemmatizer==0.7.0
+# Modelo spaCy ES (wheel directo porque el nombre 'es-core-news-md' no está indexado en PyPI)
+https://github.com/explosion/spacy-models/releases/download/es_core_news_md-3.7.0/es_core_news_md-3.7.0-py3-none-any.whl

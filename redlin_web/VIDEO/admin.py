@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Video, VideoSummary, VideoMCQ
+from .models import Video, VideoSummary, VideoMCQ, VideoCloze, VideoFeynman, VideoFeynmanAttempt
 
 
 class VideoSummaryInline(admin.StackedInline):
@@ -12,6 +12,14 @@ class VideoMCQInline(admin.TabularInline):
     model = VideoMCQ
     extra = 0
     fields = ("question", "correct_answer", "option_1", "option_2", "option_3")
+    show_change_link = True
+
+
+class VideoClozeInline(admin.TabularInline):
+    model = VideoCloze
+    extra = 0
+    fields = ("text_with_blank", "answer", "difficulty")
+    readonly_fields = ("created_at",)
     show_change_link = True
 
 
@@ -29,7 +37,7 @@ class VideoAdmin(admin.ModelAdmin):
     list_filter = ("processing_status", "created_at")
     search_fields = ("video_id", "url", "user__username")
     readonly_fields = ("created_at", "snippet_count", "video_id", "transcript_text")
-    inlines = [VideoSummaryInline, VideoMCQInline]
+    inlines = [VideoSummaryInline, VideoMCQInline, VideoClozeInline]
 
 
 @admin.register(VideoSummary)
@@ -51,3 +59,39 @@ class VideoMCQAdmin(admin.ModelAdmin):
     def short_question(self, obj):
         return (obj.question[:70] + "...") if len(obj.question) > 70 else obj.question
     short_question.short_description = "Pregunta"
+
+
+@admin.register(VideoCloze)
+class VideoClozeAdmin(admin.ModelAdmin):
+    list_display = ("id", "video", "short_blank", "answer", "difficulty", "created_at")
+    list_filter = ("difficulty", "video__processing_status")
+    search_fields = ("text_with_blank", "answer", "video__video_id", "video__url")
+    readonly_fields = ("created_at",)
+
+    def short_blank(self, obj):  # pragma: no cover - admin helper
+        txt = obj.text_with_blank or ""
+        return (txt[:70] + "...") if len(txt) > 70 else txt
+    short_blank.short_description = "Texto"
+
+@admin.register(VideoFeynman)
+class VideoFeynmanAdmin(admin.ModelAdmin):
+    list_display = ("id", "video", "short_prompt", "created_at", "attempts_count")
+    search_fields = ("prompt", "document__title", "document__user__username")
+    list_filter = ("video",)
+    readonly_fields = ("created_at",)
+
+    def short_prompt(self, obj):  # pragma: no cover
+        p = obj.prompt or ""
+        return (p[:70] + "...") if len(p) > 70 else p
+    short_prompt.short_description = "Prompt"
+
+    def attempts_count(self, obj):  # pragma: no cover
+        return obj.attempts.count()
+    attempts_count.short_description = "Intentos"
+
+@admin.register(VideoFeynmanAttempt)
+class VideoFeynmanAttemptAdmin(admin.ModelAdmin):
+    list_display = ("id", "feynman", "user", "score", "tier", "key_points_coverage", "created_at")
+    search_fields = ("feynman__prompt", "user__username", "answer_text")
+    list_filter = ("tier", "score", "user")
+    readonly_fields = ("created_at", "updated_at", "score", "tier", "breakdown", "key_points_coverage")

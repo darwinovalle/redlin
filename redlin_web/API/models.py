@@ -84,6 +84,95 @@ class MCQ(models.Model):
     def __str__(self):
         return self.question
 
+
+class Cloze(models.Model):
+    """Fill-in-the-blank generated from a Document.
+
+    text_with_blank: Text containing a placeholder (e.g. 'The capital of France is ____.')
+    answer: Correct answer expected to fill the blank
+    context: Optional extended context or explanation snippet
+    source_span: Optional raw citation / substring from the source document
+    """
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='clozes')
+    text_with_blank = models.TextField()
+    answer = models.CharField(max_length=255)
+    context = models.TextField(blank=True, default='')
+    source_span = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # Nuevo: opciones (distractores), metadata (blanks multi, strategy, spans), dificultad
+    options = models.JSONField(default=list, blank=True)
+    meta = models.JSONField(default=dict, blank=True)
+    difficulty = models.CharField(max_length=10, default='medium', choices=[('easy','Easy'),('medium','Medium'),('hard','Hard')])
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['document']),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - trivial
+        return f"Cloze {self.pk} for doc {self.document_id}"
+
+
+class Feynman(models.Model):
+    """User explanation (Feynman technique) tied to a Document.
+
+    prompt: Original question or concept to explain.
+    key_points: Structured JSON (list/dict) of essential points expected.
+    reference: Optional raw text snippet or citation from the document.
+    """
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='feynmans')
+    prompt = models.TextField()
+    key_points = models.JSONField(default=list)  # could be list of strings or dict with weights
+    reference = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['document']),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - simple
+        return f"Feynman {self.pk} doc {self.document_id}"
+
+
+class FeynmanAttempt(models.Model):
+    """User's explanation attempt for a Feynman prompt.
+
+    Stores raw answer, LLM scoring (1-100), tier classification, and structured breakdown.
+    key_points_coverage: optional normalized coverage (0..1) for quick filtering.
+    """
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='feynman_attempts')
+    feynman = models.ForeignKey(Feynman, on_delete=models.CASCADE, related_name='attempts')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='feynman_attempts')
+    answer_text = models.TextField()
+    score = models.PositiveIntegerField(null=True, blank=True)  # 1..100; null if eval failed
+    tier = models.CharField(max_length=20, blank=True, default='')  # deficient|acceptable|outstanding
+    breakdown = models.JSONField(default=dict, blank=True)  # {coverage, accuracy, clarity, simplicity, misconceptions_penalty, hallucination_penalty, feedback, prompt_log}
+    key_points_coverage = models.FloatField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['document','user','feynman']),
+            models.Index(fields=['score']),
+        ]
+
+    def classify_tier(self) -> str:
+        if self.score is None:
+            return ''
+        if self.score < 60:
+            return 'Poor'
+        if self.score < 80:
+            return 'Satisfactory'
+        return 'Excellent'
+
+    def save(self, *args, **kwargs):  # pragma: no cover - small logic
+        if self.score is not None:
+            self.tier = self.classify_tier()
+        super().save(*args, **kwargs)
+
 # Suggested UML Diagram Description:
 # 1. User has a one-to-many relationship with Document.
 # 2. Document has a one-to-one relationship with Summary.

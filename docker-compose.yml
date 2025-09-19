@@ -1,4 +1,11 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: redlin-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+
   backend:
     build:
       context: ./redlin_web
@@ -11,10 +18,40 @@ services:
     env_file:
       - ./redlin_web/.env
     environment:
-      TRANSCRIPT_DEBUG: "1"  # habilita logs de depuración de subtitles
-      TRANSCRIPT_MIN_INTERVAL: "1.2"  # throttle mínimo entre llamadas yt-dlp (segundos)
-      TRANSCRIPT_CLIENT_VARIANTS: "web,android,ios,tv"  # rotación de client variants para reducir 403/DNS
+      TRANSCRIPT_DEBUG: "1"
+      TRANSCRIPT_MIN_INTERVAL: "1.2"
+      TRANSCRIPT_CLIENT_VARIANTS: "web,android,ios,tv"
     entrypoint: ["sh", "-c", "./entrypoint.sh"]
+    depends_on:
+      - redis
+
+  worker:
+    build:
+      context: ./redlin_web
+      dockerfile: Dockerfile
+    container_name: redlin-worker
+    command: ["celery", "-A", "redlin_web", "worker", "-l", "info", "-Q", "default"]
+    volumes:
+      - ./redlin_web:/app
+    env_file:
+      - ./redlin_web/.env
+    depends_on:
+      - redis
+      - backend
+
+  beat:
+    build:
+      context: ./redlin_web
+      dockerfile: Dockerfile
+    container_name: redlin-beat
+    command: ["celery", "-A", "redlin_web", "beat", "-l", "info"]
+    volumes:
+      - ./redlin_web:/app
+    env_file:
+      - ./redlin_web/.env
+    depends_on:
+      - redis
+      - backend
 
   frontend:
     build:
@@ -30,3 +67,4 @@ services:
       - ./redlin-front/redlin-front/.env
     depends_on:
       - backend
+      - redis

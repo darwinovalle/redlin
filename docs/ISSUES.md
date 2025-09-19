@@ -6,78 +6,78 @@
 
 #### Issue #1: Configurar entorno de desarrollo
 **Tipo:** Setup | **Prioridad:** Critical | **Estimación:** 3h
-- [ ] Crear branch `feature/advanced-learning-system`
-- [ ] Instalar dependencias Python (`requirements.txt`)
-- [ ] Configurar variables de entorno (`.env.example`)
-- [ ] Configurar pre-commit hooks
-- [ ] Documentar setup en README
+- [x] Crear branch `feature/advanced-learning-system`
+- [x] Instalar dependencias Python (`requirements.txt`)
+- [x] Configurar variables de entorno (`.env.example`)
+- [x] Configurar pre-commit hooks
+- [x] Documentar setup en README
 
 #### Issue #2: Crear estructura de apps Django
 **Tipo:** Backend | **Prioridad:** Critical | **Estimación:** 2h
-- [ ] Crear app `core`
-- [ ] Crear app `subscriptions`
-- [ ] Crear app `analytics`
+- [x] Crear app `core`
+- [x] Crear app `subscriptions`
+- [x] Crear app `analytics`
 - [ ] Configurar URLs routing
-- [ ] Actualizar `INSTALLED_APPS`
+- [x] Actualizar `INSTALLED_APPS`
 
 #### Issue #3: Implementar modelos core
 **Tipo:** Backend | **Prioridad:** Critical | **Estimación:** 8h
 ```python
 # Subtareas:
-- [ ] Crear modelo Space
-- [ ] Crear modelo SpaceItem con GenericForeignKey
-- [ ] Crear modelo CoreLearningProgress
-- [ ] Crear modelo CoreStudySession
-- [ ] Crear modelo CoreAttempt
-- [ ] Agregar índices de base de datos
-- [ ] Escribir docstrings
+- [x] Crear modelo Space
+- [x] Crear modelo SpaceItem con GenericForeignKey
+- [x] Crear modelo CoreLearningProgress
+- [x] Crear modelo CoreStudySession
+- [x] Crear modelo CoreAttempt
+- [-] Agregar índices de base de datos
+- [-] Escribir docstrings
 ```
 
 #### Issue #4: Implementar modelos de gamificación
 **Tipo:** Backend | **Prioridad:** High | **Estimación:** 5h
-- [ ] Crear modelo CoreXpAccount
-- [ ] Crear modelo CoreXpAward
-- [ ] Crear signals para auto-crear XpAccount
-- [ ] Implementar método calculate_level
-- [ ] Tests unitarios
+- [x] Crear modelo CoreXpAccount
+- [x] Crear modelo CoreXpAward
+- [x] Crear signals para auto-crear XpAccount
+- [x] Implementar método calculate_level
+- [x] Tests unitarios
 
 #### Issue #5: Crear migraciones de datos existentes
 **Tipo:** DevOps | **Prioridad:** Critical | **Estimación:** 8h
 ```python
 # migrations/0002_migrate_existing_data.py
-- [ ] Migrar API_document a espacios por defecto
-- [ ] Migrar API_flashcard a CoreLearningProgress
-- [ ] Migrar API_mcq manteniendo relaciones
-- [ ] Migrar VIDEO_video y relacionados
-- [ ] Crear backup antes de migración
-- [ ] Validar integridad de datos post-migración
+- [x] Migrar API_document a espacios por defecto
+- [x] Migrar API_flashcard a CoreLearningProgress
+- [x] Migrar API_mcq manteniendo relaciones
+- [x] Migrar VIDEO_video y relacionados
+- [x] Crear backup antes de migración
+- [x] Validar integridad de datos post-migración
 ```
 
 #### Issue #6: Configurar Celery y Redis
 **Tipo:** DevOps | **Prioridad:** High | **Estimación:** 4h
-- [ ] Instalar y configurar Redis localmente
-- [ ] Configurar Celery en Django
-- [ ] Crear celery.py y tasks.py base
-- [ ] Configurar Celery Beat para tareas periódicas
-- [ ] Crear docker-compose para desarrollo
-- [ ] Documentar comandos de Celery
+- [x] Instalar y configurar Redis localmente
+- [x] Configurar Celery en Django
+- [x] Crear celery.py y tasks.py base
+- [x] Configurar Celery Beat para tareas periódicas
+- [x] Crear docker-compose para desarrollo
+- [x] Documentar comandos de Celery
 
 #### Issue #7: Implementar APIs REST básicas para Spaces
 **Tipo:** Backend | **Prioridad:** High | **Estimación:** 6h
-- [ ] Crear SpaceSerializer
-- [ ] Crear SpaceViewSet con CRUD
-- [ ] Implementar permisos (solo owner)
-- [ ] Agregar paginación
-- [ ] Agregar filtros y búsqueda
-- [ ] Tests de API
+- [x] Crear SpaceSerializer
+- [x] Crear SpaceViewSet con CRUD
+- [x] Implementar permisos (solo owner)
+- [x] Agregar paginación
+- [x] Agregar filtros y búsqueda
+- [x] Tests de API (archivo `CORE/test_api_spaces.py`)
 
 #### Issue #8: Crear tests unitarios base
 **Tipo:** Testing | **Prioridad:** Medium | **Estimación:** 4h
-- [ ] Setup pytest-django
-- [ ] Tests para modelos
-- [ ] Tests para migraciones
-- [ ] Tests para signals
-- [ ] Configurar coverage reports
+- [x] Setup pytest-django (pytest.ini, conftest.py, requirements)
+- [ ] Tests para modelos (parcial: XP account logic ya cubierto en Django TestCase previo, falta unificar en pytest)
+- [x] Tests para migraciones (test_core_migration_applied)
+- [x] Tests para signals (test_xp_account_signal_creates_account)
+- [x] Configurar coverage reports (.coveragerc, addopts en pytest.ini)
 
 ---
 
@@ -87,66 +87,137 @@
 
 #### Issue #9: Implementar modelos Cloze
 **Tipo:** Backend | **Prioridad:** High | **Estimación:** 4h
-- [ ] Crear modelo API_cloze
-- [ ] Crear modelo VIDEO_videocloze
-- [ ] Agregar relaciones con documents/videos
-- [ ] Crear migraciones
-- [ ] Tests de modelos
+- [x] Crear modelo API_cloze
+- [x] Crear modelo VIDEO_videocloze
+- [x] Agregar relaciones con documents/videos
+- [x] Crear migraciones
+- [x] Tests de modelos
 
 #### Issue #10: Implementar modelos Feynman
 **Tipo:** Backend | **Prioridad:** High | **Estimación:** 4h
-- [ ] Crear modelo API_feynman
-- [ ] Crear modelo VIDEO_videofeynman
-- [ ] Agregar campo JSON para key_points
-- [ ] Crear migraciones
-- [ ] Tests de modelos
+- [x] Crear modelo API_feynman
+- [x] Crear modelo VIDEO_videofeynman
+- [x] Agregar campo JSON para key_points
+- [x] Crear migraciones
+- [x] Tests de modelos
 
 #### Issue #11: Crear generador automático de Cloze
 **Tipo:** AI/ML | **Prioridad:** High | **Estimación:** 8h
 ```python
 # core/services/cloze_generator.py
-- [ ] Instalar spaCy y descargar modelo
-- [ ] Implementar extracción de entidades
-- [ ] Implementar selección de palabras clave
-- [ ] Crear algoritmo de generación de blanks
-- [ ] Agregar contexto para hints
-- [ ] Tests unitarios del generador
+## Subtareas Detalladas
+- [x] Migración: extender modelo `Cloze` (fields: `options` JSON, `meta` JSON, `difficulty`)
+- [x] Actualizar modelo (y decidir si aplicar también en `VideoCloze` o diferir) (aplicado también a VideoCloze)
+- [x] Instalar spaCy (lib) en `requirements.txt`
+- [x] Añadir modelo idioma (ej: `es_core_news_md`) y documentar descarga / wheel (pendiente: ya en requirements, doc añadida en módulo)
+- [x] Crear módulo `CORE/services/cloze_generator.py`
+- [x] Implementar función `get_nlp(lang)` con cache
+- [x] Implementar extracción candidatos (NER + noun chunks + TF freq) 
+- [x] Implementar scoring (rarity + entity + length + POS weights)
+- [x] Implementar selección diversa (evitar lemmas repetidos)
+- [x] Implementar generación single-blank (placeholder `____`)
+- [x] Implementar generación distractores (mismo POS / entidad, variaciones numéricas)
+- [x] Implementar multi-blank por pasaje (placeholders `[[BLANK_i]]` en `text_with_blank`)
+- [x] Guardar metadata en `meta` (strategy, blanks, spans, source, difficulty)
+- [x] Heurística de dificultad (easy/medium/hard)
+- [x] Límite global `max_items` y por pasaje `max_per_passage` (v1 solo global)
+- [x] Filtro de duplicados (lemma + casefold)
+- [x] Servicio `ClozeGenerator.generate(document, max_items)` que persiste
+- [x] (Opcional) Variante para transcript de Video
+- [x] Logging básico (n candidatos, descartados, tiempo) 
+- [x] Tests: genera >=1 ítem con entidad
+- [x] Tests: sin duplicados
+- [x] Tests: distractores no contienen la respuesta
+- [x] Tests: multi-blank mantiene orden de placeholders
+- [x] Tests: respeta `max_items`
+- [x] Tests: texto corto devuelve lista vacía
+- [x] Documentar uso en README interno / comentario módulo
+- [x] Actualizar Issue #13 dependencia (API generation) con referencia
+- [x] Revisar cobertura >90% del servicio (cloze_generator.py 91% branch; lógica pura cloze_logic.py 89%)
 ```
 
 #### Issue #12: Implementar evaluador Feynman con AI
 **Tipo:** AI/ML | **Prioridad:** Critical | **Estimación:** 10h
-- [ ] Configurar cliente OpenAI
-- [ ] Crear prompt template para evaluación
-- [ ] Implementar scoring (0-1)
-- [ ] Generar feedback estructurado
-- [ ] Manejar errores de API
-- [ ] Implementar retry logic
+- [x] Configurar cliente OpenAI
+- [x] Crear prompt template para evaluación
+- [x] Implementar scoring (0-1)
+- [x] Generar feedback estructurado
+- [x] Manejar errores de API
+- [x] Implementar retry logic
 - [ ] Mock tests para evaluador
 
-#### Issue #13: APIs para Cloze
-**Tipo:** Backend | **Prioridad:** High | **Estimación:** 6h
-- [ ] Endpoint POST `/api/cloze/generate/`
-- [ ] Endpoint GET `/api/cloze/list/`
-- [ ] Endpoint POST `/api/cloze/validate/`
-- [ ] Serializers para Cloze
-- [ ] Paginación y filtros
-- [ ] Tests de integración
+#### Issue #13: APIs para Interacción con Cloze
+**Tipo:** Backend | **Prioridad:** High | **Estimación:** 4h
+- [x] **Generación Automática:** La generación de Clozes se inicia automáticamente al crear un Documento o Video (ver `Issue #11` y `Issue #14.5`). El endpoint `POST /api/cloze/generate/` es obsoleto.
+- [x] **Listado de Clozes:** Los Clozes se obtienen a través de los endpoints existentes: `GET /api/documents/{id}/clozes/` y `GET /api/video/videos/{id}/clozes/`. El endpoint genérico `/api/cloze/list/` no es necesario.
+ - [x] **Endpoint de Validación:** Implementar `POST /api/cloze/validate/` para verificar la respuesta de un usuario a un Cloze específico durante una sesión de estudio. (Implementado, tests verdes)
+ - [x] **Serializers:** Crear `ClozeSerializer` y `VideoClozeSerializer` si aún no existen, para los endpoints de listado y validación. (Separados por app, sin duplicación cruzada)
+ - [x] **Tests de Integración:** Añadir tests para el endpoint de validación. (API y VIDEO cubiertos; legacy duplicados eliminados)
+ - [x] Dependencia: Generador Cloze (#11) listo y integrado en el pipeline de ingesta.
 
-#### Issue #14: APIs para Feynman
-**Tipo:** Backend | **Prioridad:** High | **Estimación:** 6h
-- [ ] Endpoint POST `/api/feynman/evaluate/`
-- [ ] Endpoint GET `/api/feynman/prompts/`
-- [ ] Endpoint GET `/api/feynman/history/`
-- [ ] Serializers para Feynman
-- [ ] Guardar intentos en CoreAttempt
-- [ ] Tests de integración
+#### Issue #14: APIs para Feynman (Documentos y Videos)
+**Tipo:** Backend | **Prioridad:** High | **Estimación:** 8h
+- [x] **API (Documentos):**
+    - [x] Endpoint POST `/api/documents/{id}/feynman/evaluate/`
+    - [x] Endpoint GET `/api/documents/{id}/feynman/prompts/`
+    - [x] Endpoint GET `/api/documents/{id}/feynman/history/`
+- [x] **VIDEO (Videos):**
+    - [x] Endpoint POST `/api/video/videos/{id}/feynman/evaluate/`
+    - [x] Endpoint GET `/api/video/videos/{id}/feynman/prompts/`
+    - [x] Endpoint GET `/api/video/videos/{id}/feynman/history/`
+- [ ] **Componentes Comunes:**
+    - [x] Serializers para `APIFeynman` y `VideoFeynman`.
+    - [x] Lógica para guardar intentos en `CoreAttempt`.
+    - [ ] Tests de integración para ambas rutas.
+
+#### Issue #14.5: Pipeline Asíncrono de Ingesta de Video (Escalabilidad y Cloze Automático)
+**Tipo:** Backend/DevOps | **Prioridad:** High | **Estimación:** 10h
+Objetivo: Transformar el procesamiento síncrono actual de videos (summary + MCQs) en un pipeline robusto y extensible que incluya generación automática de VideoCloze y soporte futuro para Feynman, manejando picos (≥1000 requests) sin bloquear el API.
+
+Subtareas Técnicas:
+- [ ] Arquitectura Celery definida (diagramita + doc interna) (colas: video_ingest, video_ai, nlp_local)
+- [ ] Crear `VIDEO/tasks.py` con tareas: `fetch_transcript`, `generate_summary`, `generate_mcqs`, `generate_clozes`, `generate_feynman` (stub), `finalize`
+- [ ] Encadenar tareas (chain / chord) `fetch -> (summary|mcqs en paralelo opcional) -> clozes -> feynman(stub) -> finalize`
+- [ ] Añadir generación automática de `VideoCloze` (usa `VideoClozeGenerator`) en tarea `generate_clozes`
+- [ ] Ajustar `VideoViewSet.perform_create` para encolar `process_full_pipeline.delay(video_id)` y responder rápido (estado `pending`)
+- [ ] Implementar lock/idempotencia (prevent doble ejecución) (campo DB o Redis SETNX)
+- [ ] Extender modelo `Video` o meta JSON para flags de progreso: `transcript_ok`, `summary_ok`, `mcqs_ok`, `clozes_ok`, `feynman_ok`, `errors` (lista)
+- [ ] Actualizar `processing_status` granular (pending, processing, partial, completed, failed)
+- [ ] Retries con backoff para errores de rate limit LLM (usar countdown exponencial / parse retry hint)
+- [ ] Configurar rutas Celery (`CELERY_TASK_ROUTES`) y concurrencia específica por cola
+- [ ] Cargar spaCy solo una vez por worker (lazy global) para performance
+- [ ] Manejo de fallos parciales: continuar si summary o mcqs fallan; registrar en `errors`
+- [ ] Endpoint/acción status: reutilizar `full_details` o nuevo `/api/video/videos/{id}/status/` devolviendo progreso
+- [ ] Incluir `clozes` en `full_details` (además de mcqs y summary)
+- [ ] Filtro `?video=<id>` en `/api/cloze/` para listar `VideoCloze` (sin romper filtros existentes)
+- [ ] Parámetros para escalado: `MAX_VIDEO_MCQS`, `MAX_VIDEO_CLOZES` (settings)
+- [ ] Logging estructurado (JSON) con tiempos y conteos (summary_tokens, mcq_count, cloze_count)
+- [ ] Métricas básicas (duración etapas) guardadas en meta para futura analytics
+- [ ] Tests modo Celery eager: pipeline completo crea summary, mcqs y clozes
+- [ ] Tests de fallo (transcript vacío, rate limit simulado) verifican estado `failed` o `partial`
+- [ ] Test filtro `/api/cloze/?video=` devuelve solo `VideoCloze`
+- [ ] Documentar pipeline y reprocess en README interno / comentario módulo
+- [ ] Acción `reprocess` ajustada: re‑enqueue solo pasos faltantes (si transcript_ok True salta fetch)
+- [ ] Validar cobertura >80% en `VIDEO/tasks.py` y nueva lógica
+
+Fase Futuro (no bloquear este issue):
+- [ ] Integrar generación/evaluación Feynman real (depende Issue #14)
+- [ ] WebSocket/Server-Sent Events para progreso en tiempo real
+- [ ] Cuota/consumo de créditos AI (dependerá Issue #34)
+
+Riesgos / Mitigaciones:
+- Carga LLM masiva → limitar concurrencia cola `video_ai`
+- Duplicación de pipeline → lock/idempotencia
+- Bloqueo DB por batch inserts → usar `bulk_create` y transacciones atómicas por etapa
+- Retries excesivos → límite global de reintentos + registro en `errors`
+
 
 #### Issue #15: Frontend componente Cloze
 **Tipo:** Frontend | **Prioridad:** High | **Estimación:** 8h
 ```javascript
 // Components a crear:
-- [ ] ClozeCard.jsx
-- [ ] ClozeSession.jsx
+- [x] ClozeCard.jsx
+- [x] ClozeSession.jsx
 - [ ] HintSystem.jsx
 - [ ] Animaciones de drag & drop
 - [ ] Feedback visual de correcto/incorrecto

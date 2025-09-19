@@ -1,28 +1,31 @@
 from dotenv import load_dotenv
-from .models import Document, Summary, Flashcard, MCQ
+from .models import Document, Summary, Flashcard, MCQ, Cloze, Feynman
 from PyPDF2 import PdfReader
 import google.generativeai as genai
 import os
 import re
 import time
 import random
+import json
 from django.db import transaction
+from CORE.services.cloze_generator import ClozeGenerator
 
-# Configure the Gemini API
+# ---------------------------------------------------------------------------
+# Environment / Model configuration
+# ---------------------------------------------------------------------------
 load_dotenv()
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+# Use a fast, lower-cost model variant; adjust if needed.
+model = genai.GenerativeModel("gemini-2.5-flash")
 
-# Configure Gemini
-genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
-model = genai.GenerativeModel("gemini-2.5-pro")
-
+# ---------------------------------------------------------------------------
+# Language detection helpers (restored)
+# ---------------------------------------------------------------------------
 SPANISH_COMMON = {"el","la","de","que","y","en","a","los","se","del","las","un","por","con","una","su","para","es","al","lo","como","más","pero","sus","le"}
 ENGLISH_COMMON = {"the","and","to","of","in","that","it","is","for","on","as","are","was","with","this","by","an","be","or","from"}
 
 def detect_language(text: str) -> str:
-    """
-    Heurística ligera: compara frecuencia de palabras funcionales.
-    Devuelve 'en', 'es' u 'other'.
-    """
+    """Light heuristic comparing counts of common function words."""
     if not text:
         return "other"
     words = re.findall(r"[a-záéíóúüñ]+", text.lower())
@@ -76,6 +79,349 @@ def generate_with_retry(prompt: str, *, max_attempts: int = 3, base_wait: int = 
     if last_exc:
         raise last_exc
     raise RuntimeError("Generation failed without exception detail")
+
+
+def _ai_cloze_prompt(source_text: str, *, desired_count: int, words_per_item: int, lang_label: str) -> str:
+    """Build prompt for AI Cloze generation (dynamic scaling)."""
+    language_line = "Idioma de salida: Español" if lang_label == "Spanish" else "Output language: English"
+    snippet = source_text[:16000]
+    return (
+        f"You are an expert educational content generator.\n"
+        f"Generate as many high-quality fill-in-the-blank items (Cloze) as there are DISTINCT key concepts in the SOURCE TEXT.\n"
+    f"Guideline: about 1 item per ~{words_per_item} words (estimated target ≈ {desired_count}). Continue until additional items would be redundant.\n"
+    "Prioritize: core definitions → causal relations → processes → contrasts → implications.\n"
+    "Skip trivial filler (articles, pronouns, purely structural verbs, generic words like 'thing', 'people').\n"
+    "Each answer must be pedagogically valuable (concept, entity, process, mechanism, quantitative fact).\n"
+    "Avoid making blanks out of stopwords, common verbs (be/have/do), or numbers unless they are key data points.\n\n"
+        "REQUIREMENTS:\n"
+        "- Each item has exactly one blank represented by the four underscores token: ____\n"
+        "- Sentence must be concise, pedagogically meaningful (avoid over-long verbatim copying).\n"
+        "- Blank hides a key term/concept present EXACTLY in the text.\n"
+        "- All 3 distractors also appear in the text and share semantic / POS class with answer.\n"
+        "- No duplicate answers or duplicate sentences.\n"
+        "- Difficulty: easy | medium | hard.\n"
+    "- Provide a MIX of difficulties; harder = abstraction, multi-step reasoning, rarity.\n"
+    "- Stop BEFORE producing near-duplicates or overly narrow paraphrases.\n\n"
+        "OUTPUT STRICT JSON ONLY (no markdown fences) with schema:\n"
+        "{\n  \"clozes\": [\n     {\n       \"text\": \"La célula contiene ____ que protege el material genético.\",\n       \"answer\": \"núcleo\",\n       \"distractors\": [\"citoplasma\",\"membrana\",\"ribosoma\"],\n       \"difficulty\": \"medium\"\n     }\n  ]\n}\n\n"
+        "VALIDATION RULES:\n"
+        "- 'text' has exactly one '____'.\n"
+        "- answer + distractors all appear in SOURCE TEXT.\n"
+        "- Exactly 3 distractors.\n"
+    "- Answer is NOT a stopword / trivial function word.\n"
+        "- No trailing commas, no extra keys, no wrapper prose.\n\n"
+        f"{language_line}\n\n"
+        "SOURCE TEXT (truncated):\n"
+        f"{snippet}"
+    )
+
+
+def _clean_ai_json(raw: str) -> dict | None:
+    """Extract JSON from raw model output.
+    - Tries direct json.loads
+    - If fails, regex to capture first {...} block
+    Returns dict or None.
+    """
+    raw = raw.strip()
+    try:
+        return json.loads(raw)
+    except Exception:
+        pass
+    # Remove common wrappers (markdown fences, language hints)
+    if raw.startswith("```"):
+        # strip first and last fence
+        parts = raw.split("```")
+        raw = "\n".join(p for p in parts if 'clozes' in p or '{' in p)
+        raw = raw.strip()
+    # Try to locate a JSON object containing "clozes"
+    obj = _extract_json_block(raw, key_hint='"clozes"')
+    if obj:
+        try:
+            return json.loads(obj)
+        except Exception:
+            return None
+    return None
+
+
+def _extract_json_block(text: str, key_hint: str) -> str | None:
+    """Attempt to extract a balanced JSON object that contains key_hint.
+    Scans for first '{' and tries to balance braces.
+    """
+    start_candidates = [m.start() for m in re.finditer(r'\{', text)]
+    for start in start_candidates:
+        if key_hint not in text[start:]:
+            continue
+        depth = 0
+        for i, ch in enumerate(text[start:], start=start):
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    candidate = text[start:i+1].strip()
+                    if key_hint in candidate:
+                        return candidate
+                    break
+    return None
+
+
+def generate_ai_clozes(document: Document, source_text: str, lang_label: str, *, max_items: int, words_per_item: int) -> list[Cloze]:
+    """AI-first Cloze generation.
+    Returns created Cloze list (may be empty). Falls back to empty on parse/validation failure.
+    """
+    debug = os.getenv("AI_CLOZE_DEBUG", "0").lower() in {"1","true","yes","on"}
+    base_prompt = _ai_cloze_prompt(source_text, desired_count=max_items if max_items>0 else 1000, words_per_item=words_per_item, lang_label=lang_label)
+    attempts: list[tuple[str,str]] = [("primary", base_prompt)]
+    # We will add a stricter second prompt if first fails to parse
+    STRICT_SUFFIX = "\n\nIMPORTANT: Output ONLY the JSON object. Absolutely no prose, no explanation, no markdown fences."
+    attempts.append(("strict", base_prompt + STRICT_SUFFIX))
+
+    payload = None
+    raw_text = ""
+    for label, prompt in attempts:
+        try:
+            resp = generate_with_retry(prompt, max_attempts=2)
+        except Exception as e:
+            print(f"[AI Cloze] {label} generation failed: {e}")
+            continue
+        # Safely access text
+        raw_text = getattr(resp, 'text', '') or ''
+        if debug:
+            print(f"[AI Cloze][{label}] Raw (first 300 chars): {raw_text[:300]!r}")
+        payload = _clean_ai_json(raw_text)
+        if payload and isinstance(payload, dict) and isinstance(payload.get('clozes'), list):
+            break
+        else:
+            if debug:
+                print(f"[AI Cloze][{label}] Could not parse JSON; will try next strategy.")
+            payload = None
+
+    if not payload:
+        print("[AI Cloze] Invalid JSON structure after attempts")
+        if debug and raw_text:
+            print(f"[AI Cloze][debug] Last raw output tail: {raw_text[-300:]}" )
+        return []
+
+    created: list[Cloze] = []
+    seen_sentences: set[str] = set()
+    lowered_source = source_text.lower()
+    limit = None if max_items <= 0 else max_items
+    for item in (payload['clozes'] if limit is None else payload['clozes'][:limit]):
+        if not isinstance(item, dict):
+            continue
+        text_val = str(item.get('text') or '').strip()
+        answer = str(item.get('answer') or '').strip()
+        distractors = item.get('distractors') or []
+        difficulty = str(item.get('difficulty') or 'medium').lower()
+        if text_val.count('____') != 1:
+            continue
+        if len(answer) < 2:
+            continue
+        if any(not isinstance(d, str) or len(d.strip()) < 2 for d in distractors):
+            continue
+        if len(distractors) != 3:
+            continue
+        # Validate presence in source
+        if answer.lower() not in lowered_source:
+            continue
+        if any(d.lower() not in lowered_source for d in distractors):
+            continue
+        # Avoid duplicates
+        norm_sentence = text_val.lower()
+        if norm_sentence in seen_sentences:
+            continue
+        seen_sentences.add(norm_sentence)
+        if difficulty not in {"easy","medium","hard"}:
+            difficulty = "medium"
+        try:
+            c = Cloze.objects.create(
+                document=document,
+                text_with_blank=text_val,
+                answer=answer,
+                context='',
+                source_span=answer,  # minimal trace; optional improvement: exact span search
+                options=distractors,
+                meta={"source":"ai","distractor_count": len(distractors)},
+                difficulty=difficulty,
+            )
+            created.append(c)
+        except Exception as e:
+            print(f"[AI Cloze] Persist error: {e}")
+    print(f"[AI Cloze] Created {len(created)} items (requested {max_items}).")
+    return created
+
+
+# ---------------------------------------------------------------------------
+# Feynman (concept explanation prompts) generation
+# ---------------------------------------------------------------------------
+
+def _ai_feynman_prompt(source_text: str, *, lang_label: str, soft_cap: int | None) -> str:
+    """Build prompt for generating Feynman prompts + key points.
+
+    soft_cap: advisory maximum of items (None = unlimited). The model is instructed
+    to stop when additional prompts would be redundant.
+    """
+    snippet = source_text[:16000]
+    cap_text = (
+        f"Aim for at most ~{soft_cap} distinct prompts if the text supports that many; "
+        "stop earlier when coverage is complete."
+        if soft_cap and soft_cap > 0 else
+        "Generate as many distinct prompts as needed for full coverage; stop when concepts become redundant."
+    )
+    language_line = "Idioma de salida: Español" if lang_label == "Spanish" else "Output language: English"
+    # We use a strict JSON requirement to ease downstream parsing
+    return (
+        "You are an expert learning science assistant.\n"
+        "TASK: Derive high-quality Feynman explanation prompts from the SOURCE TEXT.\n"
+        "A 'Feynman prompt' is a short request that asks the learner to explain a concept, mechanism, process, principle or relationship in their own words.\n"
+        f"{cap_text}\n"
+        "RULES:\n"
+        "- Each prompt MUST be concise (≤ 140 characters preferred, NEVER exceed 180).\n"
+        "- Avoid yes/no questions. Avoid trivial definitions already verbatim.\n"
+        "- No numbering in the prompt text itself. No quotes.\n"
+        "- Prompts must cover: core definitions, mechanisms, causal chains, processes, comparisons, implications, boundary conditions.\n"
+        "- Skip purely bibliographic or formatting content.\n"
+        "- Do NOT duplicate coverage; each prompt should target a distinct conceptual unit.\n"
+        "- For each prompt produce 3–8 key points the ideal explanation SHOULD include.\n"
+        "- Key points must be atomic, declarative, and derived from the source; no hallucinations.\n"
+        "- Assign a weight (1.0 default) but allow emphasizing especially central points up to 1.5.\n"
+        "- Keep JSON minimal: no trailing commas, no markdown fences, no commentary.\n"
+        "OUTPUT STRICT JSON ONLY with schema:\n"
+        "{\n  \"items\": [\n    {\n      \"prompt\": \"Explain the Krebs cycle role in energy production\",\n      \"key_points\": [\n        {\"point\": \"Occurs in mitochondria matrix\", \"weight\": 1.0},\n        {\"point\": \"Generates NADH and FADH2 for ETC\", \"weight\": 1.0},\n        {\"point\": \"Oxidizes acetyl-CoA to CO2\", \"weight\": 1.2}\n      ]\n    }\n  ]\n}\n"
+        "VALIDATION:\n"
+        "- 'items' array present.\n"
+        "- Each item has prompt (string) + key_points (list 3..8) each with point + weight (float).\n"
+        "- No duplicate prompt texts (case-insensitive).\n"
+        f"{language_line}\n\nSOURCE TEXT (truncated):\n{snippet}"
+    )
+
+
+def _clean_ai_feynman_json(raw: str) -> dict | None:
+    """Extract JSON for Feynman generation; reuse generic logic but look for 'items'."""
+    raw = raw.strip()
+    try:
+        data = json.loads(raw)
+        if isinstance(data, dict) and 'items' in data:
+            return data
+    except Exception:
+        pass
+    # Remove markdown fences
+    if raw.startswith("```"):
+        segments = raw.split("```")
+        raw = "\n".join(s for s in segments if 'items' in s or '{' in s)
+        raw = raw.strip()
+    obj = _extract_json_block(raw, key_hint='"items"')
+    if obj:
+        try:
+            data = json.loads(obj)
+            if isinstance(data, dict) and 'items' in data:
+                return data
+        except Exception:
+            return None
+    return None
+
+
+def generate_ai_feynman(document: Document, source_text: str, lang_label: str, *, soft_cap: int | None, regenerate: bool) -> list[Feynman]:
+    """Generate Feynman prompts + key points.
+
+    soft_cap: advisory maximum number of items (None or 0 -> unlimited but internally safety capped)
+    regenerate: if False and items already exist -> skip
+    """
+    existing_count = document.feynmans.count()
+    if existing_count > 0 and not regenerate:
+        print(f"[Feynman] Existing items ({existing_count}) present; skipping generation (regenerate disabled).")
+        return []
+
+    # Safety hard cap to prevent runaway token usage even if unlimited requested
+    internal_max = None
+    if soft_cap and soft_cap > 0:
+        internal_max = soft_cap
+    else:
+        internal_max = 80  # internal safety upper bound
+
+    base_prompt = _ai_feynman_prompt(source_text, lang_label=lang_label, soft_cap=internal_max)
+    attempts: list[tuple[str, str]] = [("primary", base_prompt)]
+    attempts.append(("strict", base_prompt + "\nIMPORTANT: Output ONLY the JSON object. Absolutely no prose."))
+    payload = None
+    raw_text = ""
+    for label, prompt in attempts:
+        try:
+            resp = generate_with_retry(prompt, max_attempts=2)
+        except Exception as e:
+            print(f"[Feynman] {label} generation failed: {e}")
+            continue
+        raw_text = getattr(resp, 'text', '') or ''
+        payload = _clean_ai_feynman_json(raw_text)
+        if payload and isinstance(payload.get('items'), list):
+            break
+        payload = None
+
+    if not payload:
+        print("[Feynman] Invalid JSON structure after attempts")
+        return []
+
+    created: list[Feynman] = []
+    seen_prompts: set[str] = set()
+    limit = None if not internal_max else internal_max
+    items_iter = payload['items'] if limit is None else payload['items'][:limit]
+    for idx, item in enumerate(items_iter, start=1):
+        if not isinstance(item, dict):
+            continue
+        prompt_text = str(item.get('prompt') or '').strip()
+        if not prompt_text:
+            continue
+        norm = prompt_text.lower()
+        if norm in seen_prompts:
+            continue
+        seen_prompts.add(norm)
+        # Length constraints
+        if len(prompt_text) > 180:
+            prompt_text = prompt_text[:180].rstrip()
+        # Enforce preferred length cap (soft) by trimming mid-word if > 140
+        if len(prompt_text) > 140:
+            prompt_text = prompt_text[:140].rstrip()
+        raw_points = item.get('key_points') or []
+        if not isinstance(raw_points, list):
+            continue
+        structured_points = []
+        for kp in raw_points:
+            if isinstance(kp, dict):
+                point = str(kp.get('point') or '').strip()
+                if not point:
+                    continue
+                try:
+                    weight = float(kp.get('weight', 1.0))
+                except Exception:
+                    weight = 1.0
+                # Clamp weight
+                if weight <= 0:
+                    weight = 1.0
+                if weight > 1.5:
+                    weight = 1.5
+                structured_points.append({"id": len(structured_points)+1, "point": point, "weight": round(weight, 2)})
+            elif isinstance(kp, str):
+                point = kp.strip()
+                if point:
+                    structured_points.append({"id": len(structured_points)+1, "point": point, "weight": 1.0})
+        if len(structured_points) < 2:  # need at least minimal guidance
+            continue
+        try:
+            f_obj = Feynman.objects.create(
+                document=document,
+                prompt=prompt_text,
+                key_points=structured_points,
+                reference=None,
+            )
+            created.append(f_obj)
+        except Exception as e:
+            try:
+                snippet = json.dumps(item)[:200]
+            except Exception:
+                snippet = repr(item)[:200]
+            print(f"[Feynman] Persist error: {e} | Raw item: {snippet}")
+
+    print(f"[Feynman] Created {len(created)} items (requested soft cap {soft_cap}).")
+    return created
 
 def process_pdf(document_id):
     document = Document.objects.get(id=document_id)
@@ -362,6 +708,54 @@ DOCUMENT TEXT:
 
         except Exception as e:
             print(f"[Error] Failed to generate or parse MCQs: {e}")
+
+        # ---- Generate Cloze (AI-first with fallback to spaCy) ----
+        try:
+            print("Generating Cloze items (AI-first)...")
+            # Dynamic sizing: allow override & unlimited
+            ai_enabled = os.getenv("AI_CLOZE_ENABLED", "false").lower() in {"1","true","yes","on"}
+            words = text.split()
+            default_words_per_item = int(os.getenv("AI_CLOZE_WORDS_PER_ITEM", "120"))
+            # Estimate desired count (floor) if not unlimited
+            unlimited = os.getenv("AI_CLOZE_MAX", "").strip() == "0"
+            estimated = max(4, len(words)//default_words_per_item) if not unlimited else 0
+            max_cap_env = os.getenv("AI_CLOZE_MAX", "")
+            if max_cap_env.isdigit() and int(max_cap_env) > 0:
+                estimated = min(estimated, int(max_cap_env))
+            approx_items = estimated if estimated else 0  # 0 signals unlimited
+            created_ai: list[Cloze] = []
+            if ai_enabled:
+                # Provide summary + a slice of original text to balance abstraction + coverage
+                combined_source = (summary_content or "") + "\n\n" + text[:10000]
+                created_ai = generate_ai_clozes(document, combined_source, lang_label, max_items=approx_items, words_per_item=default_words_per_item)
+            # If limited mode and sparse yield -> fallback fill
+            if approx_items > 0 and len(created_ai) < max(1, approx_items // 2):  # Fallback enrich if AI sparse
+                print("[AI Cloze] Fallback to local generator for remaining items...")
+                remaining = approx_items - len(created_ai)
+                if remaining > 0:
+                    cgen = ClozeGenerator(document, max_items=remaining)
+                    local_items = cgen.generate()
+                    print(f"[Cloze Fallback] Added {len(local_items)} local items.")
+            total_clozes = document.clozes.count()
+            print(f"Total Cloze items now: {total_clozes}.")
+        except Exception as e:
+            print(f"[Error] Cloze AI/local generation failed: {e}")
+
+        # ---- Generate Feynman Prompts ----
+        try:
+            print("Generating Feynman prompts...")
+            # Compose source: leverage summary (concept condensation) + raw slice for coverage
+            combined_source = (summary_content or "") + "\n\n" + text[:12000]
+            # Env configuration
+            cap_env = os.getenv("AI_FEYNMAN_MAX", "").strip()
+            soft_cap = None
+            if cap_env.isdigit() and int(cap_env) > 0:
+                soft_cap = int(cap_env)
+            regenerate = os.getenv("AI_FEYNMAN_REGENERATE", "0").lower() in {"1","true","yes","on"}
+            created_feynman = generate_ai_feynman(document, combined_source, lang_label, soft_cap=soft_cap, regenerate=regenerate)
+            print(f"Feynman prompts total now: {document.feynmans.count()} (new {len(created_feynman)}).")
+        except Exception as e:
+            print(f"[Error] Feynman generation failed: {e}")
 
         # ---- Finalize ----
         document.processing_status = 'completed'

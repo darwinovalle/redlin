@@ -3,9 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from API.jwt_auth import JWTAuthentication
-from .models import Video, VideoSummary, VideoMCQ
-from .serializers import VideoSerializer, VideoSummarySerializer, VideoMCQSerializer
-from .ai import process_video
+from .models import Video, VideoSummary, VideoMCQ, VideoCloze, VideoFeynman, VideoFeynmanAttempt
+from CORE.models import CoreAttempt
+from django.contrib.contenttypes.models import ContentType
+from .serializers import (
+    VideoSerializer, VideoSummarySerializer, VideoMCQSerializer, VideoClozeSerializer,
+    VideoFeynmanSerializer, VideoFeynmanAttemptSerializer, VideoFeynmanAttemptCreateSerializer
+)
+from .ai import process_video, evaluate_video_feynman_attempt
 
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all().order_by('-id')
@@ -58,6 +63,13 @@ class VideoViewSet(viewsets.ModelViewSet):
         qs = video.mcqs.all()
         return Response(VideoMCQSerializer(qs, many=True).data)
 
+    @action(detail=True, methods=['get'])
+    def clozes(self, request, pk=None):
+        """Listar VideoCloze del video (sub-recurso para simetría)."""
+        video = self.get_object()
+        vqs = video.clozes.all().order_by('-id')
+        return Response(VideoClozeSerializer(vqs, many=True).data)
+
     @action(detail=True, methods=['post'])
     def reprocess(self, request, pk=None):
         video = self.get_object()
@@ -77,9 +89,97 @@ class VideoViewSet(viewsets.ModelViewSet):
         data = {
             "video": VideoSerializer(video).data,
             "summary": VideoSummarySerializer(video.summary).data if hasattr(video,'summary') else None,
-            "mcqs": VideoMCQSerializer(video.mcqs.all(), many=True).data
+            "mcqs": VideoMCQSerializer(video.mcqs.all(), many=True).data,
+            "clozes": VideoClozeSerializer(video.clozes.all(), many=True).data,
+            "feynman": VideoFeynmanSerializer(video.feynmans.all().order_by('id'), many=True).data,
         }
         return Response(data)
+
+    # ---------------- Nested Feynman endpoints (Issue #14) ----------------
+    @action(detail=True, methods=['get'], url_path='feynman/prompts')
+    def feynman_prompts(self, request, pk=None):
+        video = self.get_object()
+        qs = video.feynmans.all().order_by('id')
+        return Response(VideoFeynmanSerializer(qs, many=True).data)
+
+    @action(detail=True, methods=['get'], url_path='feynman/history')
+    def feynman_history(self, request, pk=None):
+        video = self.get_object()
+        attempts = VideoFeynmanAttempt.objects.filter(video=video, user=request.user).order_by('-id')
+        return Response(VideoFeynmanAttemptSerializer(attempts, many=True).data)
+
+    @action(detail=True, methods=['post'], url_path='feynman/evaluate')
+    def feynman_evaluate(self, request, pk=None):
+        video = self.get_object()
+        feynman_id = request.data.get('feynman_id')
+        answer = request.data.get('answer') or ''
+        if not feynman_id:
+            return Response({'detail':'feynman_id requerido'}, status=400)
+        try:
+            fid = int(feynman_id)
+        except ValueError:
+            return Response({'detail':'feynman_id inválido'}, status=400)
+        f_obj = VideoFeynman.objects.filter(id=fid, video=video).first()
+        if not f_obj:
+            return Response({'detail':'Feynman not found'}, status=404)
+        attempt = evaluate_video_feynman_attempt(f_obj, answer, request.user)
+        # CoreAttempt registro
+        try:
+            ct = ContentType.objects.get_for_model(VideoFeynmanAttempt)
+            CoreAttempt.objects.create(
+                user=request.user,
+                method='FEYNMAN',
+                content_type=ct,
+                object_id=attempt.id,
+                raw_answer=attempt.answer_text,
+                ai_score=attempt.score,
+                ai_feedback=attempt.breakdown or {},
+                correct=(attempt.score or 0) >= 60,
+            )
+        except Exception as e:
+            print(f"[CoreAttempt] Error creando registro: {e}")
+        return Response(VideoFeynmanAttemptSerializer(attempt).data, status=201)
+
+
+class VideoFeynmanViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = VideoFeynman.objects.all().order_by('id')
+    serializer_class = VideoFeynmanSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = VideoFeynman.objects.filter(video__user=self.request.user).order_by('id')
+        vid = self.request.query_params.get('video')
+        if vid:
+            try:
+                qs = qs.filter(video_id=int(vid))
+            except ValueError:
+                pass
+        return qs
+
+    @action(detail=False, methods=['get'])
+    def attempts(self, request):
+        fid = request.query_params.get('feynman')
+        if not fid:
+            return Response([], status=200)
+        try:
+            fid_int = int(fid)
+        except ValueError:
+            return Response({'detail':'invalid id'}, status=400)
+        attempts = VideoFeynmanAttempt.objects.filter(feynman__id=fid_int, user=request.user).order_by('-id')
+        return Response(VideoFeynmanAttemptSerializer(attempts, many=True).data)
+
+    @action(detail=False, methods=['post'])
+    def attempt(self, request):
+        serializer = VideoFeynmanAttemptCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        f_id = serializer.validated_data['feynman_id']
+        answer = serializer.validated_data['answer']
+        f_obj = VideoFeynman.objects.filter(id=f_id, video__user=request.user).first()
+        if not f_obj:
+            return Response({'detail':'Feynman not found'}, status=404)
+        attempt = evaluate_video_feynman_attempt(f_obj, answer, request.user)
+        return Response(VideoFeynmanAttemptSerializer(attempt).data, status=201)
 
 class VideoSummaryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = VideoSummary.objects.all()
