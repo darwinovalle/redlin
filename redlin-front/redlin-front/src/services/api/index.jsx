@@ -1,66 +1,215 @@
-import axios from 'axios';
-
 const API_URL = import.meta.env?.VITE_API_URL || 'http://127.0.0.1:8000/api';
-
-const api = axios.create({
-  baseURL: API_URL,
-  // Remove the default Content-Type header
-  // headers: {
-  //   'Content-Type': 'application/json',
-  // }
-});
-
-// Attach token automatically
-api.interceptors.request.use((config) => {
+function getStoredAuth() {
   try {
-    const stored = localStorage.getItem('auth');
-    if (stored) {
-      const { access } = JSON.parse(stored);
-      if (access) config.headers.Authorization = `Bearer ${access}`;
-    }
-  } catch {}
-  return config;
-});
-
-// On 401, try refresh once
-let isRefreshing = false;
-let pending = [];
-
-function onRefreshed(token) { pending.forEach(cb => cb(token)); pending = []; }
-
-api.interceptors.response.use(
-  (res) => res,
-  async (error) => {
-    const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
-      original._retry = true;
-      if (isRefreshing) {
-        return new Promise((resolve) => {
-          pending.push((token) => {
-            original.headers.Authorization = `Bearer ${token}`;
-            resolve(api(original));
-          });
-        });
-      }
-      isRefreshing = true;
-      try {
-        const stored = JSON.parse(localStorage.getItem('auth') || '{}');
-        const resp = await axios.post(`${API_URL}/auth/refresh/`, { refresh: stored.refresh });
-        const { access, refresh } = resp.data || {};
-        const updated = { ...(stored || {}), access, refresh };
-        localStorage.setItem('auth', JSON.stringify(updated));
-        isRefreshing = false; onRefreshed(access);
-        original.headers.Authorization = `Bearer ${access}`;
-        return api(original);
-      } catch (e) {
-        isRefreshing = false; pending = [];
-        try { localStorage.removeItem('auth'); } catch {}
-        return Promise.reject(e);
-      }
-    }
-    return Promise.reject(error);
+    return JSON.parse(localStorage.getItem('auth') || '{}');
+  } catch {
+    return {};
   }
-);
+}
+
+function setStoredAuth(data) {
+  try {
+    localStorage.setItem('auth', JSON.stringify(data));
+  } catch {}
+}
+
+function clearStoredAuth() {
+  try {
+    localStorage.removeItem('auth');
+  } catch {}
+}
+
+function buildApiUrl(url) {
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+  return `${API_URL}${url.startsWith('/') ? url : `/${url}`}`;
+}
+
+async function parseResponseBody(response) {
+  if (response.status === 204 || response.status === 205) {
+    return null;
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    try {
+      return await response.json();
+    } catch {
+      return null;
+    }
+  }
+
+  const text = await response.text();
+  return text || null;
+}
+
+function createHttpError(data, status, config, url) {
+  const message =
+    (typeof data === 'string' && data) ||
+    data?.detail ||
+    data?.message ||
+    `Request failed with status ${status}`;
+  const error = new Error(message);
+  error.response = { status, data, url };
+  error.status = status;
+  error.config = config;
+  return error;
+}
+
+function isFormData(value) {
+  return typeof FormData !== 'undefined' && value instanceof FormData;
+}
+
+function isBinaryPayload(value) {
+  return (
+    (typeof Blob !== 'undefined' && value instanceof Blob) ||
+    (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) ||
+    (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView(value))
+  );
+}
+
+function prepareRequestBody(data, headers) {
+  if (data === undefined || data === null) {
+    return undefined;
+  }
+  if (isFormData(data) || data instanceof URLSearchParams || isBinaryPayload(data) || typeof data === 'string') {
+    return data;
+  }
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  return JSON.stringify(data);
+}
+
+let isRefreshing = false;
+let pendingRefreshSubscribers = [];
+
+function enqueueRefreshSubscriber() {
+  return new Promise((resolve, reject) => {
+    pendingRefreshSubscribers.push({ resolve, reject });
+  });
+}
+
+function resolveRefreshSubscribers(token) {
+  pendingRefreshSubscribers.forEach(({ resolve }) => resolve(token));
+  pendingRefreshSubscribers = [];
+}
+
+function rejectRefreshSubscribers(error) {
+  pendingRefreshSubscribers.forEach(({ reject }) => reject(error));
+  pendingRefreshSubscribers = [];
+}
+
+async function refreshAccessToken() {
+  if (isRefreshing) {
+    return enqueueRefreshSubscriber();
+  }
+
+  isRefreshing = true;
+  try {
+    const stored = getStoredAuth();
+    if (!stored?.refresh) {
+      throw createHttpError(
+        { detail: 'Missing refresh token' },
+        401,
+        { method: 'POST', url: '/auth/refresh/' },
+        buildApiUrl('/auth/refresh/')
+      );
+    }
+
+    const response = await fetch(buildApiUrl('/auth/refresh/'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ refresh: stored.refresh })
+    });
+
+    const data = await parseResponseBody(response);
+    if (!response.ok) {
+      throw createHttpError(data, response.status, { method: 'POST', url: '/auth/refresh/' }, buildApiUrl('/auth/refresh/'));
+    }
+
+    const updated = {
+      ...stored,
+      access: data?.access,
+      refresh: data?.refresh || stored.refresh
+    };
+    setStoredAuth(updated);
+    resolveRefreshSubscribers(updated.access);
+    return updated.access;
+  } catch (error) {
+    clearStoredAuth();
+    rejectRefreshSubscribers(error);
+    throw error;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
+async function request(method, url, data, config = {}, canRefresh = true) {
+  const normalizedMethod = method.toUpperCase();
+  const fullUrl = buildApiUrl(url);
+  const headers = new Headers(config.headers || {});
+  const stored = getStoredAuth();
+
+  if (stored?.access && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${stored.access}`);
+  }
+
+  const shouldSendBody = normalizedMethod !== 'GET' && normalizedMethod !== 'HEAD';
+  const body = shouldSendBody ? prepareRequestBody(data, headers) : undefined;
+
+  let response;
+  try {
+    response = await fetch(fullUrl, {
+      method: normalizedMethod,
+      headers,
+      body,
+      signal: config.signal
+    });
+  } catch (networkError) {
+    const error = new Error(networkError?.message || 'Network request failed');
+    error.cause = networkError;
+    throw error;
+  }
+
+  const responseData = await parseResponseBody(response);
+
+  if (response.ok) {
+    return {
+      data: responseData,
+      status: response.status,
+      headers: response.headers,
+      url: fullUrl,
+      config
+    };
+  }
+
+  const requestConfig = { method: normalizedMethod, url, data, headers: config.headers };
+  if (response.status === 401 && canRefresh && !config.skipAuthRefresh && !url.includes('/auth/refresh/')) {
+    await refreshAccessToken();
+    return request(method, url, data, config, false);
+  }
+
+  throw createHttpError(responseData, response.status, requestConfig, fullUrl);
+}
+
+const api = {
+  baseURL: API_URL,
+  request: ({ method = 'GET', url, data, ...config } = {}) => {
+    if (!url) {
+      throw new Error('url is required');
+    }
+    return request(method, url, data, config);
+  },
+  get: (url, config) => request('GET', url, undefined, config),
+  post: (url, data, config) => request('POST', url, data, config),
+  put: (url, data, config) => request('PUT', url, data, config),
+  patch: (url, data, config) => request('PATCH', url, data, config),
+  delete: (url, config) => request('DELETE', url, undefined, config)
+};
 
 export const authService = {
   login: async (username, password) => {
@@ -71,8 +220,7 @@ export const authService = {
       });
       return response.data;
     } catch (error) {
-      throw error.response.data;
-      console.log('error', error) 
+      throw error.response?.data || { error: 'Login failed' };
     }
   },
 
@@ -85,7 +233,7 @@ export const authService = {
       });
       return response.data;
     } catch (error) {
-      throw error.response.data;
+      throw error.response?.data || { error: 'Registration failed' };
     }
   }
 };
@@ -99,13 +247,8 @@ export const documentService = {
     formData.append('user', userId);
 
     try {
-      // Use the 'api' axios instance. Axios sets Content-Type for FormData automatically.
-      // If issues arise, uncomment and adjust the header below.
-      const response = await api.post('/documents/', formData /*, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }*/);
+      // Do not set Content-Type manually for FormData; the browser will include boundaries.
+      const response = await api.post('/documents/', formData);
       return response.data;
     } catch (error) {
       console.error('Document upload error:', error.response || error);

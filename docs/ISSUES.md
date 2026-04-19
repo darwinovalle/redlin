@@ -218,19 +218,19 @@ Riesgos / Mitigaciones:
 // Components a crear:
 - [x] ClozeCard.jsx
 - [x] ClozeSession.jsx
-- [ ] HintSystem.jsx
-- [ ] Animaciones de drag & drop
-- [ ] Feedback visual de correcto/incorrecto
+- [x] HintSystem.jsx
+- [x] Animaciones de drag & drop
+- [x] Feedback visual de correcto/incorrecto
 - [ ] Tests con React Testing Library
 ```
 
 #### Issue #16: Frontend panel Feynman
 **Tipo:** Frontend | **Prioridad:** High | **Estimación:** 10h
-- [ ] FeynmanPanel.jsx con editor markdown
-- [ ] AIFeedback.jsx para mostrar evaluación
-- [ ] StrengthsWeaknesses.jsx
-- [ ] Timer component
-- [ ] Guardar drafts localmente
+- [x] FeynmanPanel.jsx con editor markdown
+- [x] AIFeedback.jsx para mostrar evaluación
+- [x] StrengthsWeaknesses.jsx
+- [x] Timer component
+- [x] Guardar drafts localmente
 - [ ] Tests de componentes
 
 ---
