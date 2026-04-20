@@ -66,11 +66,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const isHome = location.pathname.startsWith('/home');
   const currentDocSlug = React.useMemo(() => { const m = location.pathname.match(/^\/documents\/([^/?#]+)/); return m?decodeURIComponent(m[1]):null; }, [location.pathname]);
   const currentCsvSlug = React.useMemo(() => { const m = location.pathname.match(/^\/csv\/([^/?#]+)/); return m?decodeURIComponent(m[1]):null; }, [location.pathname]);
-  const docsOpenKey = React.useMemo(()=> user?.id?`sidebar:${user.id}:docsOpen`:null,[user?.id]);
-  const sheetsOpenKey = React.useMemo(()=> user?.id?`sidebar:${user.id}:sheetsOpen`:null,[user?.id]);
-  const kanbanOpenKey = React.useMemo(()=> user?.id?`sidebar:${user.id}:kanbanOpen`:null,[user?.id]);
-  const videosOpenKey = React.useMemo(()=> user?.id?`sidebar:${user.id}:videosOpen`:null,[user?.id]);
-  const statsOpenKey = React.useMemo(()=> user?.id?`sidebar:${user.id}:statsOpen`:null,[user?.id]);
+  const sidebarStateKey = React.useMemo(() => user?.id ? `sidebar:${user.id}:sections` : null, [user?.id]);
   const [userDocuments,setUserDocuments]=useState([]);
   const [loadingDocs,setLoadingDocs]=useState(false);
   const [fetchError,setFetchError]=useState(null);
@@ -79,11 +75,12 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [loadingVideos,setLoadingVideos]=useState(false);
   const [videoError,setVideoError]=useState(null);
   const [creatingVideo,setCreatingVideo]=useState(false);
-  const [docsOpen,setDocsOpen]=useState(()=>{ if(docsOpenKey){try{const v=localStorage.getItem(docsOpenKey); if(v==='true'||v==='false') return v==='true';}catch{}} return !isHome;});
-  const [sheetsOpen,setSheetsOpen]=useState(()=>{ if(sheetsOpenKey){try{const v=localStorage.getItem(sheetsOpenKey); if(v==='true'||v==='false') return v==='true';}catch{}} return false;});
-  const [kanbanOpen,setKanbanOpen]=useState(()=>{ if(kanbanOpenKey){try{const v=localStorage.getItem(kanbanOpenKey); if(v==='true'||v==='false') return v==='true';}catch{}} return false;});
-  const [videosOpen,setVideosOpen]=useState(()=>{ if(videosOpenKey){try{const v=localStorage.getItem(videosOpenKey); if(v==='true'||v==='false') return v==='true';}catch{}} return false;});
-  const [statsOpen,setStatsOpen]=useState(()=>{ if(statsOpenKey){try{const v=localStorage.getItem(statsOpenKey); if(v==='true'||v==='false') return v==='true';}catch{}} return false;});
+  const [docsOpen,setDocsOpen]=useState(!isHome);
+  const [sheetsOpen,setSheetsOpen]=useState(false);
+  const [kanbanOpen,setKanbanOpen]=useState(false);
+  const [videosOpen,setVideosOpen]=useState(false);
+  const [statsOpen,setStatsOpen]=useState(false);
+  const sidebarStateHydratedRef = React.useRef(false);
   const [openSampleModal,setOpenSampleModal]=useState(false);
   const [renameState,setRenameState]=useState({open:false,doc:null,saving:false});
   const [renameSheetState,setRenameSheetState]=useState({open:false,imp:null,saving:false});
@@ -93,16 +90,54 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const uploadFile=async(file)=>{ if(!file||!user?.id) return; setLoading(true); setError(null); try{ await documentService.uploadDocument(file,user.id); await fetchUserDocuments(); setSuccessAlertOpen(true);}catch(e){ setError(e?.error||'Upload failed'); } finally { setLoading(false);} };
   const handleDeleteDocument=async(doc)=>{ if(!window.confirm('Delete this document?')) return; try{ await documentService.deleteDocument(doc.id); setUserDocuments(d=>d.filter(x=>x.id!==doc.id)); if(currentDocSlug && slugify(doc.title||String(doc.id))===currentDocSlug) navigate('/home'); }catch{ alert('Failed to delete'); } };
   const handleDeleteSheet=async(imp)=>{ if(!window.confirm('Delete this sheet?')) return; try{ await csvService.deleteImport(imp.id); setCsvImports(s=>s.filter(x=>x.id!==imp.id)); }catch{ alert('Failed to delete sheet'); } };
-  useEffect(()=>{ if(!docsOpenKey)return; try{const v=localStorage.getItem(docsOpenKey); if(v==='true'||v==='false') setDocsOpen(v==='true');}catch{} },[docsOpenKey]);
-  useEffect(()=>{ if(docsOpenKey) try{localStorage.setItem(docsOpenKey,String(docsOpen));}catch{} },[docsOpen,docsOpenKey]);
-  useEffect(()=>{ if(!sheetsOpenKey)return; try{const v=localStorage.getItem(sheetsOpenKey); if(v==='true'||v==='false') setSheetsOpen(v==='true');}catch{} },[sheetsOpenKey]);
-  useEffect(()=>{ if(sheetsOpenKey) try{localStorage.setItem(sheetsOpenKey,String(sheetsOpen));}catch{} },[sheetsOpen,sheetsOpenKey]);
-  useEffect(()=>{ if(!kanbanOpenKey)return; try{const v=localStorage.getItem(kanbanOpenKey); if(v==='true'||v==='false') setKanbanOpen(v==='true');}catch{} },[kanbanOpenKey]);
-  useEffect(()=>{ if(kanbanOpenKey) try{localStorage.setItem(kanbanOpenKey,String(kanbanOpen));}catch{} },[kanbanOpen,kanbanOpenKey]);
-  useEffect(()=>{ if(!videosOpenKey)return; try{const v=localStorage.getItem(videosOpenKey); if(v==='true'||v==='false') setVideosOpen(v==='true');}catch{} },[videosOpenKey]);
-  useEffect(()=>{ if(videosOpenKey) try{localStorage.setItem(videosOpenKey,String(videosOpen));}catch{} },[videosOpen,videosOpenKey]);
-  useEffect(()=>{ if(!statsOpenKey)return; try{const v=localStorage.getItem(statsOpenKey); if(v==='true'||v==='false') setStatsOpen(v==='true');}catch{} },[statsOpenKey]);
-  useEffect(()=>{ if(statsOpenKey) try{localStorage.setItem(statsOpenKey,String(statsOpen));}catch{} },[statsOpen,statsOpenKey]);
+  useEffect(() => {
+    sidebarStateHydratedRef.current = false;
+
+    const resetDefaults = () => {
+      setDocsOpen(!isHome);
+      setSheetsOpen(false);
+      setKanbanOpen(false);
+      setVideosOpen(false);
+      setStatsOpen(false);
+    };
+
+    if (!sidebarStateKey) {
+      resetDefaults();
+      sidebarStateHydratedRef.current = true;
+      return;
+    }
+
+    try {
+      const raw = localStorage.getItem(sidebarStateKey);
+      if (!raw) {
+        resetDefaults();
+      } else {
+        const parsed = JSON.parse(raw);
+        setDocsOpen(typeof parsed?.docsOpen === 'boolean' ? parsed.docsOpen : !isHome);
+        setSheetsOpen(typeof parsed?.sheetsOpen === 'boolean' ? parsed.sheetsOpen : false);
+        setKanbanOpen(typeof parsed?.kanbanOpen === 'boolean' ? parsed.kanbanOpen : false);
+        setVideosOpen(typeof parsed?.videosOpen === 'boolean' ? parsed.videosOpen : false);
+        setStatsOpen(typeof parsed?.statsOpen === 'boolean' ? parsed.statsOpen : false);
+      }
+    } catch {
+      resetDefaults();
+    } finally {
+      sidebarStateHydratedRef.current = true;
+    }
+  }, [sidebarStateKey, isHome]);
+
+  useEffect(() => {
+    if (!sidebarStateKey || !sidebarStateHydratedRef.current) return;
+    try {
+      localStorage.setItem(sidebarStateKey, JSON.stringify({
+        docsOpen,
+        sheetsOpen,
+        kanbanOpen,
+        videosOpen,
+        statsOpen
+      }));
+    } catch {}
+  }, [sidebarStateKey, docsOpen, sheetsOpen, kanbanOpen, videosOpen, statsOpen]);
   useEffect(()=>{ fetchUserDocuments(); (async()=>{ try{ const data=await csvService.listImports(); setCsvImports(Array.isArray(data)?data:[]);}catch{ setCsvImports([]);} })(); (async()=>{ if(!user){ setVideos([]); return;} setLoadingVideos(true); setVideoError(null); try{ const list=await videoService.listVideos(); setVideos(Array.isArray(list)?list:[]);}catch{ setVideoError('Could not load videos'); } finally { setLoadingVideos(false);} })(); },[user]);
   const openRename=(doc)=> setRenameState({open:true,doc,saving:false});
   const closeRename=()=> setRenameState({open:false,doc:null,saving:false});

@@ -1,7 +1,56 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { createContext, useContext, useState } from 'react';
 
 const FlashcardContext = createContext();
+
+async function parseFetchPayload(response) {
+  if (response.status === 204 || response.status === 205) {
+    return null;
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    try {
+      return await response.json();
+    } catch {
+      return null;
+    }
+  }
+
+  const text = await response.text();
+  return text || null;
+}
+
+async function fetchRequest(url, { method = 'GET', data, headers, ...options } = {}) {
+  const requestHeaders = new Headers(headers || {});
+  let body;
+
+  if (data !== undefined) {
+    if (data instanceof FormData || data instanceof URLSearchParams || typeof data === 'string') {
+      body = data;
+    } else {
+      if (!requestHeaders.has('Content-Type')) {
+        requestHeaders.set('Content-Type', 'application/json');
+      }
+      body = JSON.stringify(data);
+    }
+  }
+
+  const response = await fetch(url, {
+    method,
+    headers: requestHeaders,
+    body,
+    ...options,
+  });
+
+  const payload = await parseFetchPayload(response);
+  if (!response.ok) {
+    const error = new Error(payload?.message || payload?.detail || `Request failed with status ${response.status}`);
+    error.response = { status: response.status, data: payload };
+    throw error;
+  }
+
+  return payload;
+}
 
 export const FlashcardProvider = ({ children }) => {
   const [flashcards, setFlashcards] = useState([]);
@@ -44,8 +93,11 @@ export const FlashcardProvider = ({ children }) => {
 
   const createFlashcard = async (cardData) => {
     try {
-      const response = await axios.post('/api/flashcards', cardData);
-      setFlashcards(prev => [...prev, response.data]);
+      const data = await fetchRequest('/api/flashcards', {
+        method: 'POST',
+        data: cardData,
+      });
+      setFlashcards(prev => [...prev, data]);
     } catch (error) {
       console.error('Error creating flashcard:', error);
       throw error;
@@ -54,9 +106,12 @@ export const FlashcardProvider = ({ children }) => {
 
   const updateFlashcard = async (id, updatedData) => {
     try {
-      const response = await axios.put(`/api/flashcards/${id}`, updatedData);
+      const data = await fetchRequest(`/api/flashcards/${id}`, {
+        method: 'PUT',
+        data: updatedData,
+      });
       setFlashcards(prev => 
-        prev.map(card => card.id === id ? response.data : card)
+        prev.map(card => card.id === id ? data : card)
       );
     } catch (error) {
       console.error('Error updating flashcard:', error);
@@ -66,7 +121,7 @@ export const FlashcardProvider = ({ children }) => {
 
   const deleteFlashcard = async (id) => {
     try {
-      await axios.delete(`/api/flashcards/${id}`);
+      await fetchRequest(`/api/flashcards/${id}`, { method: 'DELETE' });
       setFlashcards(prev => prev.filter(card => card.id !== id));
     } catch (error) {
       console.error('Error deleting flashcard:', error);
@@ -130,9 +185,12 @@ export const FlashcardProvider = ({ children }) => {
     const formData = new FormData();
     formData.append('pdf', file);
     try {
-      const response = await axios.post('/api/pdf/import', formData);
-      setFlashcards(response.data.flashcards);
-      setPdfSummary(response.data.summary);
+      const data = await fetchRequest('/api/pdf/import', {
+        method: 'POST',
+        data: formData,
+      });
+      setFlashcards(data.flashcards);
+      setPdfSummary(data.summary);
     } catch (error) {
       console.error('Error importing PDF:', error);
       throw error;
