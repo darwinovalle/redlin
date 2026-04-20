@@ -1,9 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import { useMemo, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useNeuralNetworkAnimation } from '../../hooks/useNeuralNetworkAnimation';
 import { useGsapAnimations } from '../../hooks/useGsapAnimations';
+import { useLenisScroll } from '../../hooks/useLenisScroll';
 import './LandingPage.css';
 
 const LandingPage = () => {
+    const heroTitle = 'Transform How You Learn With Adaptive AI';
+    const heroTitleChars = useMemo(() => Array.from(heroTitle), [heroTitle]);
+    const rootRef = useRef(null);
+
     // Refs for sections that will be animated
     const heroRef = useRef(null);
     const featuresRef = useRef(null);
@@ -17,8 +23,12 @@ const LandingPage = () => {
     // Custom hook for neural network animation
     useNeuralNetworkAnimation(neuralNetworkRef);
 
+    // Premium smooth scrolling synchronized with ScrollTrigger.
+    useLenisScroll(true);
+
     // Custom hook for all other GSAP animations
     useGsapAnimations({
+        rootRef,
         heroRef,
         featuresRef,
         benefitsRef,
@@ -29,7 +39,7 @@ const LandingPage = () => {
     });
 
     return (
-        <div className="container-landing">
+        <div className="container-landing" ref={rootRef}>
             {/* Navigation Bar */}
             <nav className="navbar-landing">
                 <div className="logo-container-landing">
@@ -42,15 +52,15 @@ const LandingPage = () => {
                 </div>
                 
                 <div className="nav-links-landing">
-                    <a href="#features" className="nav-link-landing">Features</a>
-                    <a href="#benefits" className="nav-link-landing">Benefits</a>
-                    <a href="#how-it-works" className="nav-link-landing">How It Works</a>
-                    <a href="#pricing" className="nav-link-landing">Pricing</a>
+                    <a href="#features" className="nav-link-landing magnetic-target-landing">Features</a>
+                    <a href="#benefits" className="nav-link-landing magnetic-target-landing">Benefits</a>
+                    <a href="#how-it-works" className="nav-link-landing magnetic-target-landing">How It Works</a>
+                    <a href="#pricing" className="nav-link-landing magnetic-target-landing">Pricing</a>
                 </div>
                 
                 <div className="auth-buttons-landing">
-                    <a href="/login" className="btn-landing btn-outline-landing">Sign In</a>
-                    <a href="/register" className="btn-landing btn-primary-landing">Sign Up</a>
+                    <Link to="/login" className="btn-landing btn-outline-landing magnetic-target-landing">Sign In</Link>
+                    <Link to="/register" className="btn-landing btn-primary-landing magnetic-target-landing">Sign Up</Link>
                 </div>
             </nav>
             
@@ -112,10 +122,18 @@ const LandingPage = () => {
                 
                 <div className="hero-content-landing">
                     <div className="hero-subtitle-landing">AI-POWERED LEARNING PLATFORM</div>
-                    <h1 className="hero-title-landing">Transform How You Learn With Adaptive AI</h1>
+                    <h1 className="hero-title-landing" aria-label={heroTitle}>
+                        <span className="hero-title-mask-landing" aria-hidden="true">
+                            {heroTitleChars.map((char, index) => (
+                                <span key={`hero-char-${index}`} className="hero-title-char-landing">
+                                    {char === ' ' ? '\u00A0' : char}
+                                </span>
+                            ))}
+                        </span>
+                    </h1>
                     <p className="hero-description-landing">Experience a revolutionary learning platform that adapts to your unique learning style, providing personalized content and real-time feedback to accelerate your mastery of any subject.</p>
                     <div className="hero-cta-landing">
-                        <a href="#" className="btn-landing btn-hero-landing">Start Learning Now <i className="ri-arrow-right-line" style={{marginLeft: '8px'}}></i></a>
+                        <Link to="/register" className="btn-landing btn-hero-landing magnetic-target-landing">Start Learning Now <i className="ri-arrow-right-line" style={{marginLeft: '8px'}}></i></Link>
                     </div>
                 </div>
             </section>
@@ -143,7 +161,7 @@ const LandingPage = () => {
             </section>
 
             {/* Benefits Section */}
-            <section className="benefits-landing" ref={benefitsRef}>
+            <section className="benefits-landing" id="benefits" ref={benefitsRef}>
                 <div className="benefits-container-landing">
                     <div className="benefits-content-landing">
                         <h2 className="benefits-title-landing">Transform Your Learning Experience</h2>
@@ -181,7 +199,7 @@ const LandingPage = () => {
             </section>
 
             {/* How It Works Section */}
-            <section className="how-it-works-landing" ref={howRef}>
+            <section className="how-it-works-landing" id="how-it-works" ref={howRef}>
                 <h2 className="section-title-landing">How It Works</h2>
                 <div className="timeline-landing">
                     <div className="timeline-item-landing">
@@ -230,7 +248,7 @@ const LandingPage = () => {
                         </div>
                     </div>
                     <div className="testimonial-card-landing">
-                        <p className="testimonial-quote-landing">As an educator, I've integrated Redlin into my classroom with amazing results. My students are more engaged and show significantly better comprehension of difficult concepts.</p>
+                        <p className="testimonial-quote-landing">As an educator, I&apos;ve integrated Redlin into my classroom with amazing results. My students are more engaged and show significantly better comprehension of difficult concepts.</p>
                         <div className="testimonial-author-landing">
                             <div className="author-avatar-landing">SL</div>
                             <div className="author-info-landing">
@@ -253,7 +271,7 @@ const LandingPage = () => {
             </section>
 
             {/* Pricing Section */}
-            <section className="pricing-landing" ref={pricingRef}>
+            <section className="pricing-landing" id="pricing" ref={pricingRef}>
                 <h2 className="section-title-landing">Choose Your Plan</h2>
                 <div className="pricing-container-landing">
                     <div className="pricing-card-landing">
@@ -266,7 +284,7 @@ const LandingPage = () => {
                             <li className="pricing-feature-landing"><i className="ri-check-line"></i> 5 courses per month</li>
                             <li className="pricing-feature-landing"><i className="ri-close-line"></i> Advanced analytics</li>
                         </ul>
-                        <a href="#" className="pricing-button-landing">Get Started</a>
+                        <Link to="/register" className="pricing-button-landing magnetic-target-landing">Get Started</Link>
                     </div>
                     <div className="pricing-card-landing popular-landing">
                         <div className="pricing-badge-landing">Most Popular</div>
@@ -279,7 +297,7 @@ const LandingPage = () => {
                             <li className="pricing-feature-landing"><i className="ri-check-line"></i> Unlimited courses</li>
                             <li className="pricing-feature-landing"><i className="ri-check-line"></i> Collaborative learning tools</li>
                         </ul>
-                        <a href="#" className="pricing-button-landing">Get Started</a>
+                        <Link to="/register" className="pricing-button-landing magnetic-target-landing">Get Started</Link>
                     </div>
                     <div className="pricing-card-landing">
                         <h3 className="pricing-title-landing">Enterprise</h3>
@@ -291,7 +309,7 @@ const LandingPage = () => {
                             <li className="pricing-feature-landing"><i className="ri-check-line"></i> Dedicated support</li>
                             <li className="pricing-feature-landing"><i className="ri-check-line"></i> Team management tools</li>
                         </ul>
-                        <a href="#" className="pricing-button-landing">Contact Sales</a>
+                        <Link to="/pricing" className="pricing-button-landing magnetic-target-landing">Contact Sales</Link>
                     </div>
                 </div>
             </section>
@@ -303,7 +321,7 @@ const LandingPage = () => {
                     <p className="final-cta-description-landing">Join thousands of learners who have already revolutionized their education with our AI-powered platform.</p>
                     <form className="email-form-landing">
                         <input type="email" className="email-input-landing" placeholder="Enter your email address" />
-                        <button type="submit" className="email-button-landing">Get Started</button>
+                        <button type="submit" className="email-button-landing magnetic-target-landing">Get Started</button>
                     </form>
                 </div>
             </section>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { authService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { useNeuralNetworkAnimation } from '../../hooks/useNeuralNetworkAnimation';
 import './Login.css';
 
 const Login = () => {
@@ -14,6 +15,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const networkRef = useRef(null);
+
+  useNeuralNetworkAnimation(networkRef);
 
   // Prefill remembered user
   useEffect(() => {
@@ -41,43 +44,6 @@ const Login = () => {
       setLoading(false);
     }
   };
-
-  // Build animated neural network (simplified)
-  useEffect(() => {
-    const container = networkRef.current;
-    if (!container) return;
-    container.innerHTML = '';
-    const nodeCount = 20;
-    const connectionCount = 30;
-    const nodes = [];
-    for (let i = 0; i < nodeCount; i++) {
-      const node = document.createElement('div');
-      node.className = 'node';
-      node.style.left = `${Math.random() * 100}%`;
-      node.style.top = `${Math.random() * 100}%`;
-      container.appendChild(node);
-      nodes.push(node);
-    }
-    for (let i = 0; i < connectionCount; i++) {
-      const start = nodes[Math.floor(Math.random() * nodes.length)];
-      const end = nodes[Math.floor(Math.random() * nodes.length)];
-      const rectA = start.getBoundingClientRect();
-      const rectB = end.getBoundingClientRect();
-      const conn = document.createElement('div');
-      conn.className = 'connection';
-      const startX = start.offsetLeft + 4;
-      const startY = start.offsetTop + 4;
-      const endX = end.offsetLeft + 4;
-      const endY = end.offsetTop + 4;
-      const length = Math.hypot(endX - startX, endY - startY);
-      const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
-      conn.style.width = length + 'px';
-      conn.style.left = startX + 'px';
-      conn.style.top = startY + 'px';
-      conn.style.transform = `rotate(${angle}deg)`;
-      container.appendChild(conn);
-    }
-  }, []);
 
   return (
     <div className="login-page-root">

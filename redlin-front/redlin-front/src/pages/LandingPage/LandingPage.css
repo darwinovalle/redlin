@@ -38,6 +38,11 @@ body {
 .container-landing {
     width: 100%;
     overflow: hidden;
+    scroll-behavior: smooth;
+}
+
+section[id] {
+    scroll-margin-top: 108px;
 }
 
 /* Navigation Bar */
@@ -53,8 +58,9 @@ body {
     padding: 0 60px;
     background: rgba(26, 42, 58, 0.8);
     backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     z-index: 1000;
-    transition: background 0.3s ease;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .logo-container-landing {
@@ -151,6 +157,7 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    will-change: transform;
 }
 
 .btn-outline-landing {
@@ -197,6 +204,7 @@ body {
     background: linear-gradient(135deg, #1A2A3A 0%, #7F63F4 50%, #20C997 100%);
     opacity: 0.3;
     z-index: -2;
+    will-change: transform;
 }
 
 .mesh-grid-landing {
@@ -212,6 +220,7 @@ body {
     z-index: -1;
     perspective: 1000px;
     transform-style: preserve-3d;
+    will-change: transform;
 }
 
 .floating-elements-landing {
@@ -228,7 +237,7 @@ body {
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     box-shadow: 0 0 20px rgba(32, 201, 151, 0.3);
-    animation: float-landing 10s infinite ease-in-out;
+    will-change: transform, opacity;
 }
 
 .floating-element-landing:nth-child(1) {
@@ -237,7 +246,6 @@ body {
     top: 20%;
     right: 15%;
     background: radial-gradient(circle at 30% 30%, rgba(74, 144, 226, 0.2), rgba(127, 99, 244, 0.1));
-    animation-duration: 15s;
 }
 
 .floating-element-landing:nth-child(2) {
@@ -246,8 +254,6 @@ body {
     bottom: 15%;
     right: 25%;
     background: radial-gradient(circle at 30% 30%, rgba(32, 201, 151, 0.2), rgba(74, 144, 226, 0.1));
-    animation-duration: 12s;
-    animation-delay: 1s;
 }
 
 .floating-element-landing:nth-child(3) {
@@ -256,8 +262,6 @@ body {
     top: 30%;
     left: 10%;
     background: radial-gradient(circle at 30% 30%, rgba(255, 126, 103, 0.2), rgba(127, 99, 244, 0.1));
-    animation-duration: 18s;
-    animation-delay: 2s;
 }
 
 .floating-element-landing:nth-child(4) {
@@ -266,8 +270,6 @@ body {
     bottom: 20%;
     left: 20%;
     background: radial-gradient(circle at 30% 30%, rgba(127, 99, 244, 0.2), rgba(32, 201, 151, 0.1));
-    animation-duration: 20s;
-    animation-delay: 3s;
 }
 
 .neural-network-landing {
@@ -278,6 +280,7 @@ body {
     width: 600px;
     height: 400px;
     perspective: 1000px;
+    will-change: transform;
 }
 
 .neural-network-landing .node {
@@ -300,6 +303,7 @@ body {
     max-width: 650px;
     position: relative;
     z-index: 1;
+    will-change: transform, opacity;
 }
 
 .hero-subtitle-landing {
@@ -307,9 +311,7 @@ body {
     font-weight: 500;
     color: #20C997;
     margin-bottom: 20px;
-    opacity: 0;
-    animation: fadeInUp-landing 0.8s forwards;
-    animation-delay: 0.2s;
+    will-change: transform, opacity;
 }
 
 .hero-title-landing {
@@ -323,9 +325,19 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     color: transparent;
-    opacity: 0;
-    animation: fadeInUp-landing 0.8s forwards;
-    animation-delay: 0.4s;
+    will-change: transform, opacity;
+}
+
+.hero-title-mask-landing {
+    display: inline-block;
+    perspective: 1000px;
+}
+
+.hero-title-char-landing {
+    display: inline-block;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
+    will-change: transform, opacity;
 }
 
 .hero-description-landing {
@@ -333,15 +345,11 @@ body {
     line-height: 1.6;
     color: #F5F7FA;
     margin-bottom: 40px;
-    opacity: 0;
-    animation: fadeInUp-landing 0.8s forwards;
-    animation-delay: 0.6s;
+    will-change: transform, opacity;
 }
 
 .hero-cta-landing {
-    opacity: 0;
-    animation: fadeInUp-landing 0.8s forwards;
-    animation-delay: 0.8s;
+    will-change: transform, opacity;
 }
 
 .btn-hero-landing {
@@ -395,7 +403,7 @@ body {
     padding: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     transform: perspective(1000px) rotateX(5deg);
-    animation: float-landing 8s infinite ease-in-out;
+    will-change: transform, opacity;
 }
 
 .ui-card-1-landing {
@@ -403,7 +411,6 @@ body {
     height: 120px;
     top: 25%;
     right: 10%;
-    animation-delay: 0.5s;
 }
 
 .ui-card-2-landing {
@@ -411,7 +418,6 @@ body {
     height: 100px;
     bottom: 30%;
     right: 25%;
-    animation-delay: 1.5s;
 }
 
 .ui-card-3-landing {
@@ -419,7 +425,10 @@ body {
     height: 90px;
     top: 60%;
     right: 40%;
-    animation-delay: 2.5s;
+}
+
+.magnetic-target-landing {
+    will-change: transform;
 }
 
 .ui-card-header-landing {
@@ -1368,5 +1377,16 @@ body {
     }
     .email-button-landing {
         position: static;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .container-landing *,
+    .container-landing *::before,
+    .container-landing *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
