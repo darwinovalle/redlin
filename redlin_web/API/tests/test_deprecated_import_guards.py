@@ -8,8 +8,6 @@ SKIP_PATH_PARTS = {"tests", "migrations", "__pycache__"}
 DEPRECATED_MODULES = {"API.task_2", "API.views", "VIDEO.transcript"}
 DEPRECATED_FILES = {
     Path("API/task_2.py"),
-    Path("API/views.py"),
-    Path("VIDEO/transcript.py"),
 }
 
 
