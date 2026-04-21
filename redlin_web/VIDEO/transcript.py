@@ -1,3 +1,10 @@
+"""DEPRECATED: legacy transcript module.
+
+Deprecated in Phase 4.1. Internal modules should use
+`VIDEO.transcript_yt_dlp` for transcript retrieval.
+This module remains only for compatibility during a deprecation window.
+"""
+
 from __future__ import annotations
 import os, re, time
 from urllib.parse import urlparse, parse_qs

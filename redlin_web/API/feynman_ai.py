@@ -1,7 +1,7 @@
 import json
 from typing import Optional
 from .models import Feynman, FeynmanAttempt, User
-from .task_2 import generate_with_retry, detect_language, _extract_json_block
+from .services.processing_common import detect_language, extract_json_block, generate_with_retry
 
 def evaluate_document_feynman_attempt(f_obj: Feynman, answer: str, user: User) -> FeynmanAttempt:
     """Create + evaluate a FeynmanAttempt for a Document Feynman prompt.
@@ -70,7 +70,7 @@ NO markdown fences. NO commentary outside JSON.
         try:
             data = json.loads(raw.strip())
         except Exception:
-            block = _extract_json_block(raw, '"score"')
+            block = extract_json_block(raw, '"score"')
             if block:
                 try:
                     data = json.loads(block)
