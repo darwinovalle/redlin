@@ -1,16 +1,25 @@
 import os
-import random
 import re
-import time
+import ollama
 
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 # Keep model choice aligned with the previous pipeline behavior.
-MODEL = genai.GenerativeModel("gemini-2.5-flash")
+MODEL = genai.GenerativeModel("gemini-2.5-pro")
+
+# Ollama configuration - use environment variable or default
+# For Linux: set OLLAMA_HOST=http://172.17.0.1:11434 (host IP on docker0 bridge)
+# For Docker Desktop (Mac/Windows): uses host.docker.internal
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma4:31b-cloud")
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://host.docker.internal:11434")
+
+class GeminiResponseMock:
+    """Mock response object to maintain compatibility with Gemini's .text attribute."""
+    def __init__(self, text: str):
+        self.text = text
 
 SPANISH_COMMON = {
     "el", "la", "de", "que", "y", "en", "a", "los", "se", "del",
@@ -50,26 +59,28 @@ def _parse_retry_delay_seconds(error_message: str) -> int | None:
     return None
 
 
+def _generate_with_ollama(prompt: str) -> str:
+    """Fallback generator using local Ollama instance."""
+    client = ollama.Client(host=OLLAMA_HOST)
+    try:
+        response = client.generate(model=OLLAMA_MODEL, prompt=prompt)
+        return response['response']
+    except Exception as e:
+        print(f"[OllamaFallback] Local generation failed: {e}")
+        raise
+
 def generate_with_retry(prompt: str, *, max_attempts: int = 3, base_wait: int = 5):
-    """Call Gemini generate_content with backoff for 429/quota errors."""
-    last_exc = None
-    for attempt in range(1, max_attempts + 1):
+    """Try Gemini once, then immediately fallback to Ollama if Gemini fails."""
+    try:
+        return MODEL.generate_content(prompt)
+    except Exception as gemini_exc:
+        print("[Fallback] Gemini failed on first attempt. Trying Ollama immediately...")
         try:
-            return MODEL.generate_content(prompt)
-        except Exception as exc:
-            message = str(exc)
-            if "429" in message or "quota" in message.lower() or "rate" in message.lower():
-                suggested = _parse_retry_delay_seconds(message)
-                wait = suggested if suggested is not None else min(60, base_wait * (2 ** (attempt - 1)))
-                wait = int(wait + random.uniform(0, 0.2) * wait)
-                print(f"[RateLimit] Attempt {attempt}/{max_attempts} failed. Waiting {wait}s before retry.")
-                time.sleep(wait)
-                last_exc = exc
-                continue
-            raise
-    if last_exc:
-        raise last_exc
-    raise RuntimeError("Generation failed without exception detail")
+            result = _generate_with_ollama(prompt)
+            return GeminiResponseMock(result)
+        except Exception as ollama_exc:
+            print("[Critical] Both Gemini and Ollama failed.")
+            raise RuntimeError("Gemini failed, and Ollama fallback also failed") from ollama_exc
 
 
 def extract_json_block(text: str, key_hint: str) -> str | None:
