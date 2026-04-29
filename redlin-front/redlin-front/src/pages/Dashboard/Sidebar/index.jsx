@@ -19,12 +19,15 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import EditIcon from '@mui/icons-material/Edit';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import AddIcon from '@mui/icons-material/Add';
+import SchoolIcon from '@mui/icons-material/School';
+import MicIcon from '@mui/icons-material/Mic';
 import { ThemeProvider } from '@mui/material/styles';
 import { darkTheme } from '../../../theme';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { documentService } from '../../../services/api';
 import { videoService } from '../../../services/api/video';
+import { classroomService } from '../../../services/api/classroom';
 import AddSpaceModal from '../../../components/common/AddSpaceModal';
 import { csvService } from '../../../services/api/csv';
 import LoaderOverlay from '../../../components/common/LoaderOverlay';
@@ -75,7 +78,11 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [loadingVideos,setLoadingVideos]=useState(false);
   const [videoError,setVideoError]=useState(null);
   const [creatingVideo,setCreatingVideo]=useState(false);
+  const [classroomSessions,setClassroomSessions]=useState([]);
+  const [loadingClassroomSessions,setLoadingClassroomSessions]=useState(false);
+  const [classroomError,setClassroomError]=useState(null);
   const [docsOpen,setDocsOpen]=useState(!isHome);
+  const [classroomOpen,setClassroomOpen]=useState(false);
   const [sheetsOpen,setSheetsOpen]=useState(false);
   const [kanbanOpen,setKanbanOpen]=useState(false);
   const [videosOpen,setVideosOpen]=useState(false);
@@ -87,6 +94,39 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [error,setError]=useState(null);
   const slugify = (str)=> (str||'').toString().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-').replace(/-+/g,'-');
   const fetchUserDocuments=async()=>{ if(!user?.id){setUserDocuments([]);return;} setLoadingDocs(true); setFetchError(null); try{ const docs=await documentService.getUserDocuments(user.id); setUserDocuments(docs);}catch(e){ setFetchError(e?.message||'Could not load documents'); } finally { setLoadingDocs(false);} };
+  const fetchClassroomSessions = async () => {
+      if (!user?.id) {                                                                                                                                        
+        setClassroomSessions([]);           
+        return;                                                                                                                                               
+      }                                        
+      setLoadingClassroomSessions(true);                                                                                                                      
+      setClassroomError(null);                                                                                                                                
+      try {                                                                                                                                                   
+        const response = await classroomService.listSessions();                                                                                               
+                                                                                                                                                              
+        // LOGGING: This will help us see exactly what the server is sending in the Console (F12)                                                             
+        console.log("Classroom API Response:", response);                                                                                                     
+                                                                                                                                                              
+        // FIX: Handle both plain arrays [ ] and paginated objects { results: [ ] }                                                                           
+        let sessions = [];                     
+        if (Array.isArray(response)) {                                                                                                                        
+          sessions = response;                                                                                                                                
+        } else if (response && typeof response === 'object' && response.results) {                                                                            
+          sessions = response.results;                                                                                                                        
+        } else if (response && typeof response === 'object') {                                                                                                
+          // Fallback for any other object structure that might contain the list                                                                              
+          const possibleArray = Object.values(response).find(val => Array.isArray(val));                                                                      
+          sessions = possibleArray || [];                                                                                                                     
+        }                                                                                                                                                     
+                                                                                                                                                              
+        setClassroomSessions(sessions);                                                                                                                       
+      } catch (e) {                                                                                                                                           
+        console.error("Sidebar fetch error:", e);                                                                                                             
+        setClassroomError(e?.message || 'Could not load classroom spaces');                                                                                   
+      } finally {                                                                                                                                             
+        setLoadingClassroomSessions(false);                                                                                                                   
+      }                                                                                                                                                       
+    }; 
   const uploadFile=async(file)=>{ if(!file||!user?.id) return; setLoading(true); setError(null); try{ await documentService.uploadDocument(file,user.id); await fetchUserDocuments(); setSuccessAlertOpen(true);}catch(e){ setError(e?.error||'Upload failed'); } finally { setLoading(false);} };
   const handleDeleteDocument=async(doc)=>{ if(!window.confirm('Delete this document?')) return; try{ await documentService.deleteDocument(doc.id); setUserDocuments(d=>d.filter(x=>x.id!==doc.id)); if(currentDocSlug && slugify(doc.title||String(doc.id))===currentDocSlug) navigate('/home'); }catch{ alert('Failed to delete'); } };
   const handleDeleteSheet=async(imp)=>{ if(!window.confirm('Delete this sheet?')) return; try{ await csvService.deleteImport(imp.id); setCsvImports(s=>s.filter(x=>x.id!==imp.id)); }catch{ alert('Failed to delete sheet'); } };
@@ -95,6 +135,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
 
     const resetDefaults = () => {
       setDocsOpen(!isHome);
+      setClassroomOpen(false);
       setSheetsOpen(false);
       setKanbanOpen(false);
       setVideosOpen(false);
@@ -114,6 +155,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       } else {
         const parsed = JSON.parse(raw);
         setDocsOpen(typeof parsed?.docsOpen === 'boolean' ? parsed.docsOpen : !isHome);
+        setClassroomOpen(typeof parsed?.classroomOpen === 'boolean' ? parsed.classroomOpen : false);
         setSheetsOpen(typeof parsed?.sheetsOpen === 'boolean' ? parsed.sheetsOpen : false);
         setKanbanOpen(typeof parsed?.kanbanOpen === 'boolean' ? parsed.kanbanOpen : false);
         setVideosOpen(typeof parsed?.videosOpen === 'boolean' ? parsed.videosOpen : false);
@@ -131,14 +173,15 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
     try {
       localStorage.setItem(sidebarStateKey, JSON.stringify({
         docsOpen,
+        classroomOpen,
         sheetsOpen,
         kanbanOpen,
         videosOpen,
         statsOpen
       }));
     } catch {}
-  }, [sidebarStateKey, docsOpen, sheetsOpen, kanbanOpen, videosOpen, statsOpen]);
-  useEffect(()=>{ fetchUserDocuments(); (async()=>{ try{ const data=await csvService.listImports(); setCsvImports(Array.isArray(data)?data:[]);}catch{ setCsvImports([]);} })(); (async()=>{ if(!user){ setVideos([]); return;} setLoadingVideos(true); setVideoError(null); try{ const list=await videoService.listVideos(); setVideos(Array.isArray(list)?list:[]);}catch{ setVideoError('Could not load videos'); } finally { setLoadingVideos(false);} })(); },[user]);
+  }, [sidebarStateKey, docsOpen, classroomOpen, sheetsOpen, kanbanOpen, videosOpen, statsOpen]);
+  useEffect(()=>{ fetchUserDocuments(); fetchClassroomSessions(); (async()=>{ try{ const data=await csvService.listImports(); setCsvImports(Array.isArray(data)?data:[]);}catch{ setCsvImports([]);} })(); (async()=>{ if(!user){ setVideos([]); return;} setLoadingVideos(true); setVideoError(null); try{ const list=await videoService.listVideos(); setVideos(Array.isArray(list)?list:[]);}catch{ setVideoError('Could not load videos'); } finally { setLoadingVideos(false);} })(); },[user]);
   const openRename=(doc)=> setRenameState({open:true,doc,saving:false});
   const closeRename=()=> setRenameState({open:false,doc:null,saving:false});
   const submitRename=async(newTitle)=>{ if(!renameState.doc) return; try{ setRenameState(s=>({...s,saving:true})); await documentService.renameDocument(renameState.doc.id,newTitle); setUserDocuments(d=>d.map(x=>x.id===renameState.doc.id?{...x,title:newTitle}:x)); closeRename(); }catch(e){ setError(e?.error||'Rename failed'); setRenameState(s=>({...s,saving:false})); } };
@@ -146,6 +189,21 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const closeRenameSheet=()=> setRenameSheetState({open:false,imp:null,saving:false});
   const submitRenameSheet=async(newName)=>{ if(!renameSheetState.imp) return; try{ setRenameSheetState(s=>({...s,saving:true})); await csvService.renameImport(renameSheetState.imp.id,newName); setCsvImports(d=>d.map(i=>i.id===renameSheetState.imp.id?{...i,filename:newName}:i)); closeRenameSheet(); }catch(e){ setError(e?.error||'Rename failed'); setRenameSheetState(s=>({...s,saving:false})); } };
   const handleCreateVideo=async({url,languages})=>{ if(!url) return; setCreatingVideo(true); try{ const v=await videoService.createVideo({url,languages}); setVideos(prev=>[v,...prev]); setOpenSampleModal(false); navigate(`/videos/${v.id}`);}catch(e){ alert(e?.response?.data?.error||'Failed to add video'); } finally { setCreatingVideo(false);} };
+  const handleCreateClassroom=async({title,language})=>{
+    const trimmedTitle = (title || '').trim();
+    if(!trimmedTitle) return;
+    try{
+      const session = await classroomService.createSession({ title: trimmedTitle, language: language || 'es' });
+      await fetchClassroomSessions();
+      setClassroomOpen(true);
+      setOpenSampleModal(false);
+      if(session?.id){
+        navigate(`/classroom/${session.id}`);
+      }
+    }catch(e){
+      alert(e?.response?.data?.error || e?.message || 'Failed to create classroom space');
+    }
+  };
   return (
     <ThemeProvider theme={darkTheme}>
       <LoaderOverlay open={loading} text="Uploading..." />
@@ -166,6 +224,25 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
               <ItemIcon><HomeIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span>Home</span>
             </NavItem>
+            <NavItem onClick={()=>setClassroomOpen(v=>!v)} className={classroomOpen?'active':''}>
+              <ItemIcon><SchoolIcon sx={{ fontSize:20 }} /></ItemIcon>
+              <span style={{ flex:1 }}>Classroom Spaces</span>
+              {classroomOpen? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            </NavItem>
+            <Collapse in={classroomOpen} timeout="auto" unmountOnExit>
+              <NestedList>
+                {loadingClassroomSessions && <Typography sx={{ px:3, py:1, color:'rgba(255,255,255,0.6)' }}>Loading classrooms...</Typography>}
+                {classroomError && <Typography sx={{ px:3, py:1, color:'#ff6b6b' }}>{classroomError}</Typography>}
+                {!loadingClassroomSessions && !classroomError && classroomSessions.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No classroom spaces yet.</Typography>}
+                {classroomSessions.map((session)=> (
+                  <NavItem key={session.id} style={{ paddingLeft:40 }} onClick={()=>navigate(`/classroom/${session.id}`)}>
+                    <ItemIcon><MicIcon sx={{ fontSize:18 }} /></ItemIcon>
+                    <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{session.title}</span>
+                    <span style={{ fontSize:11, opacity:0.6 }}>{session.status}</span>
+                  </NavItem>
+                ))}
+              </NestedList>
+            </Collapse>
             <NavItem onClick={()=>setDocsOpen(v=>!v)} className={docsOpen?'active':''}>
               <ItemIcon><FolderIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Study Documents</span>
@@ -283,6 +360,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
         onClose={()=>setOpenSampleModal(false)}
         onImportDocument={async(file)=>{ await uploadFile(file); setOpenSampleModal(false); }}
         onImportSheet={async(file)=>{ try{ const res=await csvService.uploadCSV(file); setOpenSampleModal(false); const name=(file?.name||'csv').replace(/\.[^/.]+$/, ''); const slug=slugify(name); navigate(`/csv/${slug}?importId=${res?.import?.id||''}`);}catch(e){ console.error('CSV import failed',e); alert('CSV import failed'); } }}
+        onCreateClassroom={handleCreateClassroom}
         onCreateTutorial={()=>{ console.log('Create tutorial'); setOpenSampleModal(false);} }
         onCreateKanban={()=>{ console.log('Create kanban'); setOpenSampleModal(false);} }
         onCreateVideo={handleCreateVideo}
