@@ -2,6 +2,7 @@
 
 Deprecated in Phase 4.1. Internal modules must import from `API.services.*`
 directly instead of this facade.
+Removal target: Phase 5.0 (planned date: 2026-07-21).
 
 The original task_2 module held the full document-processing monolith.
 Phase 3 moved implementation into dedicated services while preserving the

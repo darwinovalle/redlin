@@ -122,6 +122,9 @@ const Home = () => {
 
   return (
     <div className="home-main-content" ref={mainContentRef}>
+      <div style={{ position: 'fixed', top: 10, right: 10, zIndex: 9999, background: '#20C997', color: '#fff', padding: '6px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700 }}>
+        HOME MOUNTED
+      </div>
       {/* Header */}
       <div className="header" ref={welcomeRef}>
         <div className="welcome">

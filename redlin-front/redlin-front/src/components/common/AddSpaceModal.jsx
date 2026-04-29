@@ -16,6 +16,7 @@ import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import DescriptionIcon from '@mui/icons-material/Description';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
+import MicIcon from '@mui/icons-material/Mic';
 import { csvService } from '../../services/api/csv';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
@@ -28,6 +29,7 @@ import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
 // - onCreateTutorial?: () => void
 // - onCreateKanban?: () => void
 // - onCreateVideo?: ({ url: string, languages?: string[] }) => void
+// - onCreateClassroom?: ({ title: string, language?: string }) => void
 const AddSpaceModal = ({
   open,
   onClose,
@@ -36,11 +38,14 @@ const AddSpaceModal = ({
   // onCreateTutorial,
   onCreateKanban,
   onCreateVideo,
+  onCreateClassroom,
   creatingVideo = false,
 }) => {
-  const [selected, setSelected] = useState('document'); // 'document' | 'sheet' | 'video' | 'kanban'
+  const [selected, setSelected] = useState('document'); // 'document' | 'sheet' | 'video' | 'kanban' | 'classroom'
   const [videoUrl, setVideoUrl] = useState('');
   const [videoLangs, setVideoLangs] = useState(''); // comma separated languages
+  const [classroomTitle, setClassroomTitle] = useState('Classroom Session');
+  const [classroomLanguage, setClassroomLanguage] = useState('es');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -49,6 +54,7 @@ const AddSpaceModal = ({
       { key: 'document', label: 'Import Document', icon: <InsertDriveFileIcon fontSize="small" /> },
   { key: 'sheet', label: 'Import Sheet', icon: <DescriptionIcon fontSize="small" /> },
   { key: 'video', label: 'Add YouTube Video', icon: <OndemandVideoIcon fontSize="small" /> },
+      { key: 'classroom', label: 'Create Classroom Space', icon: <MicIcon fontSize="small" /> },
       // { key: 'tutorial', label: 'Create Tutorial', icon: <MenuBookIcon fontSize="small" /> },
       { key: 'kanban', label: 'Create Kanban Task', icon: <ViewKanbanIcon fontSize="small" /> },
     ],
@@ -314,6 +320,56 @@ const AddSpaceModal = ({
                     onClick={()=> onCreateVideo?.({ url: videoUrl.trim(), languages: videoLangs.split(',').map(l=>l.trim()).filter(Boolean) })}
                   >
                     {creatingVideo ? 'Creating...' : 'Add Video'}
+                  </Button>
+                </Box>
+              </Box>
+            )}
+
+            {selected === 'classroom' && (
+              <Box sx={{ maxWidth: 520, width: '100%' }}>
+                <Typography variant="h6" sx={{ mb: 1.5 }}>Create a Classroom Space</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Start a dedicated space for a live class recording. After you stop, you can process the transcription.
+                </Typography>
+                <Box component="form" onSubmit={(e) => { e.preventDefault(); onCreateClassroom?.({ title: classroomTitle.trim(), language: classroomLanguage.trim() || 'es' }); }}>
+                  <input
+                    type="text"
+                    placeholder="Classroom title"
+                    value={classroomTitle}
+                    onChange={(e) => setClassroomTitle(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: 8,
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      background: 'rgba(255,255,255,0.04)',
+                      color: 'white',
+                      marginBottom: 12,
+                      fontSize: 14
+                    }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Language code (es, en, etc.)"
+                    value={classroomLanguage}
+                    onChange={(e) => setClassroomLanguage(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      background: 'rgba(255,255,255,0.04)',
+                      color: 'white',
+                      marginBottom: 16,
+                      fontSize: 13
+                    }}
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={() => onCreateClassroom?.({ title: classroomTitle.trim(), language: classroomLanguage.trim() || 'es' })}
+                    disabled={!classroomTitle.trim()}
+                  >
+                    Create Classroom
                   </Button>
                 </Box>
               </Box>

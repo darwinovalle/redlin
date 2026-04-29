@@ -2,7 +2,7 @@
 @font-face { font-family: 'AlibabaSans'; src: url('https://assets-persist.lovart.ai/agent-static-assets/AlibabaSans-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; }
 @font-face { font-family: 'AlibabaSans'; src: url('https://assets-persist.lovart.ai/agent-static-assets/Alibaba-PuHuiTi-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; }
 
-.home-main-content { width: 100%; padding: 30px; color: #333333; font-family: 'AlibabaSans', sans-serif; }
+.home-main-content { width: 100%; min-height: 100vh; padding: 30px; color: #333333; font-family: 'AlibabaSans', sans-serif; box-sizing: border-box; position: relative; z-index: 1; }
 
 .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
 .welcome { display:flex; align-items:center; }

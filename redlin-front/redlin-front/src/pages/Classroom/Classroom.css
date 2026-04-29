@@ -1,0 +1,196 @@
+.classroom-root {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(32, 201, 151, 0.16), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(74, 144, 226, 0.18), transparent 32%),
+    linear-gradient(135deg, #0f1722 0%, #12263a 48%, #1a2a3a 100%);
+  color: #fff;
+}
+
+.classroom-mesh {
+  position: absolute;
+  width: 34rem;
+  height: 34rem;
+  border-radius: 50%;
+  filter: blur(32px);
+  opacity: 0.32;
+  pointer-events: none;
+}
+
+.classroom-mesh-top {
+  top: -10rem;
+  right: -8rem;
+  background: rgba(32, 201, 151, 0.18);
+}
+
+.classroom-mesh-bottom {
+  left: -10rem;
+  bottom: -12rem;
+  background: rgba(74, 144, 226, 0.2);
+}
+
+.classroom-shell {
+  position: relative;
+  z-index: 1;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 28px 28px 40px;
+}
+
+.classroom-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.classroom-title {
+  font-family: 'AlibabaSans', sans-serif;
+  font-weight: 700 !important;
+  letter-spacing: -0.03em !important;
+  line-height: 0.95 !important;
+  margin-bottom: 14px !important;
+  max-width: 14ch;
+}
+
+.classroom-subtitle {
+  max-width: 56ch;
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.classroom-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 18px;
+}
+
+.classroom-card {
+  background: rgba(8, 14, 22, 0.76) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px !important;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32) !important;
+  padding: 24px;
+  color: #fff;
+  min-height: 74vh;
+}
+
+.classroom-card-console {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.classroom-card-output {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.classroom-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.classroom-wave {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  min-height: 120px;
+  padding: 18px 0 0;
+}
+
+.classroom-wave span {
+  width: 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #20c997, #4a90e2);
+  transform-origin: bottom center;
+  height: 20px;
+  opacity: 0.6;
+}
+
+.classroom-wave[data-active='true'] span {
+  animation: classroomWave 1.2s ease-in-out infinite;
+}
+
+.classroom-wave[data-active='false'] span {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.classroom-output-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.classroom-output-block {
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.classroom-markdown {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.classroom-markdown h1,
+.classroom-markdown h2,
+.classroom-markdown h3,
+.classroom-markdown h4,
+.classroom-markdown h5,
+.classroom-markdown h6 {
+  color: #fff;
+}
+
+.classroom-markdown p,
+.classroom-markdown li {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.classroom-mini-item {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.classroom-empty-state {
+  margin-top: auto;
+  padding: 22px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+@keyframes classroomWave {
+  0%, 100% { height: 20px; opacity: 0.45; }
+  25% { height: 76px; opacity: 1; }
+  50% { height: 44px; opacity: 0.82; }
+  75% { height: 96px; opacity: 1; }
+}
+
+@media (max-width: 1200px) {
+  .classroom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .classroom-card {
+    min-height: auto;
+  }
+
+  .classroom-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -42,24 +42,13 @@ Executed in Docker:
 - `docker compose exec -T backend pytest API/tests/test_auth_errors.py API/tests/test_cloze_api.py -q`
 - Result: `8 passed`
 
-## Candidates Not Auto-Deleted (Require Explicit Approval)
+## Remaining Candidate (Approval Required)
 
 1. `redlin_web/API/task_2.py`
 
-- Current role: Explicit compatibility facade for legacy imports.
-- Evidence: Still imported by `redlin_web/API/feynman_ai.py` in old commits and may be referenced externally.
-- Risk if removed now: Breaking out-of-tree imports or stale runtime paths.
-
-2. `redlin_web/API/views.py`
-
-- Current role: Compatibility re-export facade.
-- Evidence: Not required by current `urls.py`, but useful for backward compatibility with old imports.
-- Risk if removed now: External/internal import breakage.
-
-3. `redlin_web/VIDEO/transcript.py`
-
-- Evidence from in-repo references: no active imports found; `VIDEO/ai.py` uses `transcript_yt_dlp.py` instead.
-- Risk if removed now: Potential ad-hoc/manual usage not captured by static import analysis.
+- Current role: Compatibility facade for legacy processing imports.
+- Current in-repo usage: none detected in internal modules.
+- Risk if removed now: Potential breakage for external or out-of-tree imports still using `API.task_2`.
 
 ## Recommended Next Step (Phase 4.1)
 
@@ -69,7 +58,7 @@ If approved, perform a controlled deprecation pass:
 2. Add one test/assertion (or CI grep check) ensuring no internal imports rely on deprecated modules.
 3. Remove deprecated files in a later release after one compatibility window.
 
-## Phase 4.1 Execution (2026-04-20)
+## Phase 4.1 Execution (2026-04-21)
 
 Completed:
 
@@ -88,3 +77,37 @@ Notes:
 deprecation window.
 - Internal code should keep importing from split modules and service-layer
 implementations.
+
+## Phase 4.2 Execution (2026-04-21)
+
+Completed:
+
+1. Removed low-risk deprecated module:
+- `redlin_web/VIDEO/transcript.py`
+
+Evidence used before removal:
+
+- No internal imports found for `VIDEO.transcript`.
+- Active transcript path already uses `VIDEO/transcript_yt_dlp.py`.
+
+Validation:
+
+- `docker compose exec -T backend pytest API/tests/test_deprecated_import_guards.py -q` -> passed.
+- `docker compose exec -T backend pytest API/tests -q` -> passed.
+
+## Phase 4.3 Execution (2026-04-21)
+
+Completed:
+
+1. Removed low-risk deprecated module:
+- `redlin_web/API/views.py`
+
+Evidence used before removal:
+
+- No internal imports found for `API.views`.
+- API URL wiring already imports split modules directly (`views_auth`, `views_documents`, `views_learning`).
+
+Validation:
+
+- `docker compose exec -T backend pytest API/tests/test_deprecated_import_guards.py -q` -> passed.
+- `docker compose exec -T backend pytest API/tests VIDEO/tests -q` -> passed.
