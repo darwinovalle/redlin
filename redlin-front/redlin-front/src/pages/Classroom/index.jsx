@@ -22,6 +22,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   import { classroomService } from '../../services/api/classroom';                                                                                            
   import ClassroomQuiz from '../../components/Classroom/ClassroomQuiz';
   import ClassroomClozePanel from '../../components/Classroom/ClassroomClozePanel';
+  import ClassroomFeynmanPanel from '../../components/Classroom/ClassroomFeynmanPanel';
   import './Classroom.css';
   import TranscriptionWorker from '../../workers/transcription.worker.js?worker';
                                                                                                                                                               
@@ -540,10 +541,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                       )}                                                                                                                                      
                       {activeTab === 3 && (                                                                                                                   
                         <div className="classroom-output-block">                                                                                              
-                          <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>Feynman Prompts</Typography>                         
-                          <Stack spacing={1}>                                                                                                                 
-                            {results.feynmans?.map((fey) => (<div key={fey.id} className="classroom-mini-item">{fey.prompt}</div>))}                          
-                          </Stack>                                                                                                                            
+                          <ClassroomFeynmanPanel sessionId={session.id} prompts={results.feynmans} />
                         </div>                                                                                                                                
                       )}                                                                                                                                      
                     </>                                                                                                                                       
