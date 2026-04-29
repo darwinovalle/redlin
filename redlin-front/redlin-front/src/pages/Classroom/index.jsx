@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';                                                                                        
+import { useEffect, useMemo, useRef, useState } from 'react';                                                                                               
   import { useNavigate, useParams } from 'react-router-dom';                                                                                                  
   import Box from '@mui/material/Box';                                                                                                                        
   import Button from '@mui/material/Button';                                                                                                                  
@@ -20,6 +20,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
   import ReactMarkdown from 'react-markdown';                                                                                                                 
   import remarkGfm from 'remark-gfm';                                                                                                                         
   import { classroomService } from '../../services/api/classroom';                                                                                            
+  import ClassroomQuiz from '../../components/Classroom/ClassroomQuiz';
   import './Classroom.css';
   import TranscriptionWorker from '../../workers/transcription.worker.js?worker';
                                                                                                                                                               
@@ -66,7 +67,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
     const chunksRef = useRef([]);                                                                                                                             
     const pollRef = useRef(null);                                                                                                                             
     const recognitionRef = useRef(null);
-    const [isModelReady, setIsModelReady] = useState(false);
+    const [, setIsModelReady] = useState(false);
     const workersRef = useRef([]);
     const currentWorkerIndexRef = useRef(0)
     const isModelReadyRef = useRef(false);
@@ -528,9 +529,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
                       {activeTab === 1 && (                                                                                                                   
                         <div className="classroom-output-block">                                                                                              
                           <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>MCQs ({results.mcqs?.length || 0})</Typography>      
-                          <Stack spacing={1}>                                                                                                                 
-                            {results.mcqs?.map((mcq) => (<div key={mcq.id} className="classroom-mini-item">{mcq.question}</div>))}                            
-                          </Stack>                                                                                                                            
+                          <ClassroomQuiz mcqs={results.mcqs} />
                         </div>                                                                                                                                
                       )}                                                                                                                                      
                       {activeTab === 2 && (                                                                                                                   
