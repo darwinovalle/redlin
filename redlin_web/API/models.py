@@ -19,13 +19,26 @@ class User(models.Model):
         return True
     
 class Document(models.Model):
+    SOURCE_PDF = "pdf"
+    SOURCE_TRANSCRIPT = "transcript"
+    SOURCE_CHOICES = [
+        (SOURCE_PDF, "PDF"),
+        (SOURCE_TRANSCRIPT, "Transcript"),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='documents')
     title = models.CharField(max_length=255)
     upload_date = models.DateTimeField(auto_now_add=True)
-    pdf_file = models.FileField(upload_to='documents/')
+    pdf_file = models.FileField(upload_to='documents/', null=True, blank=True)
+    source_type = models.CharField(max_length=20, choices=SOURCE_CHOICES, default=SOURCE_PDF)
     processing_status = models.CharField(
         max_length=20,
-        choices=[('pending', 'Pending'), ('processing', 'Processing'), ('completed', 'Completed')],
+        choices=[
+            ('pending', 'Pending'),
+            ('processing', 'Processing'),
+            ('completed', 'Completed'),
+            ('failed', 'Failed'),
+        ],
         default='pending'
     )
 

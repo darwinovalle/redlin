@@ -33,6 +33,7 @@ regex==2024.11.6
 requests==2.32.3
 rsa==4.9
 sqlparse==0.5.3
+ollama>=0.1.0
 tqdm==4.67.1
 typing_extensions==4.12.2
 uritemplate==4.1.1
@@ -42,6 +43,7 @@ drf-spectacular-sidecar
 PyJWT>=2.9.0
 youtube-transcript-api==1.2.2
 yt-dlp==2025.8.20
+faster-whisper==1.1.1
 celery==5.3.6
 redis==5.0.3
 pytest==8.3.3

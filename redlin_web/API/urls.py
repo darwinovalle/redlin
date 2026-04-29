@@ -1,7 +1,8 @@
 from rest_framework.routers import DefaultRouter
-from .views import UserViewSet, DocumentViewSet, SummaryViewSet, FlashcardViewSet, MCQViewSet, ClozeViewSet, FeynmanViewSet
 from django.urls import path, include
-from .views import login, register, get_user_documents, refresh_token, whoami
+from .views_auth import login, register, refresh_token, whoami
+from .views_documents import UserViewSet, DocumentViewSet, get_user_documents
+from .views_learning import SummaryViewSet, FlashcardViewSet, MCQViewSet, ClozeViewSet, FeynmanViewSet
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')

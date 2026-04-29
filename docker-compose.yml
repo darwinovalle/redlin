@@ -30,7 +30,7 @@ services:
       context: ./redlin_web
       dockerfile: Dockerfile
     container_name: redlin-worker
-    command: ["celery", "-A", "redlin_web", "worker", "-l", "info", "-Q", "default"]
+    command: ["celery", "-A", "redlin_web", "worker", "-l", "info", "-Q", "default", "--concurrency=1"]
     volumes:
       - ./redlin_web:/app
     env_file:

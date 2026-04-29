@@ -34,20 +34,18 @@ export const useHomeAnimations = (refs) => {
 
             sections.forEach((ref, index) => {
                 if (ref && ref.current) {
-                    // Set initial state
-                    gsap.set(ref.current, { 
-                        opacity: 0, 
-                        y: 20 
-                    });
-                    
-                    // Animate in with a slight delay between each section
-                    gsap.to(ref.current, {
-                        opacity: 1,
-                        y: 0,
-                        duration: 0.6,
-                        delay: index * 0.1,
-                        ease: "power2.out"
-                    });
+                    // Keep content visible even if animation runtime is interrupted.
+                    gsap.fromTo(
+                        ref.current,
+                        { y: 12, opacity: 0.92 },
+                        {
+                            y: 0,
+                            opacity: 1,
+                            duration: 0.5,
+                            delay: index * 0.08,
+                            ease: 'power2.out',
+                        }
+                    );
                 }
             });
         }, 100);

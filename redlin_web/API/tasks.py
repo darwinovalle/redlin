@@ -1,55 +1,21 @@
-from PyPDF2 import PdfReader
-import nltk
-from .models import Summary, Flashcard, MCQ
+"""Celery tasks for API app.
 
-nltk.download('punkt')
-nltk.download('punkt_tab')
+This module is auto-discovered by Celery. Keep imports lightweight and avoid
+side effects at module import time.
+"""
 
-def process_pdf(document_id):
-    from .models import Document
+from celery import shared_task
 
-    # Retrieve the document
-    document = Document.objects.get(id=document_id)
-    document.processing_status = 'processing'
-    document.save()
+from .services.document_processing_service import process_pdf as process_pdf_service
 
-    try:
-        # Extract text from PDF
-        reader = PdfReader(document.pdf_file.path)
-        text = " ".join(page.extract_text() for page in reader.pages)
 
-        # Generate a summary (placeholder logic)
-        sentences = nltk.sent_tokenize(text)
-        summary_content = " ".join(sentences[:5])  # Take the first 5 sentences as a summary
+def process_pdf(document_id: int) -> None:
+    """Backward-compatible sync entrypoint used by existing callers."""
+    process_pdf_service(document_id)
 
-        # Save the summary
-        summary = Summary.objects.create(document=document, content=summary_content)
 
-        # Generate flashcards (placeholder logic)
-        words = nltk.word_tokenize(text)
-        keywords = set(words[:10])  # Take the first 10 unique words
-        for keyword in keywords:
-            Flashcard.objects.create(
-                document=document,
-                key_term=keyword,
-                definition=f"This is a placeholder definition for {keyword}."
-            )
-
-        # Generate MCQs (placeholder logic)
-        for i, sentence in enumerate(sentences[:3]):  # Take the first 3 sentences
-            MCQ.objects.create(
-                document=document,
-                question=f"What does the following mean: {sentence}?",
-                correct_answer="Correct Answer Placeholder",
-                option_1="Option 1",
-                option_2="Option 2",
-                option_3="Option 3"
-            )
-
-        document.processing_status = 'completed'
-        document.save()
-
-    except Exception as e:
-        document.processing_status = 'pending'
-        document.save()
-        raise e
+@shared_task(bind=True, name="API.tasks.process_pdf")
+def process_pdf_task(self, document_id: int):
+    """Async wrapper to process a document through the AI pipeline."""
+    process_pdf_service(document_id)
+    return {"status": "ok", "document_id": document_id}
