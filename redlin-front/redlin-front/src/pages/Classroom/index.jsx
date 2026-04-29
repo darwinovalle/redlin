@@ -21,6 +21,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   import remarkGfm from 'remark-gfm';                                                                                                                         
   import { classroomService } from '../../services/api/classroom';                                                                                            
   import ClassroomQuiz from '../../components/Classroom/ClassroomQuiz';
+  import ClassroomClozePanel from '../../components/Classroom/ClassroomClozePanel';
   import './Classroom.css';
   import TranscriptionWorker from '../../workers/transcription.worker.js?worker';
                                                                                                                                                               
@@ -534,10 +535,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                       )}                                                                                                                                      
                       {activeTab === 2 && (                                                                                                                   
                         <div className="classroom-output-block">                                                                                              
-                          <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>Clozes ({results.clozes?.length || 0})</Typography>  
-                          <Stack spacing={1}>                                                                                                                 
-                            {results.clozes?.map((cloze) => (<div key={cloze.id} className="classroom-mini-item">{cloze.text_with_blank}</div>))}             
-                          </Stack>                                                                                                                            
+                          <ClassroomClozePanel clozes={results.clozes} />
                         </div>                                                                                                                                
                       )}                                                                                                                                      
                       {activeTab === 3 && (                                                                                                                   
