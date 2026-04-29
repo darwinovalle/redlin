@@ -12,7 +12,8 @@ from .models import (
     ClassSessionSummary,
     ClassSessionMCQ,
     ClassSessionCloze,
-    ClassSessionFeynman
+    ClassSessionFeynman,
+    ClassSessionFeynmanAttempt,
 )
 from .serializers import (
     ClassSessionFinishSerializer,
@@ -22,8 +23,11 @@ from .serializers import (
     ClassSessionSummarySerializer,
     ClassSessionMCQSerializer,
     ClassSessionClozeSerializer,
-    ClassSessionFeynmanSerializer
+    ClassSessionFeynmanSerializer,
+    ClassSessionFeynmanAttemptSerializer,
 )
+from .services.feynman_service import evaluate_and_record_attempt
+from API.serializer import FeynmanAttemptCreateSerializer
 from .tasks import process_class_session_task, transcribe_class_session_task
 
 
@@ -142,8 +146,36 @@ class ClassSessionViewSet(viewsets.ModelViewSet):
                 "summary": ClassSessionSummarySerializer(session.summary).data if hasattr(session, "summary") else None,
                 "mcqs": ClassSessionMCQSerializer(session.mcqs.all(), many=True).data,
                 "clozes": ClassSessionClozeSerializer(session.clozes.all().order_by("-id"), many=True).data,
+                "feynmans": ClassSessionFeynmanSerializer(session.feynmans.all().order_by("id"), many=True).data,
             }
         )
+
+    @action(detail=True, methods=["get"], url_path="feynman/prompts")
+    def feynman_prompts(self, request, pk=None):
+        session = self.get_object()
+        qs = session.feynmans.all().order_by("id")
+        return Response(ClassSessionFeynmanSerializer(qs, many=True).data)
+
+    @action(detail=True, methods=["get"], url_path="feynman/history")
+    def feynman_history(self, request, pk=None):
+        session = self.get_object()
+        attempts = session.feynman_attempts.filter(user=request.user).order_by("-id")
+        return Response(ClassSessionFeynmanAttemptSerializer(attempts, many=True).data)
+
+    @action(detail=True, methods=["post"], url_path="feynman/evaluate")
+    def feynman_evaluate(self, request, pk=None):
+        session = self.get_object()
+        serializer = FeynmanAttemptCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        feynman_id = serializer.validated_data["feynman_id"]
+        answer = serializer.validated_data["answer"]
+        f_obj = session.feynmans.filter(id=feynman_id).first()
+        if not f_obj:
+            return Response({"detail": "Feynman not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        attempt = evaluate_and_record_attempt(f_obj=f_obj, answer=answer, user=request.user)
+        return Response(ClassSessionFeynmanAttemptSerializer(attempt).data, status=status.HTTP_201_CREATED)
     
 class ClassSessionSummaryViewSet(viewsets.ReadOnlyModelViewSet):
       queryset = ClassSessionSummary.objects.all()                                                                                                            

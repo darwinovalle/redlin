@@ -2,6 +2,7 @@ from API.services.processing_common import detect_language
 from .summary_service import generate_session_summary                                                                                                       
 from .mcq_service import generate_session_mcqs                                                                                                              
 from .cloze_service import generate_session_clozes                                                                                                          
+from .feynman_generation_service import generate_session_feynman                                                                                           
                                                                                                                                                             
 def process_classroom_session_text(class_session, text: str) -> None:
     """                                                                                                                                                     
@@ -29,6 +30,9 @@ def process_classroom_session_text(class_session, text: str) -> None:
                                                                                                                                                             
         # 3. Generate Clozes                                                                                                                                
         generate_session_clozes(class_session, cleaned_text, lang_label, summary_content)                                                                   
+
+        # 4. Generate Feynman prompts                                                                                                                        
+        generate_session_feynman(class_session, cleaned_text, summary_content, lang_label)                                                                  
                                                                                                                                                             
         print(f"Successfully processed ClassSession {class_session.id}.")                                                                                   
     except Exception as exc:                                                                                                                                

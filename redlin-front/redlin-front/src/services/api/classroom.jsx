@@ -48,6 +48,28 @@ export const classroomService = {
     const response = await api.get(`/classroom/sessions/${sessionId}/results/`);
     return response.data;
   },
+
+  async getFeynmanPrompts(sessionId) {
+    if (!sessionId) throw new Error('sessionId is required');
+    const response = await api.get(`/classroom/sessions/${sessionId}/feynman/prompts/`);
+    return Array.isArray(response.data) ? response.data : [];
+  },
+
+  async getFeynmanHistory(sessionId) {
+    if (!sessionId) throw new Error('sessionId is required');
+    const response = await api.get(`/classroom/sessions/${sessionId}/feynman/history/`);
+    return Array.isArray(response.data) ? response.data : [];
+  },
+
+  async evaluateFeynman({ sessionId, feynmanId, answer }) {
+    if (!sessionId) throw new Error('sessionId is required');
+    if (!feynmanId) throw new Error('feynmanId is required');
+    const response = await api.post(`/classroom/sessions/${sessionId}/feynman/evaluate/`, {
+      feynman_id: feynmanId,
+      answer,
+    });
+    return response.data;
+  },
 };
 
 export default classroomService;
