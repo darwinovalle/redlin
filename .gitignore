@@ -10,6 +10,7 @@ __pycache__/
 *.sqlite3
 redlin_web/db.sqlite3
 redlin_web/documents/
+redlin_web/media/
 
 # Node
 node_modules/

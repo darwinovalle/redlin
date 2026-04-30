@@ -40,3 +40,4 @@ redlin_web/celerybeat-schedule
 
 # Misc
 *.log
+.media/

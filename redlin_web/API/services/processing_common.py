@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 # Keep model choice aligned with the previous pipeline behavior.
-MODEL = genai.GenerativeModel("gemini-2.5-pro")
+MODEL = genai.GenerativeModel("	gemini-2.5-flash")
 
 # Ollama configuration - use environment variable or default
 # For Linux: set OLLAMA_HOST=http://172.17.0.1:11434 (host IP on docker0 bridge)
