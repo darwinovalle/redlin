@@ -36,17 +36,24 @@ import RenameDialog from '../../../components/common/RenameDialog';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const SIDEBAR_WIDTH = 288;
+const SidebarSpacer = styled('div')(() => ({
+  width: SIDEBAR_WIDTH,
+  flexShrink: 0,
+  minHeight: '100vh'
+}));
 const SidebarShell = styled('div')(() => ({
   width: SIDEBAR_WIDTH,
   flexShrink: 0,
   height: '100vh',
   display: 'flex',
   flexDirection: 'column',
+  position: 'fixed',
+  top: 0,
+  left: 0,
   backgroundColor: '#1A2A3A', // solid dark per mock
   color: '#fff',
   fontFamily: 'AlibabaSans, sans-serif',
   borderRight: '1px solid rgba(255,255,255,0.08)',
-  position: 'relative',
   zIndex: 10
 }));
 const NavItem = styled('div')(() => ({
@@ -209,6 +216,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       <LoaderOverlay open={loading} text="Uploading..." />
       <SuccessAlert open={successAlertOpen} message="Your file was successfully processed." onClose={()=>setSuccessAlertOpen(false)} autoHideDuration={5000} />
       <CssBaseline />
+      <SidebarSpacer aria-hidden="true" />
       <SidebarShell>
         <div style={{ padding: '0 24px 24px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: 24 }}>
           <div style={{ display:'flex', alignItems:'center', height:64 }}>
