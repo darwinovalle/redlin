@@ -61,6 +61,22 @@ import { useEffect, useMemo, useRef, useState } from 'react';
     const [manualTranscript, setManualTranscript] = useState('');                                                                                             
     const [mediaError, setMediaError] = useState('');
 
+    const isCompleted = session?.status === 'completed';
+    const storedTranscript = useMemo(() => {
+      const transcript = results?.session?.transcript_text || session?.transcript_text || '';
+      return typeof transcript === 'string' ? transcript.trim() : '';
+    }, [results?.session?.transcript_text, session?.transcript_text]);
+    const statusChipSx = {
+      height: 24,
+      '& .MuiChip-label': {
+        px: 1,
+      },
+      '& .MuiChip-icon': {
+        ml: 0.5,
+        fontSize: 14,
+      },
+    };
+
     const [activeTab, setActiveTab] = useState(0);                                                                                                            
     const tabs = ['Summary', 'MCQs', 'Clozes', 'Feynman'];
 
@@ -414,14 +430,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
         <div className="classroom-shell">                                                                                                                     
           <div className="classroom-hero">                                                                                                                    
             <div>                                                                                                                                             
-              <Chip label={`Session ${session?.id || sessionId}`} color={statusTone(session?.status)} sx={{ mb: 2 }} />                                       
+              {/* <Chip label={`Session ${session?.id || sessionId}`} color={statusTone(session?.status)} sx={{ mb: 2 }} />                                        */}
               <Typography variant="h3" className="classroom-title">{session?.title || 'Classroom space'}</Typography>                                         
               <Typography variant="body1" className="classroom-subtitle">                                                                                     
                 Record the lecture audio, stop when the class ends, then queue the transcription pipeline.                                                    
               </Typography>                                                                                                                                   
             </div>                                                                                                                                            
-            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">                                                                           
-              <Button variant="outlined" onClick={() => navigate('/home')} sx={{ borderRadius: 999 }}>Exit</Button>                                           
+              {!isCompleted && (
+              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">                                                                           
+              {/* <Button variant="outlined" onClick={() => navigate('/home')} sx={{ borderRadius: 999 }}>Exit</Button>                                            */}
               <Button                                                                                                                                         
                 variant="contained"                                                                                                                           
                 startIcon={recording ? <PauseCircleIcon /> : <MicIcon />}                                                                                     
@@ -440,19 +457,33 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               >                                                                                                                                               
                 {processing ? 'Processing...' : 'Process transcription'}                                                                                      
               </Button>                                                                                                                                       
-            </Stack>                                                                                                                                          
+              </Stack>
+              )}
           </div>                                                                                                                                              
                                                                                                                                                               
           <div className="classroom-grid">                                                                                                                    
-            <Paper className="classroom-card classroom-card-console" elevation={0}>                                                                           
+            <Paper className={`classroom-card classroom-card-console ${isCompleted ? 'classroom-card-console-completed' : ''}`} elevation={0}>           
               <div className="classroom-card-header">                                                                                                         
                 <div>                                                                                                                                         
-                  <Typography variant="overline" sx={{ letterSpacing: 3, color: 'rgba(255,255,255,0.55)' }}>Recording console</Typography>                    
-                  <Typography variant="h5" sx={{ color: '#fff', mt: 0.5 }}>Capture lecture audio</Typography>                                                 
+                  <Typography variant="overline" sx={{ letterSpacing: 3, color: 'rgba(255,255,255,0.55)' }}>{isCompleted ? 'Completed session' : 'Recording console'}</Typography>
+                  <Typography variant="h5" sx={{ color: '#fff', mt: 0.5 }}>{isCompleted ? 'Stored transcript' : 'Capture lecture audio'}</Typography>
                 </div>                                                                                                                                        
-                <Chip icon={recording ? <FiberManualRecordIcon /> : undefined} label={recording ? 'Live' : session?.status || 'Idle'}                         
-  color={statusTone(session?.status)} />                                                                                                                      
+                {isCompleted ? (
+                <Chip label="Completed" color={statusTone(session?.status)} size="small" sx={statusChipSx} />
+                ) : (
+                <Chip icon={recording ? <FiberManualRecordIcon /> : undefined} label={recording ? 'Live' : session?.status || 'Idle'}
+  color={statusTone(session?.status)} size="small" sx={statusChipSx} />
+                )}                                                                                                                      
               </div>                                                                                                                                          
+              {isCompleted ? (
+                <Box sx={{ mt: 2, p: 2.5, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>Transcription</Typography>
+                  <Typography variant="body1" sx={{ color: '#fff', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
+                    {storedTranscript || 'No transcript available.'}
+                  </Typography>
+                </Box>
+              ) : (
+                <>
               <div className="classroom-wave" data-active={recording ? 'true' : 'false'}>                                                                     
                 {[0, 1, 2, 3, 4, 5].map((bar) => (<span key={bar} style={{ animationDelay: `${bar * 120}ms` }} />))}                                          
               </div>                                                                                                                                          
@@ -460,7 +491,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                 <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 2, border: '1px solid rgba(255,255,255,0.1)' }}>              
                   <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block', mb: 1 }}>Live Captions:</Typography>                  
                   <Typography variant="body2" sx={{ color: '#fff', fontStyle: 'italic' }}>{liveTranscript || 'Listening...'}</Typography>                     
-                </Box>                                                                                                                                        
+                </Box>                                                                                                                                         
               )}                                                                                                                                              
               <Stack spacing={1.5} sx={{ mt: 3 }}>                                                                                                            
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>                                                                         
@@ -476,15 +507,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                   <Chip label={`Uploaded: ${audioReady ? 'Yes' : 'No'}`} variant="outlined" sx={{ color: '#fff' }} />                                         
                   <Chip label={`Status: ${session?.status || 'unknown'}`} variant="outlined" sx={{ color: '#fff' }} />                                        
                 </Stack>                                                                                                                                      
-              </Stack>                                                                                                                                        
+              </Stack>                                                                                                                                         
               <Stack direction="row" spacing={1.5} sx={{ mt: 4, flexWrap: 'wrap' }}>                                                                          
                 <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={refreshResults} sx={{ borderRadius: 999 }}>Refresh</Button>                
                 <Button variant="contained" onClick={processTranscript} disabled={!canProcess || processing} sx={{ borderRadius: 999 }}>{processing ?         
   'Queueing...' : 'Queue transcription'}</Button>                                                                                                             
-              </Stack>                                                                                                                                        
+              </Stack>                                                                                                                                         
+                </>
+              )}
             </Paper>                                                                                                                                          
                                                                                                                                                               
-            <Paper className="classroom-card classroom-card-output" elevation={0}>                                                                            
+            <Paper className="classroom-card classroom-card-output" elevation={0}>                                                                           
               <div className="classroom-card-header">                                                                                                         
                 <div>                                                                                                                                         
                   <Typography variant="overline" sx={{ letterSpacing: 3, color: 'rgba(255,255,255,0.55)' }}>Generated study space</Typography>                
@@ -494,7 +527,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               </div>                                                                                                                                          
                                                                                                                                                               
               <div className="classroom-output-stack">                                                                                                        
-                <div className="classroom-output-block">                                                                                                      
+                {!isCompleted && <div className="classroom-output-block">                                                                                     
                   <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>Transcript</Typography>                                      
                   <TextField                                                                                                                                  
                     value={manualTranscript}                                                                                                                  
@@ -503,7 +536,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                     minRows={6} multiline fullWidth variant="outlined"                                                                                        
                     sx={{ '& .MuiInputBase-root': { color: '#fff' }, '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.12)' } }}       
                   />                                                                                                                                          
-                </div>                                                                                                                                        
+                </div>}                                                                                                                                       
                                                                                                                                                               
                 <Box sx={{ mt: 3, borderBottom: 1, borderColor: 'rgba(255,255,255,0.1)' }}>                                                                   
                   <Tabs                                                                                                                                       

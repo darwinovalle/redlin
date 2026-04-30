@@ -85,6 +85,13 @@
   justify-content: space-between;
 }
 
+.classroom-card-console-completed {
+  height: 74vh;
+  justify-content: flex-start;
+  gap: 18px;
+  overflow: hidden;
+}
+
 .classroom-card-output {
   display: flex;
   flex-direction: column;
