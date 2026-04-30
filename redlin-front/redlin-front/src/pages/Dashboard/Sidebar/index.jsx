@@ -76,6 +76,8 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const isHome = location.pathname.startsWith('/home');
   const currentDocSlug = React.useMemo(() => { const m = location.pathname.match(/^\/documents\/([^/?#]+)/); return m?decodeURIComponent(m[1]):null; }, [location.pathname]);
   const currentCsvSlug = React.useMemo(() => { const m = location.pathname.match(/^\/csv\/([^/?#]+)/); return m?decodeURIComponent(m[1]):null; }, [location.pathname]);
+  const currentClassroomSessionId = React.useMemo(() => { const m = location.pathname.match(/^\/classroom\/([^/?#]+)/); return m?decodeURIComponent(m[1]):null; }, [location.pathname]);
+  const currentVideoId = React.useMemo(() => { const m = location.pathname.match(/^\/videos\/([^/?#]+)/); return m?decodeURIComponent(m[1]):null; }, [location.pathname]);
   const sidebarStateKey = React.useMemo(() => user?.id ? `sidebar:${user.id}:sections` : null, [user?.id]);
   const [userDocuments,setUserDocuments]=useState([]);
   const [loadingDocs,setLoadingDocs]=useState(false);
@@ -242,13 +244,13 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 {loadingClassroomSessions && <Typography sx={{ px:3, py:1, color:'rgba(255,255,255,0.6)' }}>Loading classrooms...</Typography>}
                 {classroomError && <Typography sx={{ px:3, py:1, color:'#ff6b6b' }}>{classroomError}</Typography>}
                 {!loadingClassroomSessions && !classroomError && classroomSessions.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No classroom spaces yet.</Typography>}
-                {classroomSessions.map((session)=> (
-                  <NavItem key={session.id} style={{ paddingLeft:40 }} onClick={()=>navigate(`/classroom/${session.id}`)}>
+                {classroomSessions.map((session)=> { const active = currentClassroomSessionId && String(session.id)===currentClassroomSessionId; return (
+                  <NavItem key={session.id} className={active?'active':''} style={{ paddingLeft:40 }} onClick={()=>navigate(`/classroom/${session.id}`)}>
                     <ItemIcon><MicIcon sx={{ fontSize:18 }} /></ItemIcon>
                     <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{session.title}</span>
                     <span style={{ fontSize:11, opacity:0.6 }}>{session.status}</span>
                   </NavItem>
-                ))}
+                );})}
               </NestedList>
             </Collapse>
             <NavItem onClick={()=>setDocsOpen(v=>!v)} className={docsOpen?'active':''}>
@@ -287,17 +289,17 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 {loadingVideos && <Typography sx={{ px:3, py:1, color:'rgba(255,255,255,0.6)' }}>Loading videos...</Typography>}
                 {videoError && <Typography sx={{ px:3, py:1, color:'#ff6b6b' }}>{videoError}</Typography>}
                 {!loadingVideos && !videoError && videos.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No videos yet.</Typography>}
-                {videos.map(v=> (
-                  <NavItem key={v.id} style={{ paddingLeft:40 }} onClick={()=>navigate(`/videos/${v.id}`)}>
+                {videos.map(v=> { const active = currentVideoId && String(v.id)===currentVideoId; return (
+                  <NavItem key={v.id} className={active?'active':''} style={{ paddingLeft:40 }} onClick={()=>navigate(`/videos/${v.id}`)}>
                     <ItemIcon><OndemandVideoIcon sx={{ fontSize:18 }} /></ItemIcon>
                     <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{v.title||v.video_id||'Video '+v.id}</span>
                     <span style={{ fontSize:11, opacity:0.6 }}>{v.processing_status}</span>
                   </NavItem>
-                ))}
+                );})}
               </NestedList>
             </Collapse>
           </div>
-          <div className="nav-section">
+          {/* <div className="nav-section">
             <NavItem onClick={()=>setSheetsOpen(v=>!v)} className={sheetsOpen?'active':''}>
               <ItemIcon><DescriptionIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Study Sheets</span>
@@ -321,7 +323,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 );})}
               </NestedList>
             </Collapse>
-          </div>
+          </div> */}
           <div className="nav-section">
             <NavItem onClick={()=>setKanbanOpen(v=>!v)} className={kanbanOpen?'active':''}>
               <ItemIcon><ViewKanbanIcon sx={{ fontSize:20 }} /></ItemIcon>
