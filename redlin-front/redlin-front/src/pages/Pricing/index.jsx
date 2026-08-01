@@ -102,19 +102,19 @@ export default function Pricing() {
                             mt: 2,
                             ...(p.highlighted
                               ? {
-                                  borderColor: 'rgba(255,255,255,0.85)',
-                                  color: '#ffffff',
+                                  borderColor: 'color-mix(in srgb, var(--color-white) 85%, transparent)',
+                                  color: 'var(--color-white)',
                                   '&:hover': {
-                                    borderColor: '#ffffff',
-                                    backgroundColor: 'rgba(255,255,255,0.08)',
+                                    borderColor: 'var(--color-white)',
+                                    backgroundColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)',
                                   },
                                 }
                               : {
-                                  backgroundColor: '#bdbdbd', // gray fill
-                                  color: '#000000', // black text
-                                  border: '1px solid rgba(255,255,255,0.16)',
+                                  backgroundColor: 'var(--color-border-mid)', // gray fill
+                                  color: 'var(--color-black)', // black text
+                                  border: '1px solid color-mix(in srgb, var(--color-white) 16%, transparent)',
                                   '&:hover': {
-                                    backgroundColor: '#c7c7c7',
+                                    backgroundColor: 'var(--color-border-grey)',
                                   },
                                 }),
                           }}

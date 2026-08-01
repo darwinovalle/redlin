@@ -47,22 +47,22 @@ const SidebarShell = styled('div')(() => ({
   position: 'fixed',
   top: 0,
   left: 0,
-  backgroundColor: '#1A2A3A', // solid dark per mock
-  color: '#fff',
+  backgroundColor: 'var(--color-navy)', // solid dark per mock
+  color: 'var(--color-white)',
   fontFamily: "'Poppins', 'Titillium Web', Arial, sans-serif",
-  borderRight: '1px solid rgba(255,255,255,0.08)',
+  borderRight: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)',
   zIndex: 10
 }));
 const NavItem = styled('button')(() => ({
-  display: 'flex', alignItems: 'center', width: '100%', padding: '14px 24px', color: 'rgba(255,255,255,0.8)', fontSize: 16, cursor: 'pointer', position: 'relative', transition: 'background .25s,color .25s', userSelect: 'none', background: 'none', border: 'none', textAlign: 'left', fontFamily: 'inherit', lineHeight: 'inherit', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' }, '&.active': { backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' }, '&:focus-visible': { outline: '2px solid #20C997', outlineOffset: '-2px' }
+  display: 'flex', alignItems: 'center', width: '100%', padding: '14px 24px', color: 'color-mix(in srgb, var(--color-white) 80%, transparent)', fontSize: 16, cursor: 'pointer', position: 'relative', transition: 'background .25s,color .25s', userSelect: 'none', background: 'none', border: 'none', textAlign: 'left', fontFamily: 'inherit', lineHeight: 'inherit', '&:hover': { backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', color: 'var(--color-white)' }, '&.active': { backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', color: 'var(--color-white)' }, '&:focus-visible': { outline: '2px solid var(--color-teal)', outlineOffset: '-2px' }
 }));
-const SectionTitle = styled('div')(() => ({ padding: '0 24px', margin: '16px 0 8px', fontSize: 12, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', letterSpacing: 1 }));
-const AddSpaceButton = styled('button')(() => ({ width: '100%', margin: '8px 24px', padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.1)', border: '1px dashed rgba(255,255,255,0.3)', borderRadius: 6, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, cursor: 'pointer', transition: 'background .25s', fontFamily: 'inherit', '&:hover': { backgroundColor: 'rgba(255,255,255,0.15)' }, '&:focus-visible': { outline: '2px solid #20C997', outlineOffset: '-2px' } }));
+const SectionTitle = styled('div')(() => ({ padding: '0 24px', margin: '16px 0 8px', fontSize: 12, textTransform: 'uppercase', color: 'color-mix(in srgb, var(--color-white) 50%, transparent)', letterSpacing: 1 }));
+const AddSpaceButton = styled('button')(() => ({ width: '100%', margin: '8px 24px', padding: '10px 16px', backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', border: '1px dashed color-mix(in srgb, var(--color-white) 30%, transparent)', borderRadius: 6, color: 'var(--color-white)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, cursor: 'pointer', transition: 'background .25s', fontFamily: 'inherit', '&:hover': { backgroundColor: 'color-mix(in srgb, var(--color-white) 15%, transparent)' }, '&:focus-visible': { outline: '2px solid var(--color-teal)', outlineOffset: '-2px' } }));
 const ItemIcon = styled('span')(() => ({ display: 'inline-flex', marginRight: 16, fontSize: 20, alignItems: 'center', justifyContent: 'center' }));
 const HoverActions = styled('div')(() => ({ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', opacity: 0, transition: 'opacity .2s' }));
 const NestedList = styled('div')(() => ({ paddingLeft: 8 }));
-const UserProfile = styled('div')(() => ({ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center' }));
-const Avatar = styled('div')(() => ({ width: 36, height: 36, borderRadius: '50%', backgroundColor: '#4A90E2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 12, fontWeight: 500, fontSize: 14 }));
+const UserProfile = styled('div')(() => ({ padding: '16px 24px', borderTop: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', display: 'flex', alignItems: 'center' }));
+const Avatar = styled('div')(() => ({ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--color-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 12, fontWeight: 500, fontSize: 14 }));
 
 export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDocumentDelete, onLogout, onOpenSettings }) {
   const [loading, setLoading] = useState(false);
@@ -216,12 +216,12 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       <SuccessAlert open={successAlertOpen} message="Your file was successfully processed." onClose={()=>setSuccessAlertOpen(false)} autoHideDuration={5000} />
       <SidebarSpacer aria-hidden="true" />
       <SidebarShell>
-        <div style={{ padding: '0 24px 24px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: 24 }}>
+        <div style={{ padding: '0 24px 24px', borderBottom: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', marginBottom: 24 }}>
           <div style={{ display:'flex', alignItems:'center', height:64 }}>
-            <div style={{ width:40, height:40, background:'linear-gradient(135deg,#20C997,#4A90E2)', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', marginRight:12, boxShadow:'0 0 20px rgba(32,201,151,0.3)' }}>
-              <i className="ri-brain-line" style={{ fontSize:22, color:'#fff' }} />
+            <div style={{ width:40, height:40, background:'linear-gradient(135deg,var(--color-teal),var(--color-blue))', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', marginRight:12, boxShadow:'0 0 20px color-mix(in srgb, var(--color-teal) 30%, transparent)' }}>
+              <i className="ri-brain-line" style={{ fontSize:22, color:'var(--color-white)' }} />
             </div>
-            <span style={{ fontSize:24, fontWeight:700, background:'linear-gradient(90deg,#FFFFFF,#B0B7C3)', WebkitBackgroundClip:'text', backgroundClip:'text', color:'transparent' }}>Redlin</span>
+            <span style={{ fontSize:24, fontWeight:700, background:'linear-gradient(90deg,var(--color-white),var(--color-text-muted-on-dark))', WebkitBackgroundClip:'text', backgroundClip:'text', color:'transparent' }}>Redlin</span>
           </div>
         </div>
         <div style={{ flex:1, overflowY:'auto' }}>
@@ -237,9 +237,9 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </NavItem>
             <Collapse in={classroomOpen} timeout="auto" unmountOnExit>
               <NestedList>
-                {loadingClassroomSessions && <Typography sx={{ px:3, py:1, color:'rgba(255,255,255,0.6)' }}>Loading classrooms...</Typography>}
-                {classroomError && <Typography sx={{ px:3, py:1, color:'#ff6b6b' }}>{classroomError}</Typography>}
-                {!loadingClassroomSessions && !classroomError && classroomSessions.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No classroom spaces yet.</Typography>}
+                {loadingClassroomSessions && <Typography sx={{ px:3, py:1, color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>Loading classrooms...</Typography>}
+                {classroomError && <Typography sx={{ px:3, py:1, color:'var(--color-danger-soft)' }}>{classroomError}</Typography>}
+                {!loadingClassroomSessions && !classroomError && classroomSessions.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No classroom spaces yet.</Typography>}
                 {classroomSessions.map((session)=> { const active = currentClassroomSessionId && String(session.id)===currentClassroomSessionId; return (
                   <NavItem type="button" key={session.id} className={active?'active':''} style={{ paddingLeft:40 }} onClick={()=>navigate(`/classroom/${session.id}`)}>
                     <ItemIcon><MicIcon sx={{ fontSize:18 }} /></ItemIcon>
@@ -256,9 +256,9 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </NavItem>
             <Collapse in={docsOpen} timeout="auto" unmountOnExit>
               <NestedList>
-                {loadingDocs && <Typography sx={{ px:3, py:1, color:'rgba(255,255,255,0.6)' }}>Loading documents...</Typography>}
-                {fetchError && <Typography sx={{ px:3, py:1, color:'#ff6b6b' }}>Error: {fetchError}</Typography>}
-                {!loadingDocs && !fetchError && userDocuments.length===0 && user && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No documents yet.</Typography>}
+                {loadingDocs && <Typography sx={{ px:3, py:1, color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>Loading documents...</Typography>}
+                {fetchError && <Typography sx={{ px:3, py:1, color:'var(--color-danger-soft)' }}>Error: {fetchError}</Typography>}
+                {!loadingDocs && !fetchError && userDocuments.length===0 && user && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No documents yet.</Typography>}
                 {userDocuments.map(doc=>{ const active = selectedDocumentId===doc.id || (currentDocSlug && slugify(doc.title||String(doc.id))===currentDocSlug); return (
                   <NavItem type="button" key={doc.id} className={active?'active':''} style={{ paddingLeft:40 }}
                     onClick={()=>{ const slug=slugify(doc.title||String(doc.id)); try{ localStorage.setItem('lastDocSlug', slug);}catch{} navigate(`/documents/${slug}`); onDocumentSelect?.(doc.id); }}
@@ -268,8 +268,8 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                     <ItemIcon><InsertDriveFileIcon sx={{ fontSize:18 }} /></ItemIcon>
                     <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{doc.title}</span>
                     <HoverActions className="hover-actions">
-                      <IconButton size="small" onClick={(e)=>{e.stopPropagation(); openRename(doc);}} sx={{ color:'rgba(255,255,255,0.7)' }}><EditIcon fontSize="inherit" /></IconButton>
-                      <IconButton size="small" onClick={(e)=>{e.stopPropagation(); handleDeleteDocument(doc);}} sx={{ color:'#ff6b6b' }}><DeleteIcon fontSize="inherit" /></IconButton>
+                      <IconButton size="small" onClick={(e)=>{e.stopPropagation(); openRename(doc);}} sx={{ color:'color-mix(in srgb, var(--color-white) 70%, transparent)' }}><EditIcon fontSize="inherit" /></IconButton>
+                      <IconButton size="small" onClick={(e)=>{e.stopPropagation(); handleDeleteDocument(doc);}} sx={{ color:'var(--color-danger-soft)' }}><DeleteIcon fontSize="inherit" /></IconButton>
                     </HoverActions>
                   </NavItem>
                 );})}
@@ -282,9 +282,9 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </NavItem>
             <Collapse in={videosOpen} timeout="auto" unmountOnExit>
               <NestedList>
-                {loadingVideos && <Typography sx={{ px:3, py:1, color:'rgba(255,255,255,0.6)' }}>Loading videos...</Typography>}
-                {videoError && <Typography sx={{ px:3, py:1, color:'#ff6b6b' }}>{videoError}</Typography>}
-                {!loadingVideos && !videoError && videos.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No videos yet.</Typography>}
+                {loadingVideos && <Typography sx={{ px:3, py:1, color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>Loading videos...</Typography>}
+                {videoError && <Typography sx={{ px:3, py:1, color:'var(--color-danger-soft)' }}>{videoError}</Typography>}
+                {!loadingVideos && !videoError && videos.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No videos yet.</Typography>}
                 {videos.map(v=> { const active = currentVideoId && String(v.id)===currentVideoId; return (
                   <NavItem type="button" key={v.id} className={active?'active':''} style={{ paddingLeft:40 }} onClick={()=>navigate(`/videos/${v.id}`)}>
                     <ItemIcon><OndemandVideoIcon sx={{ fontSize:18 }} /></ItemIcon>
@@ -303,7 +303,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </NavItem>
             <Collapse in={sheetsOpen} timeout="auto" unmountOnExit>
               <NestedList>
-                {csvImports.length===0 ? <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No sheets yet.</Typography> : csvImports.map(imp=>{ const name=(imp.filename||'csv').replace(/\.[^/.]+$/, ''); const slug=slugify(name); const active=currentCsvSlug && slug===currentCsvSlug; return (
+                {csvImports.length===0 ? <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No sheets yet.</Typography> : csvImports.map(imp=>{ const name=(imp.filename||'csv').replace(/\.[^/.]+$/, ''); const slug=slugify(name); const active=currentCsvSlug && slug===currentCsvSlug; return (
                   <NavItem type="button" key={imp.id} className={active?'active':''} style={{ paddingLeft:40 }}
                     onClick={()=>navigate(`/csv/${slug}?importId=${imp.id}`)}
                     onMouseEnter={e=>{const a=e.currentTarget.querySelector('.hover-actions'); if(a)a.style.opacity='1';}}
@@ -312,8 +312,8 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                     <ItemIcon><DescriptionIcon sx={{ fontSize:18 }} /></ItemIcon>
                     <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{name}</span>
                     <HoverActions className="hover-actions">
-                      <IconButton size="small" onClick={(e)=>{e.stopPropagation(); openRenameSheet(imp);}} sx={{ color:'rgba(255,255,255,0.7)' }}><EditIcon fontSize="inherit" /></IconButton>
-                      <IconButton size="small" onClick={(e)=>{e.stopPropagation(); handleDeleteSheet(imp);}} sx={{ color:'#ff6b6b' }}><DeleteIcon fontSize="inherit" /></IconButton>
+                      <IconButton size="small" onClick={(e)=>{e.stopPropagation(); openRenameSheet(imp);}} sx={{ color:'color-mix(in srgb, var(--color-white) 70%, transparent)' }}><EditIcon fontSize="inherit" /></IconButton>
+                      <IconButton size="small" onClick={(e)=>{e.stopPropagation(); handleDeleteSheet(imp);}} sx={{ color:'var(--color-danger-soft)' }}><DeleteIcon fontSize="inherit" /></IconButton>
                     </HoverActions>
                   </NavItem>
                 );})}
@@ -328,7 +328,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </NavItem>
             <Collapse in={kanbanOpen} timeout="auto" unmountOnExit>
               <NestedList>
-                <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No tasks yet.</Typography>
+                <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No tasks yet.</Typography>
               </NestedList>
             </Collapse>
           </div>
@@ -340,7 +340,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </NavItem>
             <Collapse in={statsOpen} timeout="auto" unmountOnExit>
               <NestedList>
-                <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No stats yet.</Typography>
+                <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No stats yet.</Typography>
               </NestedList>
             </Collapse>
           </div>
@@ -357,7 +357,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
           <Avatar>{(user?.username || user?.email || 'U?').slice(0,2).toUpperCase()}</Avatar>
           <div style={{ flex:1 }}>
             <div style={{ fontWeight:500, fontSize:14, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{user?.username || user?.email || 'User'}</div>
-            <div style={{ fontSize:12, color:'rgba(255,255,255,0.6)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{user?.email || ''}</div>
+            <div style={{ fontSize:12, color:'color-mix(in srgb, var(--color-white) 60%, transparent)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{user?.email || ''}</div>
           </div>
         </UserProfile>
       </SidebarShell>

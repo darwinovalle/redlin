@@ -12,7 +12,7 @@ const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeco
     ? `${countdownSeconds}s left`
     : null;
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ mt:2, display:'flex', flexDirection:'column', gap:2, color:'#000' }}>
+    <Box component="form" onSubmit={handleSubmit} sx={{ mt:2, display:'flex', flexDirection:'column', gap:2, color:'var(--color-black)' }}>
       <TextField
         label={timeInfo ? `Explain in your own words (${timeInfo})` : 'Explain in your own words (Markdown supported)'}
         multiline
@@ -20,10 +20,10 @@ const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeco
         value={value}
         onChange={(e)=>onChange(e.target.value)}
         disabled={disabled}
-        InputLabelProps={{ sx:{ color:'#000'} }}
-        InputProps={{ sx:{ color:'#000'} }}
+        InputLabelProps={{ sx:{ color:'var(--color-black)'} }}
+        InputProps={{ sx:{ color:'var(--color-black)'} }}
       />
-      <Button type="submit" variant="contained" disabled={disabled || !value.trim()} sx={{ alignSelf:'flex-end', background:'#000', borderRadius:'20px' }}>Submit Explanation</Button>
+      <Button type="submit" variant="contained" disabled={disabled || !value.trim()} sx={{ alignSelf:'flex-end', background:'var(--color-black)', borderRadius:'20px' }}>Submit Explanation</Button>
     </Box>
   );
 };

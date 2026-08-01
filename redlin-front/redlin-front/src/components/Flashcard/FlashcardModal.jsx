@@ -98,11 +98,11 @@ const FlashcardModal = ({ open, onClose, card, isFlipped, onToggleFlip, showNav 
                 height: 44,
                 borderRadius: '50%',
                 color: 'common.white',
-                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(38,38,38,0.75)',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'color-mix(in srgb, var(--color-black) 60%, transparent)' : 'color-mix(in srgb, var(--color-ink) 75%, transparent)',
+                boxShadow: '0 2px 10px color-mix(in srgb, var(--color-black) 35%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--color-white) 6%, transparent)',
                 '&:hover': {
-                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)',
+                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'color-mix(in srgb, var(--color-black) 70%, transparent)' : 'color-mix(in srgb, var(--color-ink-mid) 85%, transparent)',
                 },
               }}
             >
@@ -122,11 +122,11 @@ const FlashcardModal = ({ open, onClose, card, isFlipped, onToggleFlip, showNav 
                 height: 44,
                 borderRadius: '50%',
                 color: 'common.white',
-                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(38,38,38,0.75)',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'color-mix(in srgb, var(--color-black) 60%, transparent)' : 'color-mix(in srgb, var(--color-ink) 75%, transparent)',
+                boxShadow: '0 2px 10px color-mix(in srgb, var(--color-black) 35%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--color-white) 6%, transparent)',
                 '&:hover': {
-                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)',
+                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'color-mix(in srgb, var(--color-black) 70%, transparent)' : 'color-mix(in srgb, var(--color-ink-mid) 85%, transparent)',
                 },
               }}
             >

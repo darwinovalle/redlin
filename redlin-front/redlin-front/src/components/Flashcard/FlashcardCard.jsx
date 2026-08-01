@@ -18,7 +18,7 @@ const FlashcardCard = ({
   size = 'md',
   sx = {},
   showHint = false,
-  accentColor = '#00ff81',
+  accentColor = 'var(--color-success-glow)',
   // Optional flip customization
   flipDuration = 600, // ms
   flipPerspective = 1000, // px
@@ -101,7 +101,7 @@ const FlashcardCard = ({
             height: 16,
             borderRadius: 999,
             backgroundColor: accentColor,
-            boxShadow: '0 0 18px rgba(0,255,129,0.35)',
+            boxShadow: '0 0 18px color-mix(in srgb, var(--color-success-glow) 35%, transparent)',
             pointerEvents: 'none',
             zIndex: 0,
           }}

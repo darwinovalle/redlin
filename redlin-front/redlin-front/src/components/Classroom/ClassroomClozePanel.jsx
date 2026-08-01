@@ -51,7 +51,7 @@ const ClassroomClozePanel = ({ clozes }) => {
   if (!practiceClozes.length) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography sx={{ color: 'rgba(255,255,255,0.72)' }}>
+        <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
           This classroom session does not have cloze exercises yet.
         </Typography>
       </Box>
@@ -74,10 +74,10 @@ const ClassroomClozePanel = ({ clozes }) => {
           mx: 'auto',
         }}
       >
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: '#fff' }}>
+        <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: 'var(--color-white)' }}>
           Cloze Practice
         </Typography>
-        <Typography variant="body1" sx={{ mb: 3, maxWidth: 520, color: 'rgba(255,255,255,0.72)' }}>
+        <Typography variant="body1" sx={{ mb: 3, maxWidth: 520, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
           Ready? This set contains {practiceClozes.length} cloze {practiceClozes.length === 1 ? 'item' : 'items'}.
           Fill in the blanks accurately. Click start when you&apos;re ready.
         </Typography>
@@ -86,12 +86,12 @@ const ClassroomClozePanel = ({ clozes }) => {
           size="large"
           onClick={handleStart}
           sx={{
-            backgroundColor: '#6be0a6',
+            backgroundColor: 'var(--color-success)',
             borderRadius: '999px',
             px: 4,
-            color: '#07141f',
+            color: 'var(--color-navy-deep)',
             fontWeight: 800,
-            '&:hover': { backgroundColor: '#8bf0bf' },
+            '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
           }}
         >
           Start Cloze Practice
@@ -104,10 +104,10 @@ const ClassroomClozePanel = ({ clozes }) => {
     return (
       <Box sx={{ p: 3, textAlign: 'center', maxWidth: 760, mx: 'auto' }}>
         <Stack spacing={2} alignItems="center">
-          <Typography variant="h5" sx={{ fontWeight: 700, color: '#fff' }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'var(--color-white)' }}>
             Results
           </Typography>
-          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.74)' }}>
+          <Typography variant="body1" sx={{ color: 'color-mix(in srgb, var(--color-white) 74%, transparent)' }}>
             Score: {correctCount} / {total}
           </Typography>
           <Button
@@ -116,10 +116,10 @@ const ClassroomClozePanel = ({ clozes }) => {
             sx={{
               borderRadius: 999,
               px: 4,
-              bgcolor: '#6be0a6',
-              color: '#07141f',
+              bgcolor: 'var(--color-success)',
+              color: 'var(--color-navy-deep)',
               fontWeight: 800,
-              '&:hover': { bgcolor: '#8bf0bf' },
+              '&:hover': { bgcolor: 'var(--color-teal-pale)' },
             }}
           >
             Restart practice
@@ -132,10 +132,10 @@ const ClassroomClozePanel = ({ clozes }) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
-        <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', letterSpacing: 2 }}>
+        <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', letterSpacing: 2 }}>
           CLOZES ({total})
         </Typography>
-        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
+        <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
           Progress: {answeredCount} / {total}
         </Typography>
       </Box>

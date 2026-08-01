@@ -67,7 +67,7 @@ const VideoClozePanel = ({ videoId }) => {
       <Box sx={{ p:4, height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', textAlign:'center', width:'100%', maxWidth:640, mx:'auto' }}>
         <Typography variant="h4" gutterBottom sx={{ fontWeight:'bold' }} color="black">Cloze Practice</Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb:3, maxWidth:520 }}>Ready? This set contains {clozes.length} cloze {clozes.length===1?'item':'items'}. Fill in the blanks accurately. Click start when you're ready.</Typography>
-        <Button variant="contained" size="large" onClick={() => { setClozes(prev => shuffle(prev)); setSessionKey(Date.now()); setStarted(true); }} sx={{ backgroundColor:'#000', borderRadius:'20px' }}>Start Cloze Practice</Button>
+        <Button variant="contained" size="large" onClick={() => { setClozes(prev => shuffle(prev)); setSessionKey(Date.now()); setStarted(true); }} sx={{ backgroundColor:'var(--color-black)', borderRadius:'20px' }}>Start Cloze Practice</Button>
       </Box>
     );
   }
@@ -82,7 +82,7 @@ const VideoClozePanel = ({ videoId }) => {
       <Box sx={{ p:4, height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', textAlign:'center' }}>
         <Typography variant="h4" gutterBottom sx={{ fontWeight:'bold' }} color="black">Results</Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb:3 }}>Score: {correctCount} / {total}</Typography>
-        <Button variant="contained" onClick={() => { setStarted(false); setSessionKey(Date.now()); }} sx={{ backgroundColor:'#6be0a6', borderRadius:'20px' }}>Exit</Button>
+        <Button variant="contained" onClick={() => { setStarted(false); setSessionKey(Date.now()); }} sx={{ backgroundColor:'var(--color-success)', borderRadius:'20px' }}>Exit</Button>
       </Box>
     );
   }

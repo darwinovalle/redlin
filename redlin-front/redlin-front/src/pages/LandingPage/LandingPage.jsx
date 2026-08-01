@@ -54,7 +54,7 @@ const LandingPage = () => {
                 </div>
                 
                 <div className="nav-links-landing">
-                    <a href="#features" className="nav-link-landing magnetic-target-landing">Features</a>
+                    <a href="var(--color-warning-faint)tures" className="nav-link-landing magnetic-target-landing">Features</a>
                     <a href="#benefits" className="nav-link-landing magnetic-target-landing">Benefits</a>
                     <a href="#how-it-works" className="nav-link-landing magnetic-target-landing">How It Works</a>
                     <a href="#pricing" className="nav-link-landing magnetic-target-landing">Self-Host</a>

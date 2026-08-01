@@ -33,7 +33,7 @@ const VideoClozeCard = ({ cloze, onValidate, sessionKey, onResult }) => {
 
   const renderedText = useMemo(() => {
     if (!text_with_blank) return '';
-    return text_with_blank.replace('_____', '<span style="background:#e9f5f1;padding:2px 6px;border-radius:4px;font-weight:600;letter-spacing:1px;">_____</span>');
+    return text_with_blank.replace('_____', '<span style="background:var(--color-surface-teal-tint);padding:2px 6px;border-radius:4px;font-weight:600;letter-spacing:1px;">_____</span>');
   }, [text_with_blank]);
 
   const handleSubmit = async (e) => {
@@ -52,11 +52,11 @@ const VideoClozeCard = ({ cloze, onValidate, sessionKey, onResult }) => {
   };
 
   return (
-    <Box sx={{ border: '1px solid #ddd', borderRadius: 2, p: 2, mb: 2, bgcolor: '#fff' }}>
+    <Box sx={{ border: '1px solid var(--color-divider)', borderRadius: 2, p: 2, mb: 2, bgcolor: 'var(--color-white)' }}>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
         {difficulty && <Chip size="small" color={difficultyColor} label={difficulty} />}
       </Box>
-      <Typography variant="body1" sx={{ mb: 1, color: '#222', lineHeight: 1.45 }} component="div" dangerouslySetInnerHTML={{ __html: renderedText }} />
+      <Typography variant="body1" sx={{ mb: 1, color: 'var(--color-text-strong)', lineHeight: 1.45 }} component="div" dangerouslySetInnerHTML={{ __html: renderedText }} />
       {displayOptions.length > 0 && (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
           {displayOptions.map((opt, i) => (
@@ -72,22 +72,22 @@ const VideoClozeCard = ({ cloze, onValidate, sessionKey, onResult }) => {
           onChange={(e) => setUserAnswer(e.target.value)}
           style={{
             flex: 1,
-            background: '#fff',
-            border: '1px solid #ddd',
+            background: 'var(--color-white)',
+            border: '1px solid var(--color-divider)',
             borderRadius: 6,
             padding: '10px 12px',
             fontSize: 14,
             lineHeight: 1.4,
-            color: '#222',
+            color: 'var(--color-text-strong)',
             outline: 'none',
             boxShadow: 'none'
           }}
-          onFocus={(e) => { e.target.style.borderColor = '#888'; }}
-          onBlur={(e) => { e.target.style.borderColor = '#ddd'; }}
+          onFocus={(e) => { e.target.style.borderColor = 'var(--color-text-dim)'; }}
+          onBlur={(e) => { e.target.style.borderColor = 'var(--color-divider)'; }}
           placeholder="Type your answer"
           aria-label="Cloze answer"
         />
-        <Button type="submit" variant="contained" disabled={submitting || !userAnswer.trim() || result!=null} sx={{ bgcolor: '#6be0a6', '&:hover': { bgcolor: '#56c98f' } }}>
+        <Button type="submit" variant="contained" disabled={submitting || !userAnswer.trim() || result!=null} sx={{ bgcolor: 'var(--color-success)', '&:hover': { bgcolor: 'var(--color-success-deep)' } }}>
           Check
         </Button>
       </form>

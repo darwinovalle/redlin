@@ -27,8 +27,8 @@ const SuccessAlert = ({ open, message, onClose, autoHideDuration = 5000 }) => {
         top: 32,
         right: 32,
         zIndex: 1500,
-        bgcolor: '#000',
-        color: '#fff',
+        bgcolor: 'var(--color-black)',
+        color: 'var(--color-white)',
         px: 3,
         py: 2,
         borderRadius: 2,
@@ -39,12 +39,12 @@ const SuccessAlert = ({ open, message, onClose, autoHideDuration = 5000 }) => {
         maxWidth: 400,
       }}
     >
-      <CheckCircleIcon sx={{ color: '#39ff14', mr: 1, fontSize: 28 }} />
-      <Typography variant="body1" sx={{ flex: 1, color: '#fff' }}>{message}</Typography>
+      <CheckCircleIcon sx={{ color: 'var(--color-green-bright)', mr: 1, fontSize: 28 }} />
+      <Typography variant="body1" sx={{ flex: 1, color: 'var(--color-white)' }}>{message}</Typography>
       <IconButton
         size="small"
         onClick={() => { setVisible(false); onClose?.(); }}
-        sx={{ color: '#fff', ml: 2 }}
+        sx={{ color: 'var(--color-white)', ml: 2 }}
         aria-label="close"
       >
         <CloseIcon fontSize="small" />

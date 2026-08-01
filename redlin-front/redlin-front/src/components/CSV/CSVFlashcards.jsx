@@ -195,7 +195,7 @@ const CSVFlashcards = ({ sourceId }) => {
             {current + 1} of {cards.length}
           </Typography>
         </Box>
-        <LinearProgress variant="determinate" value={((current + 1) / cards.length) * 100} sx={{ height: 8, borderRadius: 5, bgcolor: '#fff', '& .MuiLinearProgress-bar': { backgroundColor: '#acf3d0' } }} />
+        <LinearProgress variant="determinate" value={((current + 1) / cards.length) * 100} sx={{ height: 8, borderRadius: 5, bgcolor: 'var(--color-white)', '& .MuiLinearProgress-bar': { backgroundColor: 'var(--color-success-soft)' } }} />
       </Box>
   
       <Box sx={{ position: 'relative', width: '90%', maxWidth: '500px', mb: 4 }}>
@@ -213,11 +213,11 @@ const CSVFlashcards = ({ sourceId }) => {
             height: 44,
             borderRadius: '50%',
             color: 'common.white',
-            bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(38,38,38,0.75)',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            bgcolor: (theme) => theme.palette.mode === 'dark' ? 'color-mix(in srgb, var(--color-black) 60%, transparent)' : 'color-mix(in srgb, var(--color-ink) 75%, transparent)',
+            boxShadow: '0 2px 10px color-mix(in srgb, var(--color-black) 35%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--color-white) 6%, transparent)',
             '&:hover': {
-              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)',
+              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'color-mix(in srgb, var(--color-black) 70%, transparent)' : 'color-mix(in srgb, var(--color-ink-mid) 85%, transparent)',
             },
           }}
         >
@@ -237,11 +237,11 @@ const CSVFlashcards = ({ sourceId }) => {
             height: 44,
             borderRadius: '50%',
             color: 'common.white',
-            bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(38,38,38,0.75)',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            bgcolor: (theme) => theme.palette.mode === 'dark' ? 'color-mix(in srgb, var(--color-black) 60%, transparent)' : 'color-mix(in srgb, var(--color-ink) 75%, transparent)',
+            boxShadow: '0 2px 10px color-mix(in srgb, var(--color-black) 35%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--color-white) 6%, transparent)',
             '&:hover': {
-              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(48,48,48,0.85)',
+              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'color-mix(in srgb, var(--color-black) 70%, transparent)' : 'color-mix(in srgb, var(--color-ink-mid) 85%, transparent)',
             },
           }}
         >
@@ -318,18 +318,18 @@ const CSVFlashcards = ({ sourceId }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={closeEdit} disabled={savingEdit}>Cancelar</Button>
-          <Button variant="contained" onClick={saveEdit} disabled={savingEdit} sx={{ backgroundColor: '#6be0a6' }}>Guardar</Button>
+          <Button variant="contained" onClick={saveEdit} disabled={savingEdit} sx={{ backgroundColor: 'var(--color-success)' }}>Guardar</Button>
         </DialogActions>
       </Dialog>
 
       <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, color: 'text.secondary' }}>
               {/* <Typography variant="caption">Shortcuts:</Typography> */}
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.06)' }}>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--color-black) 6%, transparent)' }}>
                 <Typography variant="caption">Press</Typography>
                 <Box component="img" src={Keyf1Png} alt="Tecla 1" sx={{ height: 28, opacity: 0.85 }} />
                 <Typography variant="caption">to left</Typography>
               </Box>
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.06)' }}>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--color-black) 6%, transparent)' }}>
                 <Typography variant="caption">Press</Typography>
                 <Box component="img" src={Keyf2Png} alt="Tecla 2" sx={{ height: 28, opacity: 0.85 }} />
                 <Typography variant="caption">to right</Typography>

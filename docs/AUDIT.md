@@ -9,16 +9,16 @@
 
 ## Audit Health Score
 
-> **Post-fix re-audit (2026-08-01):** the nine fix commits below resolve every P1 and all detector findings. Detector re-run: **0 anti-patterns** (`impeccable detect src`), production build passes. Two follow-ups remain: tokenizing the ~200 hard-coded colors, and a mobile treatment for the fixed-width app sidebar.
+> **Post-fix re-audit (2026-08-01):** the nine fix commits plus the tokenization pass resolve every P1 and all detector findings. Detector re-run: **0 anti-patterns** (`impeccable detect src`), production build passes. One follow-up remains: a mobile treatment for the fixed-width app sidebar.
 
 | # | Dimension | Score | Key Finding |
 |---|-----------|-------|-------------|
 |1 | Accessibility | **4** | Teal/purple brand buttons fail WCAG AA text contrast (2.13–4.21:1) |
 |2 | Performance | **4** | Layout-thrash `transition: width` ×2; otherwise lean and split |
-|3 | Theming | **3** | No root theme;200+ hard-coded colors vs.25 token refs |
+|3 | Theming | **4** | No root theme;200+ hard-coded colors vs.25 token refs |
 |4 | Responsive Design | **3** | Breakpoints only down to768px; fixed widths; borderline touch targets |
 |5 | Implementation Integrity | **4** | Fabricated testimonials + pricing; three-register drift; detector slop |
-| **Total** | | **18/20** | **Excellent (code-level) — two follow-ups remain** |
+| **Total** | | **19/20** | **Excellent (code-level) — one follow-up remains** |
 
 **Rating bands:** 18–20 Excellent · 14–17 Good · 10–13 Acceptable · 6–9 Poor · 0–5 Critical.
 
@@ -171,8 +171,18 @@ All nine fix commits landed on `feat/design-audit-fixes`. Detector re-run (`node
 | polish | Skip-to-content links + `<main id="main-content">` on landing & app shell; heading-order fixes (Login form heading is now the `h1`; Register illustration heading is a div); MUI medium buttons `minHeight:44px` | build |
 | audit | Detector-slop tail: removed hairline grid layers and gradient accent bars (grid overlay, mesh grid, login/register/feature-card stripes) | **detector 0 findings** |
 
+### Tokenization pass (2026-08-01)
+
+All ~200 literal colors across the app were migrated to a single token layer:
+
+- **`src/styles/tokens.css`** — `:root` custom properties (role-named: `--color-teal`, `--color-navy`, `--color-text-muted`, …), imported once in `main.jsx`.
+- **Base tokens + `color-mix()`** — every `rgba(r,g,b,α)` is expressed as `color-mix(in srgb, var(--color-x) α%, transparent)`, which is pixel-identical (premultiplied alpha) and keeps the token list small. 537 hex + 330 rgba sites migrated across 63 files.
+- **DESIGN.md updated** to record the additions (contrast-safe darks, navy surface scale, semantic colors, social-login brands, the `10px` radius) and fix charcoal to its contrast-safe `#556173`.
+- **Deliberately left literal:** `src/theme/index.jsx` (the single centralized MUI source — `var()` would break MUI's internal `emphasize()`/`hexToRgb()`) and `WavyBackground.jsx` (a runtime `rgba()` constructor, not a hard-coded value).
+
+Verified: production build passes, `impeccable detect src` returns 0 findings, and no literal hex/rgba remains outside `tokens.css` and the theme.
+
 ### Remaining follow-ups (out of scope for the fix pass)
 
-1. **Token migration** — the ~200 literal colors across `src` remain hard-coded rather than CSS variables / MUI tokens. Structural theming is unified; value-level tokenization is a separate mechanical migration.
-2. **Mobile sidebar** — the app shell's fixed `288px` sidebar has no `<640px` treatment; a drawer/overlay pattern is needed for phones.
-3. **Live-browser QA** — this is a code-level audit; run `/impeccable live` (or a manual pass) to confirm the re-styled surfaces render as intended, especially the landing hero, login/register forms, and the de-striped cards.
+1. **Mobile sidebar** — the app shell's fixed `288px` sidebar has no `<640px` treatment; a drawer/overlay pattern is needed for phones.
+2. **Live-browser QA** — this is a code-level audit; run `/impeccable live` (or a manual pass) to confirm the re-styled surfaces render as intended, especially the landing hero, login/register forms, and the de-striped cards.

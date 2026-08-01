@@ -4,10 +4,10 @@
   min-height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at top left, rgba(32, 201, 151, 0.16), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(74, 144, 226, 0.18), transparent 32%),
-    linear-gradient(135deg, #0f1722 0%, #12263a 48%, #1a2a3a 100%);
-  color: #fff;
+    radial-gradient(circle at top left, color-mix(in srgb, var(--color-teal) 16%, transparent), transparent 30%),
+    radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-blue) 18%, transparent), transparent 32%),
+    linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%);
+  color: var(--color-white);
 }
 
 .classroom-mesh {
@@ -23,13 +23,13 @@
 .classroom-mesh-top {
   top: -10rem;
   right: -8rem;
-  background: rgba(32, 201, 151, 0.18);
+  background: color-mix(in srgb, var(--color-teal) 18%, transparent);
 }
 
 .classroom-mesh-bottom {
   left: -10rem;
   bottom: -12rem;
-  background: rgba(74, 144, 226, 0.2);
+  background: color-mix(in srgb, var(--color-blue) 20%, transparent);
 }
 
 .classroom-shell {
@@ -59,7 +59,7 @@
 
 .classroom-subtitle {
   max-width: 56ch;
-  color: rgba(255, 255, 255, 0.74);
+  color: color-mix(in srgb, var(--color-white) 74%, transparent);
 }
 
 .classroom-grid {
@@ -69,13 +69,13 @@
 }
 
 .classroom-card {
-  background: rgba(8, 14, 22, 0.76) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--color-navy-deep) 76%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--color-white) 8%, transparent);
   border-radius: 28px !important;
   backdrop-filter: blur(18px);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32) !important;
+  box-shadow: 0 24px 70px color-mix(in srgb, var(--color-black) 32%, transparent) !important;
   padding: 24px;
-  color: #fff;
+  color: var(--color-white);
   min-height: 74vh;
 }
 
@@ -117,7 +117,7 @@
 .classroom-wave span {
   width: 12px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #20c997, #4a90e2);
+  background: linear-gradient(180deg, var(--color-teal), var(--color-blue));
   transform-origin: bottom center;
   height: 20px;
   opacity: 0.6;
@@ -128,7 +128,7 @@
 }
 
 .classroom-wave[data-active='false'] span {
-  background: rgba(255, 255, 255, 0.18);
+  background: color-mix(in srgb, var(--color-white) 18%, transparent);
 }
 
 .classroom-output-stack {
@@ -141,13 +141,13 @@
 
 .classroom-output-block {
   padding: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid color-mix(in srgb, var(--color-white) 8%, transparent);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--color-white) 3%, transparent);
 }
 
 .classroom-markdown {
-  color: rgba(255, 255, 255, 0.92);
+  color: color-mix(in srgb, var(--color-white) 92%, transparent);
 }
 
 .classroom-markdown h1,
@@ -156,28 +156,28 @@
 .classroom-markdown h4,
 .classroom-markdown h5,
 .classroom-markdown h6 {
-  color: #fff;
+  color: var(--color-white);
 }
 
 .classroom-markdown p,
 .classroom-markdown li {
-  color: rgba(255, 255, 255, 0.9);
+  color: color-mix(in srgb, var(--color-white) 90%, transparent);
 }
 
 .classroom-mini-item {
   padding: 12px 14px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.9);
+  background: color-mix(in srgb, var(--color-white) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-white) 6%, transparent);
+  color: color-mix(in srgb, var(--color-white) 90%, transparent);
 }
 
 .classroom-empty-state {
   margin-top: auto;
   padding: 22px;
-  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border: 1px dashed color-mix(in srgb, var(--color-white) 16%, transparent);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--color-white) 2%, transparent);
 }
 
 @keyframes classroomWave {

@@ -1,0 +1,104 @@
+/* ============================================================
+   RedLin design tokens — "The Neural Lab" (see DESIGN.md)
+   ------------------------------------------------------------
+   Single source of truth for colors. Component styles reference
+   these variables instead of literal hex/rgba values.
+
+   Alpha variants are expressed with color-mix() against the base
+   token — `rgba(32,201,151,0.3)` becomes
+   `color-mix(in srgb, var(--color-teal) 30%, transparent)`, which
+   renders pixel-identically while keeping the token list small.
+   ============================================================ */
+
+:root {
+  /* ---- Brand ---- */
+  --color-teal: #20C997;            /* eco-teal */
+  --color-teal-deep: #0B7A54;       /* contrast-safe text-bearing teal */
+  --color-teal-hover: #19A37F;
+  --color-teal-bright: #16A57B;
+  --color-teal-pale: #8BF0BF;       /* light teal accents */
+  --color-teal-tint: #E0F5EF;       /* pale-teal */
+  --color-purple: #7F63F4;          /* electric-purple */
+  --color-purple-deep: #5F47C9;     /* contrast-safe */
+  --color-blue: #4A90E2;            /* slate-blue */
+  --color-blue-deep: #2D6FB0;       /* contrast-safe */
+  --color-blue-deeper: #166AC0;     /* hover */
+  --color-coral: #FF7E67;
+  --color-amber: #FFB400;
+
+  /* ---- Dark register — navy surfaces ---- */
+  --color-navy-deep: #07141F;       /* darker-navy */
+  --color-navy: #1A2A3A;            /* deep-navy / primary surface */
+  --color-navy-800: #1C2836;
+  --color-navy-700: #232F3E;
+  --color-navy-600: #2A3647;
+  --color-navy-500: #253241;
+  --color-navy-400: #162435;
+  --color-navy-300: #234560;
+  --color-navy-200: #12263A;
+  --color-navy-100: #0F1B2A;
+  --color-navy-050: #0F1722;
+
+  /* ---- Light register ---- */
+  --color-shell: #E9E9E9;           /* app-bg */
+  --color-white: #FFFFFF;
+  --color-cloud: #F5F7FA;           /* cloud */
+  --color-mist: #E1E5EA;            /* mist */
+  --color-surface-muted: #FAFAFA;
+  --color-surface-alt: #F0F2F5;
+  --color-surface-input: #F5F5F5;
+  --color-surface-card: #FDFDFD;
+  --color-surface-neutral: #F0F0F0;
+  --color-surface-teal-tint: #E9F5F1;
+  --color-divider: #DDDDDD;
+  --color-divider-soft: #EEEEEE;
+  --color-border-mid: #BDBDBD;
+  --color-border-grey: #C7C7C7;
+  --color-border-faint: #E0E4E8;
+  --color-border-navy: #3A4656;
+  --color-border-navy-soft: #3A4659;
+
+  /* ---- Text ---- */
+  --color-text: #333333;
+  --color-text-strong: #222222;
+  --color-text-deep: #111111;
+  --color-text-mid: #666666;
+  --color-text-dim: #888888;
+  --color-text-faint: #999999;
+  --color-text-fainter: #AAAAAA;
+  --color-text-muted: #556173;      /* charcoal (contrast-fixed) */
+  --color-text-muted-on-dark: #B0B7C3;
+
+  /* ---- Ink / near-black (MUI dark surfaces, overlays) ---- */
+  --color-black: #000000;
+  --color-ink-surface: #1E1E1E;
+  --color-ink: #2A2A2A;
+  --color-ink-soft: #2C2C2C;
+  --color-ink-mid: #2D2D2D;
+  --color-ink-deep: #141414;
+  --color-ink-2: #242424;
+  --color-ink-4: #1F1F1F;
+
+  /* ---- Semantic ---- */
+  --color-danger: #B91C1C;
+  --color-danger-deep: #B71C1C;
+  --color-danger-soft: #FF6B6B;
+  --color-danger-softer: #FF7474;
+  --color-danger-faint: #FFB4B4;
+  --color-danger-bright: #FF0000;
+  --color-danger-warm: #FF5A5A;
+  --color-warning-faint: #FFEEAA;   /* #fea */
+  --color-success: #6BE0A6;
+  --color-success-deep: #56C98F;
+  --color-success-soft: #ACF3D0;
+  --color-success-glow: #00FF81;
+  --color-green-bright: #39FF14;
+  --color-amber-soft: #FFC542;
+
+  /* ---- Social login ---- */
+  --color-google: #DB4437;
+  --color-facebook: #4267B2;
+
+  /* NOTE: the radius scale lives in DESIGN.md (rounded:) — border-radius
+     values were left literal in this pass, which was scoped to colors. */
+}

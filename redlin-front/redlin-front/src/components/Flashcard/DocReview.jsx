@@ -228,7 +228,7 @@ const DocReview = ({ documentId, onReviewChange = () => {} }) => {
             size="large" 
             onClick={() => { playClick(); setIsReviewActive(true); }} 
             disabled={studyBatch.length === 0 || loading}
-            sx={{ backgroundColor: '#000', borderRadius: '20px' }}
+            sx={{ backgroundColor: 'var(--color-black)', borderRadius: '20px' }}
           >
             {studyBatch.length > 0 ? 'Start Review' : 'No Cards Due'}
           </Button>
@@ -256,7 +256,7 @@ const DocReview = ({ documentId, onReviewChange = () => {} }) => {
                   '&:active': { cursor: 'grabbing' },
                   transition: 'transform 0.2s ease, filter 0.2s ease',
                   transform: isDragging ? 'scale(1.04) rotateZ(0.4deg)' : 'none',
-                  filter: isDragging ? 'drop-shadow(0 8px 24px rgba(0,0,0,0.35))' : 'none',
+                  filter: isDragging ? 'drop-shadow(0 8px 24px color-mix(in srgb, var(--color-black) 35%, transparent))' : 'none',
                   '&:hover .grabOverlay': { opacity: 1, transform: 'translate(-50%, 0)' },
                 }}
               >
@@ -282,7 +282,7 @@ const DocReview = ({ documentId, onReviewChange = () => {} }) => {
                     transition: 'opacity .2s ease, transform .2s ease',
                   }}
                 >
-                  <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.25, py: 0.5, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.55)', color: '#fff', backdropFilter: 'blur(4px)', fontSize: 12 }}>
+                  <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.25, py: 0.5, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--color-black) 55%, transparent)', color: 'var(--color-white)', backdropFilter: 'blur(4px)', fontSize: 12 }}>
                     <BackHandIcon sx={{ fontSize: 16 }} /> Drag to sort
                   </Box>
                 </Box>
@@ -319,7 +319,7 @@ const DocReview = ({ documentId, onReviewChange = () => {} }) => {
                   const active = dragOver === key;
                   return {
                     p: 2,
-                    border: '1.5px dashed #000',
+                    border: '1.5px dashed var(--color-black)',
                     borderRadius: 2,
                     minHeight: 140,
                     position: 'relative',
@@ -330,7 +330,7 @@ const DocReview = ({ documentId, onReviewChange = () => {} }) => {
                     justifyContent: 'flex-start',
                     transition: 'transform .2s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease',
                     bgcolor: 'transparent',
-                    boxShadow: active ? '0 6px 20px rgba(0,0,0,0.06)' : 'none',
+                    boxShadow: active ? '0 6px 20px color-mix(in srgb, var(--color-black) 6%, transparent)' : 'none',
                     transform: active ? 'translateY(-2px)' : 'none',
                     outline: active ? `2px solid ${alpha(theme.palette.text.primary, 0.15)}` : 'none',
                     outlineOffset: '-2px',
@@ -338,7 +338,7 @@ const DocReview = ({ documentId, onReviewChange = () => {} }) => {
                 }}
               >
                 <Box sx={{ textAlign: 'center' }}>
-                  <Typography sx={{ fontWeight: 700, color: '#000' }}>{label}</Typography>
+                  <Typography sx={{ fontWeight: 700, color: 'var(--color-black)' }}>{label}</Typography>
                   <Typography variant="caption" color="text.secondary">
                     {bucketItems[key].length} assigned
                   </Typography>
@@ -373,24 +373,24 @@ const DocReview = ({ documentId, onReviewChange = () => {} }) => {
           {/* Acciones */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
             <Button variant="outlined" onClick={() => { playClick(); resetReview(); }} disabled={submitting}>Reset</Button>
-            <Button variant="contained" onClick={() => { playClick(); handleSubmit(); }} disabled={!canSubmit} sx={{ backgroundColor: '#000' }}>
+            <Button variant="contained" onClick={() => { playClick(); handleSubmit(); }} disabled={!canSubmit} sx={{ backgroundColor: 'var(--color-black)' }}>
               {submitting ? 'Submitting...' : 'Submit Reviews'}
             </Button>
           </Box>
 
           {/* Helper de atajos 1/2/3 debajo de buckets */}
           <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, color: 'text.secondary' }}>
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.06)' }}>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--color-black) 6%, transparent)' }}>
               <Typography variant="caption">Press</Typography>
               <Box component="img" src={Key1Png} alt="Key 1" sx={{ height: 28, opacity: 0.85 }} />
               <Typography variant="caption">to send to Hard</Typography>
             </Box>
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.06)' }}>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--color-black) 6%, transparent)' }}>
               <Typography variant="caption">Press</Typography>
               <Box component="img" src={Key2Png} alt="Key 2" sx={{ height: 28, opacity: 0.85 }} />
               <Typography variant="caption">to send to Medium</Typography>
             </Box>
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.06)' }}>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--color-black) 6%, transparent)' }}>
               <Typography variant="caption">Press</Typography>
               <Box component="img" src={Key3Png} alt="Key 3" sx={{ height: 28, opacity: 0.85 }} />
               <Typography variant="caption">to send to Easy</Typography>

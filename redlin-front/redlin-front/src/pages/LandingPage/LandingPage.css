@@ -11,8 +11,8 @@
 
 body {
     font-family: 'Poppins', 'Titillium Web', Arial, sans-serif;
-    color: #FFFFFF;
-    background-color: #1A2A3A;
+    color: var(--color-white);
+    background-color: var(--color-navy);
     overflow-x: hidden;
 }
 
@@ -37,9 +37,9 @@ section[id] {
     justify-content: space-between;
     align-items: center;
     padding: 0 60px;
-    background: rgba(26, 42, 58, 0.8);
+    background: color-mix(in srgb, var(--color-navy) 80%, transparent);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-white) 6%, transparent);
     z-index: 1000;
     transition: background 0.3s ease, border-color 0.3s ease;
 }
@@ -61,7 +61,7 @@ section[id] {
 .logo-icon-landing {
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, #20C997, #7F63F4);
+    background: linear-gradient(135deg, var(--color-teal), var(--color-purple));
     border-radius: 10px;
     margin-right: 12px;
     position: relative;
@@ -76,7 +76,7 @@ section[id] {
     position: absolute;
     width: 20px;
     height: 20px;
-    background: rgba(255, 255, 255, 0.9);
+    background: color-mix(in srgb, var(--color-white) 90%, transparent);
     border-radius: 50%;
     animation: pulse-landing 2s infinite;
 }
@@ -95,7 +95,7 @@ section[id] {
 .nav-link-landing {
     font-size: 16px;
     font-weight: 500;
-    color: #F5F7FA;
+    color: var(--color-cloud);
     text-decoration: none;
     position: relative;
     padding: 8px 0;
@@ -109,14 +109,14 @@ section[id] {
     left: 0;
     width: 100%;
     height: 2px;
-    background: linear-gradient(90deg, #20C997, #7F63F4);
+    background: linear-gradient(90deg, var(--color-teal), var(--color-purple));
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.3s ease;
 }
 
 .nav-link-landing:hover {
-    color: #FFFFFF;
+    color: var(--color-white);
 }
 
 .nav-link-landing:hover::after {
@@ -144,25 +144,25 @@ section[id] {
 }
 
 .btn-outline-landing {
-    border: 2px solid #20C997;
-    color: #FFFFFF;
+    border: 2px solid var(--color-teal);
+    color: var(--color-white);
     background: transparent;
 }
 
 .btn-outline-landing:hover {
-    background: rgba(32, 201, 151, 0.1);
+    background: color-mix(in srgb, var(--color-teal) 10%, transparent);
     transform: translateY(-2px);
 }
 
 .btn-primary-landing {
-    background: linear-gradient(135deg, #0B7A54, #5F47C9);
-    color: #FFFFFF;
+    background: linear-gradient(135deg, var(--color-teal-deep), var(--color-purple-deep));
+    color: var(--color-white);
     border: none;
-    box-shadow: 0 4px 15px rgba(32, 201, 151, 0.3);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--color-teal) 30%, transparent);
 }
 
 .btn-primary-landing:hover {
-    box-shadow: 0 6px 20px rgba(32, 201, 151, 0.5);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--color-teal) 50%, transparent);
     transform: translateY(-2px);
 }
 
@@ -184,7 +184,7 @@ section[id] {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #1A2A3A 0%, #7F63F4 50%, #20C997 100%);
+    background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-purple) 50%, var(--color-teal) 100%);
     opacity: 0.3;
     z-index: -2;
     will-change: transform;
@@ -214,8 +214,8 @@ section[id] {
 .floating-element-landing {
     position: absolute;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 20px rgba(32, 201, 151, 0.3);
+    background: color-mix(in srgb, var(--color-white) 10%, transparent);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-teal) 30%, transparent);
     will-change: transform, opacity;
 }
 
@@ -224,7 +224,7 @@ section[id] {
     height: 300px;
     top: 20%;
     right: 15%;
-    background: radial-gradient(circle at 30% 30%, rgba(74, 144, 226, 0.2), rgba(127, 99, 244, 0.1));
+    background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-blue) 20%, transparent), color-mix(in srgb, var(--color-purple) 10%, transparent));
 }
 
 .floating-element-landing:nth-child(2) {
@@ -232,7 +232,7 @@ section[id] {
     height: 200px;
     bottom: 15%;
     right: 25%;
-    background: radial-gradient(circle at 30% 30%, rgba(32, 201, 151, 0.2), rgba(74, 144, 226, 0.1));
+    background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-teal) 20%, transparent), color-mix(in srgb, var(--color-blue) 10%, transparent));
 }
 
 .floating-element-landing:nth-child(3) {
@@ -240,7 +240,7 @@ section[id] {
     height: 150px;
     top: 30%;
     left: 10%;
-    background: radial-gradient(circle at 30% 30%, rgba(255, 126, 103, 0.2), rgba(127, 99, 244, 0.1));
+    background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-coral) 20%, transparent), color-mix(in srgb, var(--color-purple) 10%, transparent));
 }
 
 .floating-element-landing:nth-child(4) {
@@ -248,7 +248,7 @@ section[id] {
     height: 100px;
     bottom: 20%;
     left: 20%;
-    background: radial-gradient(circle at 30% 30%, rgba(127, 99, 244, 0.2), rgba(32, 201, 151, 0.1));
+    background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-purple) 20%, transparent), color-mix(in srgb, var(--color-teal) 10%, transparent));
 }
 
 .neural-network-landing {
@@ -267,14 +267,14 @@ section[id] {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #FFFFFF;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+    background: var(--color-white);
+    box-shadow: 0 0 15px color-mix(in srgb, var(--color-white) 80%, transparent);
 }
 
 .neural-network-landing .connection {
     position: absolute;
     height: 2px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.8));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--color-white) 20%, transparent), color-mix(in srgb, var(--color-white) 80%, transparent));
     transform-origin: left center;
 }
 
@@ -288,7 +288,7 @@ section[id] {
 .hero-subtitle-landing {
     font-size: 20px;
     font-weight: 500;
-    color: #20C997;
+    color: var(--color-teal);
     margin-bottom: 20px;
     will-change: transform, opacity;
 }
@@ -299,7 +299,7 @@ section[id] {
     font-weight: bold;
     line-height: 1.1;
     margin-bottom: 30px;
-    color: #FFFFFF;
+    color: var(--color-white);
     will-change: transform, opacity;
 }
 
@@ -318,7 +318,7 @@ section[id] {
 .hero-description-landing {
     font-size: 18px;
     line-height: 1.6;
-    color: #F5F7FA;
+    color: var(--color-cloud);
     margin-bottom: 40px;
     will-change: transform, opacity;
 }
@@ -331,10 +331,10 @@ section[id] {
     padding: 16px 36px;
     font-size: 18px;
     border-radius: 40px;
-    background: linear-gradient(135deg, #0B7A54, #5F47C9);
-    color: #FFFFFF;
+    background: linear-gradient(135deg, var(--color-teal-deep), var(--color-purple-deep));
+    color: var(--color-white);
     border: none;
-    box-shadow: 0 8px 25px rgba(32, 201, 151, 0.4);
+    box-shadow: 0 8px 25px color-mix(in srgb, var(--color-teal) 40%, transparent);
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
@@ -347,13 +347,13 @@ section[id] {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-white) 20%, transparent), transparent);
     transition: all 0.6s ease;
 }
 
 .btn-hero-landing:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(32, 201, 151, 0.6);
+    box-shadow: 0 12px 30px color-mix(in srgb, var(--color-teal) 60%, transparent);
 }
 
 .btn-hero-landing:hover::before {
@@ -371,12 +371,12 @@ section[id] {
 
 .ui-card-landing {
     position: absolute;
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--color-white) 5%, transparent);
     backdrop-filter: blur(10px);
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid color-mix(in srgb, var(--color-white) 10%, transparent);
     padding: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--color-black) 20%, transparent);
     transform: perspective(1000px) rotateX(5deg);
     will-change: transform, opacity;
 }
@@ -416,7 +416,7 @@ section[id] {
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #20C997, #7F63F4);
+    background: linear-gradient(135deg, var(--color-teal), var(--color-purple));
     margin-right: 8px;
     display: flex;
     align-items: center;
@@ -426,7 +426,7 @@ section[id] {
 .ui-card-title-landing {
     font-size: 12px;
     font-weight: 500;
-    color: #FFFFFF;
+    color: var(--color-white);
 }
 
 .ui-card-content-landing {
@@ -437,7 +437,7 @@ section[id] {
 
 .ui-card-bar-landing {
     height: 4px;
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--color-white) 10%, transparent);
     border-radius: 2px;
     overflow: hidden;
 }
@@ -447,7 +447,7 @@ section[id] {
     display: block;
     height: 100%;
     width: 60%;
-    background: linear-gradient(90deg, #20C997, #7F63F4);
+    background: linear-gradient(90deg, var(--color-teal), var(--color-purple));
     animation: progress-landing 3s infinite;
 }
 
@@ -455,7 +455,7 @@ section[id] {
 .features-landing {
     padding: 120px 0;
     position: relative;
-    background-color: #1A2A3A;
+    background-color: var(--color-navy);
     overflow: hidden;
     width: 100%;
     text-align: center; /* Para centrar el contenedor inline-flex */
@@ -477,7 +477,7 @@ section[id] {
     transform: translateX(-50%);
     width: 100px;
     height: 4px;
-    background: linear-gradient(90deg, #7F63F4, #20C997);
+    background: linear-gradient(90deg, var(--color-purple), var(--color-teal));
 }
 
 .features-container-landing {
@@ -494,9 +494,9 @@ section[id] {
 }
 
 .feature-card-landing {
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--color-white) 5%, transparent);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid color-mix(in srgb, var(--color-white) 10%, transparent);
     border-radius: 20px;
     padding: 40px;
     flex: 0 0 300px;
@@ -508,13 +508,13 @@ section[id] {
 
 .feature-card-landing:hover {
     transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    border-color: rgba(32, 201, 151, 0.5);
+    box-shadow: 0 20px 40px color-mix(in srgb, var(--color-black) 30%, transparent);
+    border-color: color-mix(in srgb, var(--color-teal) 50%, transparent);
 }
 
 .feature-icon-landing {
     font-size: 48px;
-    color: #20C997;
+    color: var(--color-teal);
     margin-bottom: 30px;
     display: inline-block;
     transition: transform 0.3s ease;
@@ -533,7 +533,7 @@ section[id] {
 .feature-description-landing {
     font-size: 16px;
     line-height: 1.6;
-    color: #F5F7FA;
+    color: var(--color-cloud);
     word-wrap: break-word; /* Evita que el texto se desborde */
 }
 
@@ -547,18 +547,18 @@ section[id] {
 
 .feature-card-landing:hover {
     transform: translateY(-10px) rotateY(5deg);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
-    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 30px 60px color-mix(in srgb, var(--color-black) 30%, transparent);
+    background: color-mix(in srgb, var(--color-white) 10%, transparent);
 }
 
 .feature-icon-landing {
     font-size: 48px;
     margin-bottom: 30px;
-    color: #20C997;
+    color: var(--color-teal);
     display: inline-block;
     padding: 20px;
     border-radius: 50%;
-    background: rgba(32, 201, 151, 0.1);
+    background: color-mix(in srgb, var(--color-teal) 10%, transparent);
 }
 
 .feature-title-landing {
@@ -570,7 +570,7 @@ section[id] {
 .feature-description-landing {
     font-size: 18px;
     line-height: 1.6;
-    color: rgba(255, 255, 255, 0.8);
+    color: color-mix(in srgb, var(--color-white) 80%, transparent);
 }
 
 
@@ -578,7 +578,7 @@ section[id] {
 .benefits-landing {
     padding: 120px 80px;
     position: relative;
-    background-color: #1A2A3A;
+    background-color: var(--color-navy);
     width: 100%;
 }
 
@@ -603,7 +603,7 @@ section[id] {
     font-size: 20px;
     line-height: 1.6;
     margin-bottom: 40px;
-    color: rgba(255, 255, 255, 0.8);
+    color: color-mix(in srgb, var(--color-white) 80%, transparent);
 }
 
 .stats-container-landing {
@@ -613,7 +613,7 @@ section[id] {
 }
 
 .stat-item-landing {
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--color-white) 5%, transparent);
     border-radius: 15px;
     padding: 30px;
     text-align: center;
@@ -622,19 +622,19 @@ section[id] {
 
 .stat-item-landing:hover {
     transform: translateY(-10px);
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--color-white) 10%, transparent);
 }
 
 .stat-number-landing {
     font-size: 48px;
     font-weight: bold;
     margin-bottom: 10px;
-    color: #20C997;
+    color: var(--color-teal);
 }
 
 .stat-label-landing {
     font-size: 18px;
-    color: rgba(255, 255, 255, 0.8);
+    color: color-mix(in srgb, var(--color-white) 80%, transparent);
 }
 
 .benefits-visual-landing {
@@ -647,7 +647,7 @@ section[id] {
     width: 100%;
     height: 100%;
     border-radius: 20px;
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--color-white) 5%, transparent);
     overflow: hidden;
 }
 
@@ -656,7 +656,7 @@ section[id] {
     bottom: 0;
     width: 40px;
     border-radius: 10px 10px 0 0;
-    background: linear-gradient(180deg, #7F63F4, #20C997);
+    background: linear-gradient(180deg, var(--color-purple), var(--color-teal));
     animation: growUp 2s ease-out forwards;
 }
 
@@ -700,7 +700,7 @@ section[id] {
 .how-it-works-landing {
     padding: 120px 80px;
     position: relative;
-    background-color: #1A2A3A;
+    background-color: var(--color-navy);
     width: 100%;
 }
 
@@ -718,7 +718,7 @@ section[id] {
     left: 50%;
     width: 4px;
     height: 100%;
-    background: linear-gradient(180deg, #7F63F4, #20C997);
+    background: linear-gradient(180deg, var(--color-purple), var(--color-teal));
     transform: translateX(-50%);
 }
 
@@ -743,14 +743,14 @@ section[id] {
 .timeline-content-landing {
     position: relative;
     padding: 30px;
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--color-white) 5%, transparent);
     border-radius: 15px;
     transition: all 0.3s ease;
 }
 
 .timeline-content-landing:hover {
     transform: translateY(-10px);
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--color-white) 10%, transparent);
 }
 
 .timeline-item-landing:nth-child(odd) .timeline-content-landing::after {
@@ -760,7 +760,7 @@ section[id] {
     right: -15px;
     width: 30px;
     height: 30px;
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--color-white) 5%, transparent);
     transform: rotate(45deg);
     z-index: -1;
 }
@@ -772,7 +772,7 @@ section[id] {
     left: -15px;
     width: 30px;
     height: 30px;
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--color-white) 5%, transparent);
     transform: rotate(45deg);
     z-index: -1;
 }
@@ -783,8 +783,8 @@ section[id] {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: #1A2A3A;
-    border: 4px solid #7F63F4;
+    background: var(--color-navy);
+    border: 4px solid var(--color-purple);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -810,14 +810,14 @@ section[id] {
 .timeline-description-landing {
     font-size: 16px;
     line-height: 1.6;
-    color: rgba(255, 255, 255, 0.8);
+    color: color-mix(in srgb, var(--color-white) 80%, transparent);
 }
 
 /* Testimonials Section */
 .testimonials-landing {
     padding: 120px 80px;
     position: relative;
-    background-color: #1A2A3A;
+    background-color: var(--color-navy);
     width: 100%;
 }
 
@@ -830,7 +830,7 @@ section[id] {
 
 .testimonial-card-landing {
     flex: 0 0 calc(33.333% - 30px);
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--color-white) 5%, transparent);
     border-radius: 15px;
     padding: 40px;
     position: relative;
@@ -839,7 +839,7 @@ section[id] {
 
 .testimonial-card-landing:hover {
     transform: translateY(-10px) rotate(1deg);
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--color-white) 10%, transparent);
 }
 
 /* Feature cards reuse the testimonial layout but carry no quotation mark. */
@@ -851,7 +851,7 @@ section[id] {
     font-size: 20px;
     line-height: 1.6;
     margin-bottom: 30px;
-    color: rgba(255, 255, 255, 0.9);
+    color: color-mix(in srgb, var(--color-white) 90%, transparent);
     position: relative;
 }
 
@@ -861,7 +861,7 @@ section[id] {
     top: -20px;
     left: -10px;
     font-size: 80px;
-    color: rgba(127, 99, 244, 0.2);
+    color: color-mix(in srgb, var(--color-purple) 20%, transparent);
     font-family: Georgia, serif;
 }
 
@@ -874,13 +874,13 @@ section[id] {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #7F63F4, #20C997);
+    background: linear-gradient(135deg, var(--color-purple), var(--color-teal));
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 15px;
     font-size: 24px;
-    color: #FFFFFF;
+    color: var(--color-white);
 }
 
 .author-info-landing {
@@ -896,14 +896,14 @@ section[id] {
 
 .author-position-landing {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
+    color: color-mix(in srgb, var(--color-white) 70%, transparent);
 }
 
 /* Pricing Section */
 .pricing-landing {
     padding: 120px 80px;
     position: relative;
-    background-color: #1A2A3A;
+    background-color: var(--color-navy);
     width: 100%;
 }
 
@@ -916,7 +916,7 @@ section[id] {
 
 .pricing-card-landing {
     flex: 0 0 350px;
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--color-white) 5%, transparent);
     border-radius: 20px;
     padding: 50px 40px;
     position: relative;
@@ -927,12 +927,12 @@ section[id] {
 
 .pricing-card-landing:hover {
     transform: translateY(-20px) rotateY(5deg);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
-    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 30px 60px color-mix(in srgb, var(--color-black) 30%, transparent);
+    background: color-mix(in srgb, var(--color-white) 10%, transparent);
 }
 
 .pricing-card-landing.popular-landing {
-    background: rgba(127, 99, 244, 0.15);
+    background: color-mix(in srgb, var(--color-purple) 15%, transparent);
     transform: scale(1.05);
     z-index: 2;
 }
@@ -945,8 +945,8 @@ section[id] {
     position: absolute;
     top: -15px;
     right: 30px;
-    background: #FF7E67;
-    color: #FFFFFF;
+    background: var(--color-coral);
+    color: var(--color-white);
     padding: 8px 15px;
     border-radius: 20px;
     font-size: 14px;
@@ -963,13 +963,13 @@ section[id] {
     font-size: 48px;
     font-weight: bold;
     margin-bottom: 20px;
-    color: #FFFFFF;
+    color: var(--color-white);
 }
 
 .pricing-price-landing span {
     font-size: 16px;
     font-weight: normal;
-    color: rgba(255, 255, 255, 0.7);
+    color: color-mix(in srgb, var(--color-white) 70%, transparent);
 }
 
 .pricing-features-landing {
@@ -979,24 +979,24 @@ section[id] {
 
 .pricing-feature-landing {
     padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-white) 10%, transparent);
     font-size: 16px;
-    color: rgba(255, 255, 255, 0.8);
+    color: color-mix(in srgb, var(--color-white) 80%, transparent);
     display: flex;
     align-items: center;
 }
 
 .pricing-feature-landing i {
     margin-right: 10px;
-    color: #20C997;
+    color: var(--color-teal);
 }
 
 .pricing-button-landing {
     display: block;
     width: 100%;
     padding: 15px;
-    background: #20C997;
-    color: #1A2A3A;
+    background: var(--color-teal);
+    color: var(--color-navy);
     border: none;
     border-radius: 30px;
     font-size: 16px;
@@ -1008,24 +1008,24 @@ section[id] {
 }
 
 .pricing-card-landing.popular-landing .pricing-button-landing {
-    background: #5F47C9;
-    color: #FFFFFF;
+    background: var(--color-purple-deep);
+    color: var(--color-white);
 }
 
 .pricing-button-landing:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(32, 201, 151, 0.3);
+    box-shadow: 0 10px 20px color-mix(in srgb, var(--color-teal) 30%, transparent);
 }
 
 .pricing-card-landing.popular-landing .pricing-button-landing:hover {
-    box-shadow: 0 10px 20px rgba(127, 99, 244, 0.3);
+    box-shadow: 0 10px 20px color-mix(in srgb, var(--color-purple) 30%, transparent);
 }
 
 /* Final CTA Section */
 .final-cta-landing {
     padding: 120px 80px;
     position: relative;
-    background: linear-gradient(135deg, #1A2A3A 0%, #7F63F4 100%);
+    background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-purple) 100%);
     text-align: center;
     overflow: hidden;
     width: 100%;
@@ -1038,7 +1038,7 @@ section[id] {
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle at 30% 50%, rgba(32, 201, 151, 0.3) 0%, rgba(26, 42, 58, 0) 70%);
+    background: radial-gradient(circle at 30% 50%, color-mix(in srgb, var(--color-teal) 30%, transparent) 0%, transparent 70%);
     z-index: 1;
 }
 
@@ -1059,7 +1059,7 @@ section[id] {
     font-size: 24px;
     line-height: 1.6;
     margin-bottom: 50px;
-    color: rgba(255, 255, 255, 0.9);
+    color: color-mix(in srgb, var(--color-white) 90%, transparent);
 }
 
 .email-form-landing {
@@ -1075,14 +1075,14 @@ section[id] {
     border: none;
     border-radius: 50px;
     font-size: 18px;
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--color-white) 10%, transparent);
     backdrop-filter: blur(10px);
-    color: #FFFFFF;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--color-white);
+    border: 1px solid color-mix(in srgb, var(--color-white) 20%, transparent);
 }
 
 .email-input-landing::placeholder {
-    color: rgba(255, 255, 255, 0.6);
+    color: color-mix(in srgb, var(--color-white) 60%, transparent);
 }
 
 .email-button-landing {
@@ -1092,8 +1092,8 @@ section[id] {
     padding: 15px 30px;
     border: none;
     border-radius: 50px;
-    background: #20C997;
-    color: #1A2A3A;
+    background: var(--color-teal);
+    color: var(--color-navy);
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
@@ -1101,15 +1101,15 @@ section[id] {
 }
 
 .email-button-landing:hover {
-    background: #FF7E67;
+    background: var(--color-coral);
     transform: translateY(-2px);
 }
 
 /* Footer */
 .footer-landing {
     padding: 80px;
-    background-color: #1A2A3A;
-    color: rgba(255, 255, 255, 0.7);
+    background-color: var(--color-navy);
+    color: color-mix(in srgb, var(--color-white) 70%, transparent);
     text-align: center;
     width: 100%;
 }
@@ -1122,13 +1122,13 @@ section[id] {
 }
 
 .footer-link-landing {
-    color: rgba(255, 255, 255, 0.7);
+    color: color-mix(in srgb, var(--color-white) 70%, transparent);
     text-decoration: none;
     transition: all 0.3s ease;
 }
 
 .footer-link-landing:hover {
-    color: #20C997;
+    color: var(--color-teal);
 }
 
 .social-links-landing {
@@ -1142,18 +1142,18 @@ section[id] {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--color-white) 10%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #FFFFFF;
+    color: var(--color-white);
     text-decoration: none;
     transition: all 0.3s ease;
     font-size: 20px;
 }
 
 .social-link-landing:hover {
-    background: #20C997;
+    background: var(--color-teal);
     transform: translateY(-5px);
 }
 

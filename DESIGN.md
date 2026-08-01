@@ -33,8 +33,9 @@ colors:
     value: "#E0F5EF"
     role: light-accent-surface
   charcoal:
-    value: "#6C7A89"
+    value: "#556173"
     role: muted-text
+    note: "contrast-fixed from #6C7A89 (4.09:1 -> 6.28:1 on white)"
   white:
     value: "#FFFFFF"
     role: text-on-dark
@@ -50,6 +51,202 @@ colors:
   brand-gradient-90:
     value: "linear-gradient(90deg, #20C997, #7F63F4)"
     role: primary-gradient-horizontal
+  # --- token additions from the 2026-08-01 tokenization pass ---
+  teal-deep:
+    value: "#0B7A54"
+    role: contrast-safe-primary
+  teal-deeper:
+    value: "#0A6A4A"
+    role: contrast-safe-primary-hover
+  teal-hover:
+    value: "#19A37F"
+    role: primary-hover
+  teal-bright:
+    value: "#16A57B"
+    role: primary-hover-alt
+  teal-pale:
+    value: "#8BF0BF"
+    role: primary-light
+  purple-deep:
+    value: "#5F47C9"
+    role: contrast-safe-secondary
+  purple-deeper:
+    value: "#5240B4"
+    role: contrast-safe-secondary-hover
+  purple-light:
+    value: "#B8A8FA"
+    role: secondary-light
+  blue-deep:
+    value: "#2D6FB0"
+    role: contrast-safe-tertiary
+  blue-deeper:
+    value: "#166AC0"
+    role: tertiary-hover
+  navy-800:
+    value: "#1C2836"
+    role: dark-surface-800
+  navy-700:
+    value: "#232F3E"
+    role: dark-surface-700
+  navy-600:
+    value: "#2A3647"
+    role: dark-surface-600
+  navy-500:
+    value: "#253241"
+    role: dark-surface-500
+  navy-400:
+    value: "#162435"
+    role: dark-surface-400
+  navy-300:
+    value: "#234560"
+    role: dark-surface-300
+  navy-200:
+    value: "#12263A"
+    role: dark-surface-200
+  navy-100:
+    value: "#0F1B2A"
+    role: dark-surface-100
+  navy-050:
+    value: "#0F1722"
+    role: dark-surface-050
+  surface-muted:
+    value: "#FAFAFA"
+    role: light-surface-muted
+  surface-alt:
+    value: "#F0F2F5"
+    role: light-surface-alt
+  surface-input:
+    value: "#F5F5F5"
+    role: input-fill
+  surface-card:
+    value: "#FDFDFD"
+    role: card-fill
+  surface-neutral:
+    value: "#F0F0F0"
+    role: neutral-fill
+  surface-teal-tint:
+    value: "#E9F5F1"
+    role: teal-tint-fill
+  divider:
+    value: "#DDDDDD"
+    role: divider
+  divider-soft:
+    value: "#EEEEEE"
+    role: divider-soft
+  border-mid:
+    value: "#BDBDBD"
+    role: border-mid
+  border-grey:
+    value: "#C7C7C7"
+    role: border-grey
+  border-faint:
+    value: "#E0E4E8"
+    role: border-faint
+  border-navy:
+    value: "#3A4656"
+    role: dark-border
+  border-navy-soft:
+    value: "#3A4659"
+    role: dark-border-soft
+  text:
+    value: "#333333"
+    role: text-on-light
+  text-strong:
+    value: "#222222"
+    role: text-on-light-strong
+  text-deep:
+    value: "#111111"
+    role: text-on-light-deep
+  text-mid:
+    value: "#666666"
+    role: text-mid
+  text-dim:
+    value: "#888888"
+    role: text-dim
+  text-faint:
+    value: "#999999"
+    role: text-faint
+  text-fainter:
+    value: "#AAAAAA"
+    role: text-fainter
+  text-muted-on-dark:
+    value: "#B0B7C3"
+    role: muted-text-on-dark
+  black:
+    value: "#000000"
+    role: black
+  ink-surface:
+    value: "#1E1E1E"
+    role: ink-surface
+  ink:
+    value: "#2A2A2A"
+    role: ink
+  ink-soft:
+    value: "#2C2C2C"
+    role: ink-soft
+  ink-mid:
+    value: "#2D2D2D"
+    role: ink-mid
+  ink-deep:
+    value: "#141414"
+    role: ink-deep
+  ink-2:
+    value: "#242424"
+    role: ink-2
+  ink-3:
+    value: "#121212"
+    role: ink-3
+  ink-4:
+    value: "#1F1F1F"
+    role: ink-4
+  danger:
+    value: "#B91C1C"
+    role: danger
+  danger-deep:
+    value: "#B71C1C"
+    role: danger-deep
+  danger-soft:
+    value: "#FF6B6B"
+    role: danger-soft
+  danger-softer:
+    value: "#FF7474"
+    role: danger-softer
+  danger-faint:
+    value: "#FFB4B4"
+    role: danger-faint
+  danger-bright:
+    value: "#FF0000"
+    role: danger-bright
+  danger-warm:
+    value: "#FF5A5A"
+    role: danger-warm
+  warning-faint:
+    value: "#FFEEAA"
+    role: warning-faint
+  success:
+    value: "#6BE0A6"
+    role: success
+  success-deep:
+    value: "#56C98F"
+    role: success-deep
+  success-soft:
+    value: "#ACF3D0"
+    role: success-soft
+  success-glow:
+    value: "#00FF81"
+    role: success-glow
+  green-bright:
+    value: "#39FF14"
+    role: green-bright
+  amber-soft:
+    value: "#FFC542"
+    role: amber-soft
+  google:
+    value: "#DB4437"
+    role: social-google
+  facebook:
+    value: "#4267B2"
+    role: social-facebook
 typography:
   display:
     fontFamily: "Poppins, Arial, sans-serif"
@@ -86,6 +283,7 @@ typography:
 rounded:
   sm: "4px"
   md: "8px"
+  "md-lg": "10px"
   lg: "12px"
   xl: "15px"
   "2xl": "20px"
