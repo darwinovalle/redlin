@@ -172,7 +172,7 @@ section[id] {
 }
 
 .btn-primary-landing {
-    background: linear-gradient(135deg, #20C997, #7F63F4);
+    background: linear-gradient(135deg, #0B7A54, #5F47C9);
     color: #FFFFFF;
     border: none;
     box-shadow: 0 4px 15px rgba(32, 201, 151, 0.3);
@@ -356,7 +356,7 @@ section[id] {
     padding: 16px 36px;
     font-size: 18px;
     border-radius: 40px;
-    background: linear-gradient(135deg, #20C997, #7F63F4);
+    background: linear-gradient(135deg, #0B7A54, #5F47C9);
     color: #FFFFFF;
     border: none;
     box-shadow: 0 8px 25px rgba(32, 201, 151, 0.4);
@@ -1045,7 +1045,8 @@ section[id] {
 }
 
 .pricing-card-landing.popular-landing .pricing-button-landing {
-    background: #7F63F4;
+    background: #5F47C9;
+    color: #FFFFFF;
 }
 
 .pricing-button-landing:hover {
