@@ -879,6 +879,11 @@ section[id] {
     background: rgba(255, 255, 255, 0.1);
 }
 
+/* Feature cards reuse the testimonial layout but carry no quotation mark. */
+.feature-card-landing .testimonial-quote-landing::before {
+    content: none;
+}
+
 .testimonial-quote-landing {
     font-size: 20px;
     line-height: 1.6;
