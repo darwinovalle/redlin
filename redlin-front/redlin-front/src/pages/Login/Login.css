@@ -1,12 +1,10 @@
-@font-face { font-family: 'MiSans'; src: url('https://assets-persist.lovart.ai/agent-static-assets/MiSans-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; }
-@font-face { font-family: 'MiSans'; src: url('https://assets-persist.lovart.ai/agent-static-assets/MiSans-Medium.ttf') format('truetype'); font-weight: 500; font-style: normal; }
-@font-face { font-family: 'MiSans'; src: url('https://assets-persist.lovart.ai/agent-static-assets/MiSans-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; }
+/* Brand typefaces (Poppins, Titillium Web) come from Google Fonts via index.html. */
 
-.login-page-root { font-family: 'MiSans', sans-serif; width: 100%; height: 100vh; display: flex; color: #FFFFFF; overflow: hidden; }
+.login-page-root { font-family: 'Poppins', 'Titillium Web', Arial, sans-serif; width: 100%; height: 100vh; display: flex; color: #FFFFFF; overflow: hidden; }
 .left-section { width: 50%; background: #1A2A3A; display:flex; flex-direction:column; justify-content:center; align-items:center; position:relative; overflow:hidden; }
 .left-content { position:relative; z-index:2; text-align:center; padding:0 60px; }
 .illustration { width:80%; margin:0 auto 40px; }
-.platform-tagline { font-size:32px; font-weight:700; margin-bottom:20px; background:linear-gradient(90deg,#20C997,#4A90E2); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.platform-tagline { font-size:32px; font-weight:700; margin-bottom:20px; color:#20C997; }
 .platform-description { font-size:18px; color:#B0B7C3; line-height:1.6; max-width:80%; margin:0 auto; }
 .bg-pattern { position:absolute; inset:0; background: radial-gradient(circle at 30% 30%, rgba(74,144,226,0.1) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(32,201,151,0.1) 0%, transparent 50%); z-index:1; }
 .neural-network { position:absolute; inset:0; z-index:1; opacity:0.2; }
@@ -18,7 +16,7 @@
 .logo-container { display:flex; align-items:center; justify-content:center; margin-bottom:30px; }
 .logo { width:40px; height:40px; background:linear-gradient(135deg,#20C997,#4A90E2); border-radius:10px; display:flex; align-items:center; justify-content:center; margin-right:12px; box-shadow:0 0 20px rgba(32,201,151,0.3); }
 .logo i { font-size:24px; color:#fff; }
-.platform-name { font-size:24px; font-weight:700; background:linear-gradient(90deg,#FFFFFF,#B0B7C3); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.platform-name { font-size:24px; font-weight:700; color:#FFFFFF; }
 .login-title { font-size:24px; font-weight:700; margin-bottom:20px; text-align:center; }
 .error-banner { background:#b91c1c; color:#fff; padding:10px 14px; border-radius:8px; font-size:14px; margin-bottom:16px; text-align:center; }
 .form-group { margin-bottom:20px; position:relative; animation:fadeIn .6s ease-out both; }

@@ -1,26 +1,7 @@
-@font-face {
-    font-family: 'SpaceGrotesk';
-    src: url('https://assets-persist.lovart.ai/agent-static-assets/AlimamaShuHeiTi-Bold.otf') format('opentype');
-    font-weight: bold;
-}
-
-@font-face {
-    font-family: 'Inter';
-    src: url('https://assets-persist.lovart.ai/agent-static-assets/MiSans-Regular.ttf') format('truetype');
-    font-weight: normal;
-}
-
-@font-face {
-    font-family: 'Inter';
-    src: url('https://assets-persist.lovart.ai/agent-static-assets/MiSans-Medium.ttf') format('truetype');
-    font-weight: 500;
-}
-
-@font-face {
-    font-family: 'Inter';
-    src: url('https://assets-persist.lovart.ai/agent-static-assets/MiSans-Bold.ttf') format('truetype');
-    font-weight: bold;
-}
+/* Brand typefaces (Poppins, Titillium Web) are loaded via Google Fonts in
+   index.html — the previous @font-face blocks pointed at a third-party
+   agent-static CDN and named faces ('Inter', 'SpaceGrotesk') that actually
+   shipped MiSans / AlimamaShuHeiTi glyphs. Removed. */
 
 .container-landing * {
     margin: 0;
@@ -29,7 +10,7 @@
 }
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Poppins', 'Titillium Web', Arial, sans-serif;
     color: #FFFFFF;
     background-color: #1A2A3A;
     overflow-x: hidden;
@@ -69,7 +50,7 @@ section[id] {
 }
 
 .logo-landing {
-    font-family: 'SpaceGrotesk', sans-serif;
+    font-family: 'Poppins', 'Titillium Web', Arial, sans-serif;
     font-weight: bold;
     font-size: 28px;
     display: flex;
@@ -148,7 +129,7 @@ section[id] {
 }
 
 .btn-landing {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Poppins', 'Titillium Web', Arial, sans-serif;
     font-weight: 500;
     font-size: 16px;
     padding: 12px 24px;
@@ -317,16 +298,12 @@ section[id] {
 }
 
 .hero-title-landing {
-    font-family: 'SpaceGrotesk', sans-serif;
+    font-family: 'Poppins', 'Titillium Web', Arial, sans-serif;
     font-size: 72px;
     font-weight: bold;
     line-height: 1.1;
     margin-bottom: 30px;
-    background: linear-gradient(135deg, #FFFFFF 0%, #F5F7FA 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    color: transparent;
+    color: #FFFFFF;
     will-change: transform, opacity;
 }
 
@@ -489,7 +466,7 @@ section[id] {
 }
 
 .section-title-landing {
-    font-family: 'AlimamaShuHeiTi', sans-serif;
+    font-family: 'Poppins', 'Titillium Web', Arial, sans-serif;
     font-size: 60px;
     margin-bottom: 60px;
     text-align: center;
@@ -552,7 +529,7 @@ section[id] {
 }
 
 .feature-title-landing {
-    font-family: 'SpaceGrotesk', sans-serif;
+    font-family: 'Poppins', 'Titillium Web', Arial, sans-serif;
     font-size: 24px;
     margin-bottom: 15px;
 }
@@ -629,7 +606,7 @@ section[id] {
 }
 
 .benefits-title-landing {
-    font-family: 'AlimamaShuHeiTi', sans-serif;
+    font-family: 'Poppins', 'Titillium Web', Arial, sans-serif;
     font-size: 50px;
     margin-bottom: 30px;
     line-height: 1.2;
@@ -665,10 +642,7 @@ section[id] {
     font-size: 48px;
     font-weight: bold;
     margin-bottom: 10px;
-    background: linear-gradient(90deg, #7F63F4, #20C997);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #20C997;
 }
 
 .stat-label-landing {
@@ -1089,7 +1063,7 @@ section[id] {
 }
 
 .final-cta-title-landing {
-    font-family: 'AlimamaShuHeiTi', sans-serif;
+    font-family: 'Poppins', 'Titillium Web', Arial, sans-serif;
     font-size: 60px;
     margin-bottom: 30px;
 }

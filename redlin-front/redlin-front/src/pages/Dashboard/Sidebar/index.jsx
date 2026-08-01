@@ -49,7 +49,7 @@ const SidebarShell = styled('div')(() => ({
   left: 0,
   backgroundColor: '#1A2A3A', // solid dark per mock
   color: '#fff',
-  fontFamily: 'AlibabaSans, sans-serif',
+  fontFamily: "'Poppins', 'Titillium Web', Arial, sans-serif",
   borderRight: '1px solid rgba(255,255,255,0.08)',
   zIndex: 10
 }));

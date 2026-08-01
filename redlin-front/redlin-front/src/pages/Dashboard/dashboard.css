@@ -1,25 +1,6 @@
-/* Dashboard layout restyle inspired by provided HTML mockup */
-@font-face {
-  font-family: 'AlibabaSans';
-  src: url('https://assets-persist.lovart.ai/agent-static-assets/AlibabaSans-Regular.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'AlibabaSans';
-  src: url('https://assets-persist.lovart.ai/agent-static-assets/AlibabaSans-Medium.otf') format('opentype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'AlibabaSans';
-  src: url('https://assets-persist.lovart.ai/agent-static-assets/Alibaba-PuHuiTi-Bold.otf') format('opentype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
+/* Dashboard layout restyle inspired by provided HTML mockup.
+   Brand typefaces (Poppins, Titillium Web) come from Google Fonts via
+   index.html; the previous @font-face blocks loaded a third-party CDN. */
 
 .dashboard-root {
   width: 100%;
@@ -30,7 +11,7 @@
   background: #1A2A3A;
   /* Requested gradient from #20C997 to sidebar blue #1A2A3A */
   background: linear-gradient(135deg, #20C997 0%, #1A2A3A 70%);
-  font-family: 'AlibabaSans', system-ui, sans-serif;
+  font-family: 'Poppins', 'Titillium Web', Arial, sans-serif;
   overflow: hidden;
 }
 
