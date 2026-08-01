@@ -42,6 +42,9 @@ export const darkTheme = createTheme({
           backgroundColor: '#5F47C9',
           '&:hover': { backgroundColor: '#5240B4' },
         },
+        sizeMedium: {
+          minHeight: 44, // meet the 44px touch-target minimum
+        },
       },
     },
   },

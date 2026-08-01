@@ -66,7 +66,7 @@ const Login = () => {
               <circle cx="280" cy="240" r="10" fill="#FFFFFF" />
             </svg>
           </div>
-          <h1 className="platform-tagline">AI-Powered Learning Platform</h1>
+          <div className="platform-tagline">AI-Powered Learning Platform</div>
           <p className="platform-description">Unlock your potential with our advanced AI learning system. Personalized education paths, real-time feedback, and adaptive learning technology to accelerate your growth.</p>
         </div>
       </div>
@@ -76,7 +76,7 @@ const Login = () => {
             <div className="logo"><i className="ri-brain-line" /></div>
             <div className="platform-name">Redlin</div>
           </div>
-          <h3 className="login-title">Login</h3>
+          <h1 className="login-title">Login</h1>
           {error && <div className="error-banner" role="alert">{error}</div>}
           <form onSubmit={handleLogin} autoComplete="on">
             <div className="form-group">

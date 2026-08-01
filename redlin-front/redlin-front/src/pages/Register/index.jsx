@@ -66,7 +66,7 @@ const Register = () => {
           </div>
         </div>
         <div className="illustration-content">
-          <h2>Accelerate Your Learning with AI</h2>
+          <div className="illustration-title">Accelerate Your Learning with AI</div>
           <p>Join our advanced learning platform that adapts to your unique learning style. Personalized curriculum, real-time feedback, and AI-powered insights to help you master new skills faster than ever before.</p>
         </div>
       </div>

@@ -39,6 +39,8 @@ const LandingPage = () => {
     });
 
     return (
+        <>
+        <a href="#main-content" className="skip-link">Skip to content</a>
         <div className="container-landing" ref={rootRef}>
             {/* Navigation Bar */}
             <nav className="navbar-landing">
@@ -63,7 +65,9 @@ const LandingPage = () => {
                     <Link to="/register" className="btn-landing btn-primary-landing magnetic-target-landing">Sign Up</Link>
                 </div>
             </nav>
-            
+
+            {/* Main content */}
+            <main id="main-content" tabIndex={-1}>
             {/* Hero Section */}
             <section className="hero-landing" id="hero" ref={heroRef}>
                 <div className="hero-bg-landing"></div>
@@ -312,6 +316,8 @@ const LandingPage = () => {
                 </div>
             </section>
 
+            </main>
+
             {/* Footer */}
             <footer className="footer-landing">
                 <div className="footer-links-landing">
@@ -335,6 +341,7 @@ const LandingPage = () => {
                 </div>
             </footer>
         </div>
+        </>
     );
 };
 

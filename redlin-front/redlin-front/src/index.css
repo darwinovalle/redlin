@@ -416,3 +416,25 @@ body{
     display: none;
   }
 }
+
+/* Skip-to-content link: visually hidden until it receives keyboard focus. */
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: 16px;
+  z-index: 10000;
+  padding: 12px 20px;
+  background: #0B7A54;
+  color: #FFFFFF;
+  border-radius: 0 0 10px 10px;
+  font-family: 'Poppins', 'Titillium Web', Arial, sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+.skip-link:focus {
+  top: 0;
+  outline: 2px solid #20C997;
+  outline-offset: -2px;
+}
