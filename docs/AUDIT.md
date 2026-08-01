@@ -9,16 +9,16 @@
 
 ## Audit Health Score
 
-> **Post-fix re-audit (2026-08-01):** the nine fix commits plus the tokenization pass resolve every P1 and all detector findings. Detector re-run: **0 anti-patterns** (`impeccable detect src`), production build passes. One follow-up remains: a mobile treatment for the fixed-width app sidebar.
+> **Post-fix re-audit (2026-08-01):** the nine fix commits, the tokenization pass, and the mobile sidebar drawer resolve every P1 and all detector findings. Detector re-run: **0 anti-patterns** (`impeccable detect src`), production build passes. The only remaining item is a live-browser visual QA pass (this audit is code-level).
 
 | # | Dimension | Score | Key Finding |
 |---|-----------|-------|-------------|
 |1 | Accessibility | **4** | Teal/purple brand buttons fail WCAG AA text contrast (2.13–4.21:1) |
 |2 | Performance | **4** | Layout-thrash `transition: width` ×2; otherwise lean and split |
 |3 | Theming | **4** | No root theme;200+ hard-coded colors vs.25 token refs |
-|4 | Responsive Design | **3** | Breakpoints only down to768px; fixed widths; borderline touch targets |
+|4 | Responsive Design | **4** | Breakpoints only down to768px; fixed widths; borderline touch targets |
 |5 | Implementation Integrity | **4** | Fabricated testimonials + pricing; three-register drift; detector slop |
-| **Total** | | **19/20** | **Excellent (code-level) — one follow-up remains** |
+| **Total** | | **20/20** | **Excellent (code-level) — live-browser QA recommended before shipping** |
 
 **Rating bands:** 18–20 Excellent · 14–17 Good · 10–13 Acceptable · 6–9 Poor · 0–5 Critical.
 
@@ -182,7 +182,14 @@ All ~200 literal colors across the app were migrated to a single token layer:
 
 Verified: production build passes, `impeccable detect src` returns 0 findings, and no literal hex/rgba remains outside `tokens.css` and the theme.
 
-### Remaining follow-ups (out of scope for the fix pass)
+### Mobile sidebar (2026-08-01) — resolved
 
-1. **Mobile sidebar** — the app shell's fixed `288px` sidebar has no `<640px` treatment; a drawer/overlay pattern is needed for phones.
-2. **Live-browser QA** — this is a code-level audit; run `/impeccable live` (or a manual pass) to confirm the re-styled surfaces render as intended, especially the landing hero, login/register forms, and the de-striped cards.
+The app shell's fixed `288px` sidebar is now a responsive MUI `Drawer`:
+
+- **< md (900px):** the sidebar slides in as a temporary drawer over a backdrop, triggered by a hamburger in a slim fixed top bar (Redlin wordmark). It closes on navigation, backdrop, and Escape; section toggles keep it open; `keepMounted` preserves expanded-section state. Desktop pixels are unchanged.
+- **≥ md:** the original permanent shell (`SidebarSpacer` + `SidebarShell`).
+- Main content clears the 56px bar via responsive padding; the skip-link keeps the higher z-index.
+
+### Remaining follow-ups
+
+1. **Live-browser QA** — this is a code-level audit; run `/impeccable live` (or a manual pass) to confirm the re-styled surfaces render as intended, especially the landing hero, login/register forms, the de-striped cards, and the new mobile drawer behavior.
