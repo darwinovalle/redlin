@@ -15,6 +15,7 @@ const Pricing = lazy(() => import('./pages/Pricing'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Checkout = lazy(() => import('./pages/Checkout'));
+const Settings = lazy(() => import('./pages/Settings'));
 
 
 const AppRouter = () => {
@@ -55,6 +56,7 @@ const RouterContent = () => {
             <Route path="/classroom/:sessionId" element={<Classroom />} />
             {/* Optional alias */}
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>
       </Suspense>
