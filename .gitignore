@@ -35,6 +35,10 @@ celerybeat-schedule
 redlin_web/data_backups/*.json
 redlin_web/celerybeat-schedule
 
+# Claude Code session config / Graphify output
+.claude/
+graphify-out/
+
 # Misc
 *.log
 .github
