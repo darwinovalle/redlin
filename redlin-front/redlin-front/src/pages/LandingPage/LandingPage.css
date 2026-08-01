@@ -1362,6 +1362,33 @@ section[id] {
     }
 }
 
+@media (max-width: 640px) {
+    .nav-landing {
+        padding: 14px 16px;
+    }
+    .hero-title-landing {
+        font-size: 40px;
+    }
+    .hero-subtitle-landing {
+        font-size: 16px;
+    }
+    .benefits-landing, .how-it-works-landing, .testimonials-landing, .pricing-landing, .final-cta-landing, .footer-landing {
+        padding: 64px 16px;
+    }
+    .feature-card-landing {
+        width: 100%;
+    }
+    .testimonial-card-landing {
+        padding: 28px 24px;
+    }
+    .pricing-card-landing {
+        flex: 0 0 100%;
+    }
+    .email-input-landing, .email-button-landing {
+        width: 100%;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .container-landing *,
     .container-landing *::before,

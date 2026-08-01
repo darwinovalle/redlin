@@ -93,3 +93,7 @@
   .two-column { grid-template-columns:1fr; }
   .access-cards { grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); }
 }
+
+@media (max-width:640px){
+  .home-main-content { padding:16px; }
+}

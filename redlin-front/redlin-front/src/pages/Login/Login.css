@@ -54,3 +54,8 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focu
 .social-btn:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.2); }
 @keyframes fadeIn { from { opacity:0; transform:translateY(10px);} to { opacity:1; transform:translateY(0);} }
 @media (max-width:1200px){ .left-section { display:none; } .right-section { width:100%; } .login-form-container { width:100%; max-width:480px; } }
+
+@media (max-width:640px){
+  .login-form-container { padding:28px 20px; }
+  .login-form-container h1, .login-title { font-size:22px; }
+}

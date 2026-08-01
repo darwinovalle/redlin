@@ -79,3 +79,8 @@
 .apple-btn { background:#000; }
 .social-btn:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.2); }
 @media (max-width:1200px){ .illustration-section { display:none; } .form-section, .reg-container { width:100%; } .form-container { width:100%; max-width:520px; } }
+
+@media (max-width:640px){
+  .form-container { padding:28px 20px; }
+  .form-container h1 { font-size:24px; }
+}
