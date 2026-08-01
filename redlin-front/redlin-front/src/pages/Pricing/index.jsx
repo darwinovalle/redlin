@@ -12,10 +12,7 @@ import {
   Divider,
   ToggleButtonGroup,
   ToggleButton,
-  CssBaseline,
 } from '@mui/material';
-import { ThemeProvider } from '@mui/material/styles';
-import { darkTheme } from '../../theme';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { plans } from './plans';
 
@@ -38,8 +35,7 @@ export default function Pricing() {
   };
 
   return (
-    <ThemeProvider theme={darkTheme}>
-      <CssBaseline />
+    <>
       <Box
         sx={{
           minHeight: '100vh',
@@ -135,6 +131,6 @@ export default function Pricing() {
           </Grid>
         </Container>
       </Box>
-    </ThemeProvider>
+    </>
   );
 }

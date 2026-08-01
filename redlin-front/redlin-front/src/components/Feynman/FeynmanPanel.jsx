@@ -125,7 +125,7 @@ const FeynmanPanel = ({ documentId }) => {
           <Typography variant="body2" sx={{ mb:3, color:'#000' }}>You completed {results.length} / {prompts.length} questions.</Typography>
           <Divider sx={{ mb:2 }} />
           {results.map(r=> (
-            <Box key={r.id} sx={{ mb:2, p:2, border:'1px solid', borderColor:'divider', borderRadius:2, background:(theme)=> theme.palette.mode==='dark' ? '#20252b' : '#fafafa' }}>
+            <Box key={r.id} sx={{ mb:2, p:2, border:'1px solid', borderColor:'divider', borderRadius:2, background:'#fafafa' }}>
               <Typography variant="subtitle2" sx={{ fontWeight:'bold', mb:1, color:'#000' }}>Question</Typography>
               <Typography variant="body2" sx={{ whiteSpace:'pre-wrap', mb:1, color:'#000' }}>{(prompts.find(p=>p.id===r.feynman) || {}).prompt}</Typography>
               {r.score!=null && <Typography variant="caption" sx={{ fontWeight:'bold', color:'#000' }}>Score: {r.score}</Typography>}
@@ -147,7 +147,7 @@ const FeynmanPanel = ({ documentId }) => {
               onExpire={()=>{ if(!justAdvancedRef.current) submitCurrent(); }}
             />
           </Box>
-          <Box sx={{ p:2, border:'1px solid', borderColor:'divider', borderRadius:2, mb:2, background:(theme)=> theme.palette.mode==='dark' ? '#1e1e1e' : '#fdfdfd', color:'#000' }}>
+          <Box sx={{ p:2, border:'1px solid', borderColor:'divider', borderRadius:2, mb:2, background:'#fdfdfd', color:'#000' }}>
             <Typography variant="subtitle2" sx={{ fontWeight:'bold', mb:1, color:'#000' }}>Question</Typography>
             <Typography variant="body1" sx={{ whiteSpace:'pre-wrap', lineHeight:1.4, color:'#000' }}>{current.prompt}</Typography>
           </Box>

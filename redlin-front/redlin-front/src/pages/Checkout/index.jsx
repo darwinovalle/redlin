@@ -14,10 +14,7 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  CssBaseline,
 } from '@mui/material';
-import { ThemeProvider } from '@mui/material/styles';
-import { darkTheme } from '../../theme';
 import { getPlanByName } from '../Pricing/plans';
 
 function useQuery() {
@@ -55,8 +52,7 @@ export default function Checkout() {
   };
 
   return (
-    <ThemeProvider theme={darkTheme}>
-      <CssBaseline />
+    <>
       <Box sx={{ minHeight: '100vh', backgroundColor: 'background.paper', py: { xs: 2, md: 6 } }}>
         <Container maxWidth="lg">
           <Grid container spacing={3}>
@@ -113,6 +109,6 @@ export default function Checkout() {
           </Grid>
         </Container>
       </Box>
-    </ThemeProvider>
+    </>
   );
 }

@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { styled } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -21,8 +20,6 @@ import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import AddIcon from '@mui/icons-material/Add';
 import SchoolIcon from '@mui/icons-material/School';
 import MicIcon from '@mui/icons-material/Mic';
-import { ThemeProvider } from '@mui/material/styles';
-import { darkTheme } from '../../../theme';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { documentService } from '../../../services/api';
@@ -214,10 +211,9 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
     }
   };
   return (
-    <ThemeProvider theme={darkTheme}>
+    <>
       <LoaderOverlay open={loading} text="Uploading..." />
       <SuccessAlert open={successAlertOpen} message="Your file was successfully processed." onClose={()=>setSuccessAlertOpen(false)} autoHideDuration={5000} />
-      <CssBaseline />
       <SidebarSpacer aria-hidden="true" />
       <SidebarShell>
         <div style={{ padding: '0 24px 24px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: 24 }}>
@@ -378,6 +374,6 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       />
       <RenameDialog open={renameState.open} initialValue={renameState.doc?.title || ''} onClose={closeRename} onSubmit={submitRename} submitting={renameState.saving} />
       <RenameDialog open={renameSheetState.open} initialValue={(renameSheetState.imp?.filename || '').replace(/\.[^/.]+$/, '')} onClose={closeRenameSheet} onSubmit={submitRenameSheet} submitting={renameSheetState.saving} title="Rename Sheet" label="Sheet name" />
-    </ThemeProvider>
+    </>
   );
 }
