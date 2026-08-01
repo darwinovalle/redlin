@@ -252,15 +252,16 @@ class ClozeGenerator:
     def _heuristic_difficulty(self, cand: Candidate) -> str:
         score = cand.get('score', 1.0)
         length = len(cand['text'])
-        # Basic rule combining rarity+length+entity
-        if cand.get('entity_label') and score >= 1.2:
-            return 'hard'
-        if length <= 5 and score < 0.9:
+        # Named entities are prominent and recognizable → easy
+        if cand.get('entity_label'):
             return 'easy'
-        if score > 1.3 or length > 12:
-            return 'hard'
-        if score < 0.85:
+        # Short terms are easy to spot in context
+        if length <= 5:
             return 'easy'
+        # Long, rare, or abstract terms → hard
+        if score > 1.3 and length > 10:
+            return 'hard'
+        # Everything else: medium (most meaningful vocabulary falls here)
         return 'medium'
 
 
@@ -286,14 +287,110 @@ class VideoClozeGenerator(ClozeGenerator):
         self.video = video
         self.max_items = max_items
 
+    @staticmethod
+    def _clean_source_text(text: str) -> str:
+        """Strip transcript timestamp tags, markdown formatting, and collapse whitespace.
+
+        YouTube transcripts may contain timestamp markers like
+        ``<00:00:02.028><c>and </c>`` and summaries may contain markdown
+        headers/bold/list markers.  Both produce garbled cloze items if not
+        cleaned before NLP processing.
+        """
+        import re
+        # Strip timestamp + caption tags (e.g. <00:00:02.028><c>and </c>)
+        text = re.sub(r'<[^>]+>', '', text)
+        # Strip markdown formatting
+        text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)          # ## headers
+        text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)                      # **bold**
+        text = re.sub(r'\*([^*]+)\*', r'\1', text)                          # *italic*
+        text = re.sub(r'^\s*[-*+]\s+', '', text, flags=re.MULTILINE)       # list markers
+        text = re.sub(r'^\s*\d+\.\s+', '', text, flags=re.MULTILINE)       # numbered lists
+        text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)                # [text](url) links
+        text = re.sub(r'`([^`]+)`', r'\1', text)                           # inline code
+        # Strip zero-width spaces and other invisible Unicode
+        text = re.sub(r'[​‌‍﻿]', '', text)
+        # Deduplicate consecutive repeated words (YouTube auto-caption duplication)
+        words = text.split()
+        if words:
+            deduped = [words[0]]
+            for w in words[1:]:
+                if w.lower() != deduped[-1].lower():
+                    deduped.append(w)
+            words = deduped
+        # Deduplicate consecutive repeated phrases (3–7 word sliding window)
+        result = []
+        i = 0
+        while i < len(words):
+
+            matched = False
+            for plen in range(min(12, (len(words) - i) // 2), 2, -1):
+                phrase = words[i:i + plen]
+                j = i + plen
+                while j + plen <= len(words) and words[j:j + plen] == phrase:
+                    j += plen
+                if j > i + plen:
+                    result.extend(phrase)
+                    i = j
+                    matched = True
+                    break
+            if not matched:
+                result.append(words[i])
+                i += 1
+        text = ' '.join(result)
+        # Collapse multiple spaces/newlines into single space
+        text = re.sub(r'\n\s*\n', '\n', text)                               # paragraph breaks
+        text = re.sub(r'\s+', ' ', text)                                     # whitespace
+        return text.strip()
+
     # Sobrescribe para texto de video
     def _get_document_text(self) -> str:  # type: ignore[override]
         try:
             if hasattr(self.video, 'summary') and self.video.summary:
-                return getattr(self.video.summary, 'content', '') or ''
+                raw = getattr(self.video.summary, 'content', '') or ''
+                if raw:
+                    return self._clean_source_text(raw)
         except Exception:
             pass
-        return self.video.transcript_text or self.video.title or ''
+        raw = self.video.transcript_text or self.video.title or ''
+        return self._clean_source_text(raw) if raw else ''
+
+    @staticmethod
+    def _extract_sentence_context(text: str, span_start: int, span_end: int) -> str:
+        """Return the sentence containing [span_start:span_end] with only that span blanked.
+
+        Finds sentence boundaries (period/!/? followed by whitespace, or paragraph
+        breaks) around the candidate and replaces only the answer word with ``____``.
+        Falls back to the full document when boundaries can't be resolved.
+        """
+        import re
+
+        blank = '____'
+        # --- find sentence START (nearest boundary before span_start) ---
+        sent_start = 0
+        # sentence-ending punctuation followed by whitespace
+        for m in re.finditer(r'(?<=[.!?])\s', text):
+            if m.end() <= span_start and m.end() > sent_start:
+                sent_start = m.end()
+        # paragraph breaks (double newline)
+        for m in re.finditer(r'\n\s*\n', text):
+            if m.end() <= span_start and m.end() > sent_start:
+                sent_start = m.end()
+
+        # --- find sentence END (nearest boundary after span_end) ---
+        sent_end = len(text)
+        for m in re.finditer(r'[.!?](?:\s|$)', text):
+            if m.start() >= span_end and m.start() < sent_end:
+                sent_end = m.start() + 1  # include the punctuation
+                break
+        for m in re.finditer(r'\n\s*\n', text):
+            if m.start() >= span_end and m.start() < sent_end:
+                sent_end = m.start()
+                break
+
+        sentence = text[sent_start:sent_end].strip()
+        blank_start_rel = max(0, span_start - sent_start)
+        blank_end_rel = max(blank_start_rel, min(span_end - sent_start, len(sentence)))
+        return sentence[:blank_start_rel] + blank + sentence[blank_end_rel:]
 
     def generate(self) -> List[VideoCloze]:  # type: ignore[override]
         import time
@@ -312,7 +409,7 @@ class VideoClozeGenerator(ClozeGenerator):
         for cand in selected:
             answer = cand['text']
             span_start, span_end = cand['start'], cand['end']
-            blank_text = text[:span_start] + '____' + text[span_end:]
+            blank_text = self._extract_sentence_context(text, span_start, span_end)
             difficulty = self._heuristic_difficulty(cand)
             distractors = self._build_distractors(answer, base, cand, nlp=nlp)
             meta = {
