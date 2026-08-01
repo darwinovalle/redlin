@@ -49,7 +49,7 @@ def generate_session_mcqs(class_session: ClassSession, text: str, lang_label: st
     prompt = MCQ_PROMPT.format(lang_label=lang_label, text=text)
 
     try:
-        response = generate_with_retry(prompt, max_attempts=3)
+        response = generate_with_retry(prompt, max_attempts=3, user_id=class_session.user_id)
         raw = response.text.strip()
 
         # Strip markdown fences if the model wraps anyway (defensive)

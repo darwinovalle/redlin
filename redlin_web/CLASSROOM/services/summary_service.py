@@ -40,7 +40,7 @@ def generate_session_summary(class_session: ClassSession, text: str, lang_label:
     {text}                                                                        
     """                                                                           
     try:                                                                      
-        response = generate_with_retry(summary_prompt, max_attempts=3)        
+        response = generate_with_retry(summary_prompt, max_attempts=3, user_id=class_session.user_id)        
         content = response.text                                               
     except Exception as exc:                 
         content = f"Title: {doc_title}\n\n(Error during generation: {exc})"   

@@ -56,7 +56,7 @@ DOCUMENT TEXT:
 """
 
     try:
-        flashcard_response = generate_with_retry(flashcard_prompt, max_attempts=3)
+        flashcard_response = generate_with_retry(flashcard_prompt, max_attempts=3, user_id=document.user_id)
         flashcards_raw = flashcard_response.text
         flashcard_blocks = flashcards_raw.strip().split("\n\n")
 
