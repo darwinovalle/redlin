@@ -89,7 +89,7 @@ def generate_ai_clozes(
     raw_text = ""
     for label, prompt in attempts:
         try:
-            resp = generate_with_retry(prompt, max_attempts=2)
+            resp = generate_with_retry(prompt, max_attempts=2, user_id=document.user_id)
         except Exception as exc:
             print(f"[AI Cloze] {label} generation failed: {exc}")
             continue

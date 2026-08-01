@@ -34,6 +34,22 @@ ALLOWED_HOSTS = ['*']
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 
 
+def _compute_default_fernet_key() -> str:
+    """Derive a stable Fernet key from SECRET_KEY (or the LLM_ENCRYPTION_KEY env var).
+
+    Fernet requires a 32-byte urlsafe-base64-encoded key. In production set
+    LLM_ENCRYPTION_KEY explicitly — rotating SECRET_KEY would orphan stored keys,
+    which then degrade gracefully to the server-default Gemini key.
+    """
+    import base64
+    import hashlib
+    raw = os.getenv("LLM_ENCRYPTION_KEY") or ("redlin-llm-key-" + SECRET_KEY)
+    return base64.urlsafe_b64encode(hashlib.sha256(raw.encode("utf-8")).digest()).decode("ascii")
+
+
+LLM_ENCRYPTION_KEY = os.getenv("LLM_ENCRYPTION_KEY", _compute_default_fernet_key())
+
+
 # Application definition
 
 INSTALLED_APPS = [

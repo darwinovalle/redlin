@@ -89,7 +89,7 @@ def generate_ai_feynman(
     payload = None
     for label, prompt in attempts:
         try:
-            resp = generate_with_retry(prompt, max_attempts=2)
+            resp = generate_with_retry(prompt, max_attempts=2, user_id=document.user_id)
         except Exception as exc:
             print(f"[Feynman] {label} generation failed: {exc}")
             continue

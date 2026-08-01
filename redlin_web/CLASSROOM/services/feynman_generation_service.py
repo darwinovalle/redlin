@@ -89,7 +89,7 @@ def generate_ai_session_feynman(
     payload = None
     for label, prompt in attempts:
         try:
-            resp = generate_with_retry(prompt, max_attempts=2)
+            resp = generate_with_retry(prompt, max_attempts=2, user_id=class_session.user_id)
         except Exception as exc:
             print(f"[Classroom Feynman] {label} generation failed: {exc}")
             continue

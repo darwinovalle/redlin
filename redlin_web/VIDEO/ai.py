@@ -1,67 +1,15 @@
 import os
 import re
 import time
-import random
 import json
 from typing import List
-from dotenv import load_dotenv
-import google.generativeai as genai
 
 from django.db import transaction
 from .models import Video, VideoSummary, VideoMCQ, VideoCloze, VideoFeynman, VideoFeynmanAttempt
 from .transcript_yt_dlp import fetch_transcript_yt_dlp, TranscriptError
 from CORE.services.cloze_generator import VideoClozeGenerator
-
-load_dotenv()
-genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
-_model = genai.GenerativeModel("gemini-2.5-flash")
-
-_RE_RETRY = re.compile(r"retry_delay\s*\{\s*seconds:\s*(\d+)", re.I)
-
-SPANISH_COMMON = {"el","la","de","que","y","en","a","los","se","del","las","un","por","con","una","su","para","es","al","lo","como","más","pero","sus","le"}
-ENGLISH_COMMON = {"the","and","to","of","in","that","it","is","for","on","as","are","was","with","this","by","an","be","or","from"}
-
-def _parse_retry_delay_seconds(msg: str):
-    m = _RE_RETRY.search(msg)
-    return int(m.group(1)) if m else None
-
-def detect_language(text: str) -> str:
-    """
-    Heurística ligera: compara frecuencia de palabras funcionales.
-    Devuelve 'en', 'es' u 'other'.
-    """
-    if not text:
-        return "other"
-    words = re.findall(r"[a-záéíóúüñ]+", text.lower())
-    if not words:
-        return "other"
-    es_count = sum(1 for w in words if w in SPANISH_COMMON)
-    en_count = sum(1 for w in words if w in ENGLISH_COMMON)
-    if es_count >= 3 and es_count > en_count * 1.2:
-        return "es"
-    if en_count >= 3 and en_count > es_count * 1.2:
-        return "en"
-    return "other"
-
-def generate_with_retry(prompt: str, max_attempts: int = 3, base_wait: int = 5):
-    last_exc = None
-    for attempt in range(1, max_attempts + 1):
-        try:
-            return _model.generate_content(prompt)
-        except Exception as e:
-            msg = str(e)
-            if "429" in msg or "quota" in msg.lower() or "rate" in msg.lower():
-                suggested = _parse_retry_delay_seconds(msg)
-                wait = suggested if suggested is not None else min(60, base_wait * (2 ** (attempt - 1)))
-                wait = int(wait + random.uniform(0, 0.25) * wait)
-                print(f"[Video RateLimit] intento {attempt}/{max_attempts}. Esperando {wait}s")
-                time.sleep(wait)
-                last_exc = e
-                continue
-            raise
-    if last_exc:
-        raise last_exc
-    raise RuntimeError("Fallo de generación sin excepción detallada")
+# Shared per-user LLM dispatch (provider resolution, retry, Ollama fallback).
+from API.services.processing_common import detect_language, extract_json_block, generate_with_retry
 
 def _build_timestamp_reference(snippets):
     """
@@ -154,7 +102,7 @@ def generate_video_feynman(video: Video, source_text: str, lang_label: str, *, s
     payload=None
     for label,pmt in attempts:
         try:
-            resp = generate_with_retry(pmt, max_attempts=2)
+            resp = generate_with_retry(pmt, max_attempts=2, user_id=video.user_id)
             raw = getattr(resp,'text','') or ''
             debug = os.getenv("VIDEO_FEYNMAN_DEBUG","0").lower() in {"1","true","yes","on"}
             if debug:
@@ -234,7 +182,7 @@ STRICT JSON ONLY:
 """
     try:
         debug = os.getenv("VIDEO_FEYNMAN_EVAL_DEBUG","0").lower() in {"1","true","yes","on"}
-        resp = generate_with_retry(prompt, max_attempts=2)
+        resp = generate_with_retry(prompt, max_attempts=2, user_id=user.id)
         raw = getattr(resp,'text','') or ''
         if debug:
             print(f"[VideoFeynmanEval][raw first 300] {raw[:300]!r}")
@@ -382,7 +330,7 @@ def generate_ai_video_clozes(video: Video, source_text: str, lang_label: str, *,
     last_raw = ""
     for label, p in attempts:
         try:
-            resp = generate_with_retry(p, max_attempts=2)
+            resp = generate_with_retry(p, max_attempts=2, user_id=video.user_id)
         except Exception as e:
             print(f"[AI Video Cloze] {label} fail: {e}")
             continue
@@ -537,7 +485,7 @@ SOURCE TEXT (for analysis; paraphrase in output)
 
 """
         try:
-            summary_resp = generate_with_retry(summary_prompt)
+            summary_resp = generate_with_retry(summary_prompt, user_id=video.user_id)
             summary_text = summary_resp.text
             VideoSummary.objects.update_or_create(
                 video=video,
@@ -602,7 +550,7 @@ DOCUMENT TEXT:
 {full_text}
 """
         try:
-            mcq_resp = generate_with_retry(mcq_prompt)
+            mcq_resp = generate_with_retry(mcq_prompt, user_id=video.user_id)
             raw = mcq_resp.text.strip()
             blocks = raw.split("\n\n")
             new_mcqs = []

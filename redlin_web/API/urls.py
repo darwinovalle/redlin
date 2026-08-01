@@ -3,6 +3,7 @@ from django.urls import path, include
 from .views_auth import login, register, refresh_token, whoami
 from .views_documents import UserViewSet, DocumentViewSet, get_user_documents
 from .views_learning import SummaryViewSet, FlashcardViewSet, MCQViewSet, ClozeViewSet, FeynmanViewSet
+from .views_settings import llm_settings
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -19,5 +20,6 @@ urlpatterns = [
     path('auth/register/', register, name='register'),
     path('auth/refresh/', refresh_token, name='token-refresh'),
     path('auth/whoami/', whoami, name='whoami'),
+    path('settings/llm/', llm_settings, name='llm-settings'),
     path('', include(router.urls)),
 ]

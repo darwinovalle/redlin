@@ -64,7 +64,7 @@ REQUIREMENTS:
 NO markdown fences. NO commentary outside JSON.
 """
     try:
-        resp = generate_with_retry(eval_prompt, max_attempts=2)
+        resp = generate_with_retry(eval_prompt, max_attempts=2, user_id=user.id)
         raw = getattr(resp, 'text', '') or ''
         data = None
         try:

@@ -64,7 +64,7 @@ SOURCE TEXT (for analysis; paraphrase in output)
 """
 
     try:
-        summary_response = generate_with_retry(summary_prompt, max_attempts=3)
+        summary_response = generate_with_retry(summary_prompt, max_attempts=3, user_id=document.user_id)
         summary_content = summary_response.text
     except Exception as exc:
         summary_content = f"Title: {doc_title}\n\n(No substantive content found due to generation error.)"

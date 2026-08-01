@@ -63,7 +63,7 @@ DOCUMENT TEXT:
 """
 
     try:
-        mcq_response = generate_with_retry(mcq_prompt, max_attempts=3)
+        mcq_response = generate_with_retry(mcq_prompt, max_attempts=3, user_id=document.user_id)
         mcqs_raw = mcq_response.text
         mcq_blocks = mcqs_raw.strip().split("\n\n")
 

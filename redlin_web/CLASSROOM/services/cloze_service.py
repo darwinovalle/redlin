@@ -16,7 +16,7 @@ def generate_session_clozes(class_session: ClassSession, source_text: str, lang_
     )
 
     try:
-        response = generate_with_retry(prompt, max_attempts=2)
+        response = generate_with_retry(prompt, max_attempts=2, user_id=class_session.user_id)
         payload = extract_json_block(response.text, key_hint='"clozes"')
         if not payload: return 0
 
