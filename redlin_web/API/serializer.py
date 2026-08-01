@@ -12,7 +12,7 @@ Endpoint semantics (Issue #13):
 """
 
 from rest_framework import serializers
-from .models import User, Document, Summary, Flashcard, MCQ, Cloze, Feynman, FeynmanAttempt
+from .models import User, Document, Summary, Flashcard, MCQ, Cloze, Feynman, FeynmanAttempt, UserLLMSettings
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -122,4 +122,48 @@ class ClozeValidateSerializer(serializers.Serializer):
 
     def validate_answer(self, value: str) -> str:  # simple normalization opportunity
         return value.strip()
+
+
+class UserLLMSettingsSerializer(serializers.ModelSerializer):
+    """Per-user LLM provider config. The API key is write-only and encrypted at rest.
+
+    Responses never carry the plaintext key — only a masked view of it.
+    """
+
+    api_key = serializers.CharField(write_only=True, required=False, allow_blank=True, trim_whitespace=False)
+    masked_api_key = serializers.SerializerMethodField(read_only=True)
+    configured = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = UserLLMSettings
+        fields = ['provider', 'base_url', 'model_name', 'api_key', 'masked_api_key', 'configured', 'updated_at']
+        read_only_fields = ['updated_at']
+
+    def get_masked_api_key(self, obj) -> str | None:
+        key = obj.api_key  # in-memory decrypt only
+        if not key:
+            return None
+        if len(key) <= 8:
+            return "********"
+        return f"{key[:4]}...{key[-4:]}"
+
+    def get_configured(self, obj) -> bool:
+        return bool(obj.encrypted_api_key)
+
+    def create(self, validated_data):
+        api_key = validated_data.pop('api_key', None)
+        instance = UserLLMSettings(user=self.context['request'].user, **validated_data)
+        if api_key:
+            instance.api_key = api_key  # encrypt before first save
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        api_key = validated_data.pop('api_key', None)
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        if api_key is not None:
+            instance.api_key = api_key  # property setter encrypts (empty clears)
+        instance.save()
+        return instance
 
