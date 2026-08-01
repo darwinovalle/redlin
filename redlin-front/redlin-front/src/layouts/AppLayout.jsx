@@ -18,7 +18,7 @@ const AppLayout = () => {
       {/* <WavyBackground waveHeight="60vh" offsetY={0} /> */}
 
       <MiniDrawer onLogout={() => { logout(); navigate('/login'); }} onOpenSettings={() => navigate('/settings')} />
-      <Box component="main" id="main-content" tabIndex={-1} sx={{ position: 'relative', zIndex: 1, flexGrow: 1, minWidth: 0, minHeight: '100vh', display: 'flex', justifyContent: 'flex-start', alignItems: 'stretch', overflowY: 'auto', pt: 0, mt: 0 }}>
+      <Box component="main" id="main-content" tabIndex={-1} sx={{ position: 'relative', zIndex: 1, flexGrow: 1, minWidth: 0, minHeight: '100vh', display: 'flex', justifyContent: 'flex-start', alignItems: 'stretch', overflowY: 'auto', pt: { xs: '56px', md: 0 }, mt: 0 }}>
         <Outlet />
       </Box>
     </Box>

@@ -1,8 +1,12 @@
 import * as React from 'react';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import Drawer from '@mui/material/Drawer';
+import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import MenuIcon from '@mui/icons-material/Menu';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
@@ -71,6 +75,11 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname.startsWith('/home');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [mobileOpen, setMobileOpen] = useState(false);
+  // close the mobile drawer whenever a nav item navigates
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
   const currentDocSlug = React.useMemo(() => { const m = location.pathname.match(/^\/documents\/([^/?#]+)/); return m?decodeURIComponent(m[1]):null; }, [location.pathname]);
   const currentCsvSlug = React.useMemo(() => { const m = location.pathname.match(/^\/csv\/([^/?#]+)/); return m?decodeURIComponent(m[1]):null; }, [location.pathname]);
   const currentClassroomSessionId = React.useMemo(() => { const m = location.pathname.match(/^\/classroom\/([^/?#]+)/); return m?decodeURIComponent(m[1]):null; }, [location.pathname]);
@@ -210,12 +219,8 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       alert(e?.response?.data?.error || e?.message || 'Failed to create classroom space');
     }
   };
-  return (
+  const sidebarContent = (
     <>
-      <LoaderOverlay open={loading} text="Uploading..." />
-      <SuccessAlert open={successAlertOpen} message="Your file was successfully processed." onClose={()=>setSuccessAlertOpen(false)} autoHideDuration={5000} />
-      <SidebarSpacer aria-hidden="true" />
-      <SidebarShell>
         <div style={{ padding: '0 24px 24px', borderBottom: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', marginBottom: 24 }}>
           <div style={{ display:'flex', alignItems:'center', height:64 }}>
             <div style={{ width:40, height:40, background:'linear-gradient(135deg,var(--color-teal),var(--color-blue))', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', marginRight:12, boxShadow:'0 0 20px color-mix(in srgb, var(--color-teal) 30%, transparent)' }}>
@@ -360,7 +365,43 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             <div style={{ fontSize:12, color:'color-mix(in srgb, var(--color-white) 60%, transparent)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{user?.email || ''}</div>
           </div>
         </UserProfile>
-      </SidebarShell>
+
+    </>
+  );
+
+  return (
+    <>
+      <LoaderOverlay open={loading} text="Uploading..." />
+      <SuccessAlert open={successAlertOpen} message="Your file was successfully processed." onClose={()=>setSuccessAlertOpen(false)} autoHideDuration={5000} />
+
+      {isMobile ? (
+        <>
+          {/* Slim fixed top bar with the nav hamburger (mobile only) */}
+          <Box sx={{ display: 'flex', position: 'fixed', top: 0, left: 0, right: 0, height: 56, zIndex: 1200, alignItems: 'center', px: 2, gap: 1, backgroundColor: 'var(--color-shell)', borderBottom: '1px solid var(--color-divider)' }}>
+            <IconButton onClick={() => setMobileOpen(true)} aria-label="Open navigation menu" edge="start" sx={{ color: 'var(--color-teal-deep)' }}>
+              <MenuIcon />
+            </IconButton>
+            <Typography sx={{ fontWeight: 700, fontSize: 18, color: 'var(--color-text)' }}>Redlin</Typography>
+          </Box>
+          <Drawer
+            variant="temporary"
+            open={mobileOpen}
+            onClose={() => setMobileOpen(false)}
+            ModalProps={{ keepMounted: true }}
+            PaperProps={{ sx: { width: SIDEBAR_WIDTH, boxSizing: 'border-box', backgroundColor: 'var(--color-navy)', color: 'var(--color-white)', fontFamily: "'Poppins', 'Titillium Web', Arial, sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)' } }}
+          >
+            {sidebarContent}
+          </Drawer>
+        </>
+      ) : (
+        <>
+          <SidebarSpacer aria-hidden="true" />
+          <SidebarShell>
+            {sidebarContent}
+          </SidebarShell>
+        </>
+      )}
+
       <AddSpaceModal
         open={openSampleModal}
         onClose={()=>setOpenSampleModal(false)}
