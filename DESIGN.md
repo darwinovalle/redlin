@@ -51,7 +51,7 @@ colors:
   brand-gradient-90:
     value: "linear-gradient(90deg, #20C997, #7F63F4)"
     role: primary-gradient-horizontal
-  # --- token additions from the 2026-08-01 tokenization pass ---
+  # token additions from the 2026-08-01 tokenization pass
   teal-deep:
     value: "#0B7A54"
     role: contrast-safe-primary
@@ -277,9 +277,14 @@ typography:
     fontFamily: "monospace"
     fontSize: "0.875rem"
   landing-headline:
-    fontFamily: "'SpaceGrotesk', sans-serif"
+    fontFamily: "Poppins, Arial, sans-serif"
     fontSize: "28px"
     fontWeight: bold
+  promo:
+    fontFamily: "Poppins, Arial, sans-serif"
+    fontSize: "42px"
+    fontWeight: 700
+    lineHeight: 1.15
 rounded:
   sm: "4px"
   md: "8px"
