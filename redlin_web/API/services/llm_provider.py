@@ -197,6 +197,11 @@ def generate_with_retry(
     for attempt in range(1, max_attempts + 1):
         try:
             text = dispatch(prompt, config)
+            # Observability: log which provider/key served this call so backend
+            # logs (docker compose logs -f backend) show asset provenance.
+            mode = "server-default" if config.is_server_default else "custom"
+            base = f" base_url={config.base_url}" if config.base_url else ""
+            print(f"[LLM] user={user_id} provider={config.provider} model={config.model}{base} [{mode}]")
             return GeminiResponseMock(text)
         except Exception as exc:
             last_exc = exc
