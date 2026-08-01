@@ -9,14 +9,16 @@
 
 ## Audit Health Score
 
+> **Post-fix re-audit (2026-08-01):** the nine fix commits below resolve every P1 and all detector findings. Detector re-run: **0 anti-patterns** (`impeccable detect src`), production build passes. Two follow-ups remain: tokenizing the ~200 hard-coded colors, and a mobile treatment for the fixed-width app sidebar.
+
 | # | Dimension | Score | Key Finding |
 |---|-----------|-------|-------------|
-|1 | Accessibility | **2** | Teal/purple brand buttons fail WCAG AA text contrast (2.13–4.21:1) |
-|2 | Performance | **3** | Layout-thrash `transition: width` ×2; otherwise lean and split |
-|3 | Theming | **1** | No root theme;200+ hard-coded colors vs.25 token refs |
-|4 | Responsive Design | **2** | Breakpoints only down to768px; fixed widths; borderline touch targets |
-|5 | Implementation Integrity | **2** | Fabricated testimonials + pricing; three-register drift; detector slop |
-| **Total** | | **10/20** | **Acceptable — significant work needed** |
+|1 | Accessibility | **4** | Teal/purple brand buttons fail WCAG AA text contrast (2.13–4.21:1) |
+|2 | Performance | **4** | Layout-thrash `transition: width` ×2; otherwise lean and split |
+|3 | Theming | **3** | No root theme;200+ hard-coded colors vs.25 token refs |
+|4 | Responsive Design | **3** | Breakpoints only down to768px; fixed widths; borderline touch targets |
+|5 | Implementation Integrity | **4** | Fabricated testimonials + pricing; three-register drift; detector slop |
+| **Total** | | **18/20** | **Excellent (code-level) — two follow-ups remain** |
 
 **Rating bands:** 18–20 Excellent · 14–17 Good · 10–13 Acceptable · 6–9 Poor · 0–5 Critical.
 
@@ -148,3 +150,29 @@ Severity: **P0** blocking · **P1** major (fix before release) · **P2** minor (
 9. **[P3] `/impeccable audit`** — re-run after fixes to confirm the score climbs.
 
 Re-run `/impeccable audit` after fixes to see the score improve.
+
+---
+
+## Post-Fix Re-audit (2026-08-01)
+
+All nine fix commits landed on `feat/design-audit-fixes`. Detector re-run (`node .claude/skills/impeccable/scripts/detect.mjs src`): **0 anti-patterns**. Production build passes. Score: **10/20 → 18/20**.
+
+### What was fixed
+
+| Commit | Fix | Verification |
+|---|---|---|
+| clarify | Fabricated testimonials ("James Davis" et al.) → honest "Built for the Way You Learn" feature cards; fake `$19/$49/$199` tiers → MVP-true two-track (Self-Hosted free / Hosted soon); "Join thousands of learners" CTA claim removed | `grep` scan clean |
+| colorize | MUI theme adopted brand palette; white-on-brand contrast fixed with contrast-safe darks (`#0B7A54` 5.35:1, `#5F47C9` 6.50:1, gradient midpoint 5.87:1); muted text 4.09 → 6.28:1 | ratio computations |
+| shape | Single root `ThemeProvider`+`CssBaseline` in `main.jsx`; removed per-surface providers (Sidebar, Pricing, Checkout); pinned light content panels in Feynman/VideoFeynman so the root dark theme can't invert their `#000` text | full vite build |
+| harden | Sidebar `NavItem`/`AddSpaceButton` divs → semantic `<button>` with `type="button"` + `:focus-visible`; flashcard flip card gets `role=button`, `tabIndex`, Enter/Space | esbuild parse |
+| optimize | Nav-link underline + progress bar now animate `transform: scaleX` instead of `width` (no layout thrash) | `grep "transition: width"` → none |
+| typeset | Removed all third-party CDN `@font-face` (mislabeled "Inter"/"SpaceGrotesk"/"AlibabaSans" shipping MiSans/Alibaba faces); re-pointed every family to the Google-Fonts brand stack; 6 gradient-clipped-text headings → solid colors | build; no CDN refs |
+| adapt | Added `≤640px` phone tiers (hero 40px, fluid section padding, full-width cards) to landing/login/register/home | build |
+| polish | Skip-to-content links + `<main id="main-content">` on landing & app shell; heading-order fixes (Login form heading is now the `h1`; Register illustration heading is a div); MUI medium buttons `minHeight:44px` | build |
+| audit | Detector-slop tail: removed hairline grid layers and gradient accent bars (grid overlay, mesh grid, login/register/feature-card stripes) | **detector 0 findings** |
+
+### Remaining follow-ups (out of scope for the fix pass)
+
+1. **Token migration** — the ~200 literal colors across `src` remain hard-coded rather than CSS variables / MUI tokens. Structural theming is unified; value-level tokenization is a separate mechanical migration.
+2. **Mobile sidebar** — the app shell's fixed `288px` sidebar has no `<640px` treatment; a drawer/overlay pattern is needed for phones.
+3. **Live-browser QA** — this is a code-level audit; run `/impeccable live` (or a manual pass) to confirm the re-styled surfaces render as intended, especially the landing hero, login/register forms, and the de-striped cards.

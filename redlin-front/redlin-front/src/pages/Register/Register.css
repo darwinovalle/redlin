@@ -21,7 +21,6 @@
 .form-section { width:50%; background:linear-gradient(135deg,#232F3E 0%,#1C2836 100%); display:flex; justify-content:center; align-items:center; position:relative; }
 .form-section:before { content:""; position:absolute; inset:0; background-image:radial-gradient(circle at 10% 20%, rgba(74,144,226,0.03) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(32,201,151,0.03) 0%, transparent 20%), radial-gradient(circle at 50% 50%, rgba(127,99,244,0.03) 0%, transparent 30%); }
 .form-container { width:480px; background:linear-gradient(135deg,#2A3647 0%, #253241 100%); border-radius:12px; padding:40px; box-shadow:0 8px 30px rgba(0,0,0,0.3), 0 1px 3px rgba(32,201,151,0.1), 0 1px 2px rgba(74,144,226,0.1); position:relative; overflow:hidden; }
-.form-container:before { content:""; position:absolute; top:0; left:0; width:100%; height:3px; background:linear-gradient(90deg,#20C997,#4A90E2,#7F63F4); }
 .logo-container { display:flex; align-items:center; justify-content:center; margin-bottom:30px; }
 .logo { width:40px; height:40px; background:linear-gradient(135deg,#20C997,#4A90E2); border-radius:10px; display:flex; align-items:center; justify-content:center; margin-right:12px; box-shadow:0 0 20px rgba(32,201,151,0.3); }
 .logo i { font-size:24px; color:#fff; }
