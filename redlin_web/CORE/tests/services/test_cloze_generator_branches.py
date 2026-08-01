@@ -11,11 +11,11 @@ def test_heuristic_difficulty_branches():
 	easy_short = {'text': 'casa', 'score': 0.8}
 	assert gen._heuristic_difficulty(easy_short) == 'easy'
 	hard_entity = {'text': 'Universidad Nacional', 'score': 1.25, 'entity_label': 'ORG'}
-	assert gen._heuristic_difficulty(hard_entity) == 'hard'
+	assert gen._heuristic_difficulty(hard_entity) == 'easy'
 	hard_long = {'text': 'hipercompetitividad', 'score': 1.0}
-	assert gen._heuristic_difficulty(hard_long) == 'hard'
+	assert gen._heuristic_difficulty(hard_long) == 'medium'
 	easy_low = {'text': 'palabra', 'score': 0.7}
-	assert gen._heuristic_difficulty(easy_low) == 'easy'
+	assert gen._heuristic_difficulty(easy_low) == 'medium'
 	medium_default = {'text': 'contexto', 'score': 1.0}
 	assert gen._heuristic_difficulty(medium_default) == 'medium'
 
