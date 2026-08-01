@@ -1,0 +1,416 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "title": "Design System: RedLin — The Neural Lab",
+  "extensions": {
+    "colorMeta": {
+      "eco-teal": {
+        "role": "primary",
+        "displayName": "Teal",
+        "canonical": "oklch(72% 0.18 165)",
+        "tonalRamp": [
+          "oklch(96% 0.005 165)",
+          "oklch(92% 0.02 165)",
+          "oklch(85% 0.06 165)",
+          "oklch(72% 0.18 165)",
+          "oklch(60% 0.25 165)",
+          "oklch(45% 0.28 165)",
+          "oklch(30% 0.25 165)"
+        ]
+      },
+      "electric-purple": {
+        "role": "secondary",
+        "displayName": "Purple",
+        "canonical": "oklch(58% 0.2 275)",
+        "tonalRamp": [
+          "oklch(95% 0.005 275)",
+          "oklch(88% 0.03 275)",
+          "oklch(78% 0.09 275)",
+          "oklch(58% 0.2 275)",
+          "oklch(42% 0.22 275)",
+          "oklch(28% 0.2 275)",
+          "oklch(15% 0.12 275)"
+        ]
+      },
+      "deep-navy": {
+        "role": "dark-surface",
+        "displayName": "Deep Navy",
+        "canonical": "oklch(18% 0.01 250)",
+        "tonalRamp": [
+          "oklch(96% 0.001 250)",
+          "oklch(90% 0.003 250)",
+          "oklch(80% 0.008 250)",
+          "oklch(60% 0.015 250)",
+          "oklch(40% 0.02 250)",
+          "oklch(25% 0.02 250)",
+          "oklch(12% 0.01 250)"
+        ]
+      },
+      "darker-navy": {
+        "role": "deepest-surface",
+        "displayName": "Darker Navy",
+        "canonical": "oklch(9% 0.005 250)",
+        "tonalRamp": [
+          "oklch(95% 0.001 250)",
+          "oklch(85% 0.003 250)",
+          "oklch(70% 0.006 250)",
+          "oklch(50% 0.008 250)",
+          "oklch(30% 0.01 250)",
+          "oklch(15% 0.005 250)",
+          "oklch(8% 0.003 250)"
+        ]
+      },
+      "slate-blue": {
+        "role": "tertiary",
+        "displayName": "Slate Blue",
+        "canonical": "oklch(55% 0.15 240)",
+        "tonalRamp": [
+          "oklch(94% 0.005 240)",
+          "oklch(85% 0.015 240)",
+          "oklch(75% 0.025 240)",
+          "oklch(55% 0.15 240)",
+          "oklch(40% 0.18 240)",
+          "oklch(25% 0.18 240)",
+          "oklch(12% 0.15 240)"
+        ]
+      },
+      "coral": {
+        "role": "warm-accent",
+        "displayName": "Coral",
+        "canonical": "oklch(58% 0.18 30)",
+        "tonalRamp": [
+          "oklch(95% 0.005 30)",
+          "oklch(85% 0.02 30)",
+          "oklch(70% 0.04 30)",
+          "oklch(58% 0.18 30)",
+          "oklch(45% 0.22 30)",
+          "oklch(30% 0.21 30)",
+          "oklch(15% 0.15 30)"
+        ]
+      },
+      "warm-amber": {
+        "role": "warm-accent-alt",
+        "displayName": "Amber",
+        "canonical": "oklch(62% 0.15 70)",
+        "tonalRamp": [
+          "oklch(95% 0.005 70)",
+          "oklch(85% 0.02 70)",
+          "oklch(70% 0.04 70)",
+          "oklch(62% 0.15 70)",
+          "oklch(45% 0.2 70)",
+          "oklch(30% 0.2 70)",
+          "oklch(15% 0.15 70)"
+        ]
+      },
+      "cloud": {
+        "role": "light-surface",
+        "displayName": "Cloud",
+        "canonical": "oklch(95% 0.002 90)",
+        "tonalRamp": [
+          "oklch(98% 0.0005 90)",
+          "oklch(96% 0.001 90)",
+          "oklch(92% 0.004 90)",
+          "oklch(85% 0.008 90)",
+          "oklch(75% 0.012 90)",
+          "oklch(60% 0.015 90)",
+          "oklch(40% 0.018 90)"
+        ]
+      },
+      "mist": {
+        "role": "light-border",
+        "displayName": "Mist",
+        "canonical": "oklch(88% 0.004 10)",
+        "tonalRamp": [
+          "oklch(95% 0.001 10)",
+          "oklch(90% 0.003 10)",
+          "oklch(80% 0.006 10)",
+          "oklch(65% 0.008 10)",
+          "oklch(50% 0.01 10)",
+          "oklch(30% 0.012 10)",
+          "oklch(15% 0.008 10)"
+        ]
+      },
+      "pale-teal": {
+        "role": "light-accent-surface",
+        "displayName": "Pale Teal",
+        "canonical": "oklch(92% 0.01 165)",
+        "tonalRamp": [
+          "oklch(96% 0.002 165)",
+          "oklch(93% 0.005 165)",
+          "oklch(88% 0.008 165)",
+          "oklch(80% 0.012 165)",
+          "oklch(70% 0.015 165)",
+          "oklch(55% 0.018 165)",
+          "oklch(40% 0.02 165)"
+        ]
+      },
+      "charcoal": {
+        "role": "muted-text",
+        "displayName": "Charcoal",
+        "canonical": "oklch(45% 0.02 210)",
+        "tonalRamp": [
+          "oklch(95% 0.001 210)",
+          "oklch(85% 0.004 210)",
+          "oklch(70% 0.008 210)",
+          "oklch(50% 0.012 210)",
+          "oklch(30% 0.014 210)",
+          "oklch(15% 0.01 210)",
+          "oklch(8% 0.006 210)"
+        ]
+      },
+      "white": {
+        "role": "text-on-dark",
+        "displayName": "White",
+        "canonical": "oklch(100% 0 0)",
+        "tonalRamp": [
+          "oklch(100% 0 0)",
+          "oklch(95% 0.001 0)",
+          "oklch(85% 0.003 0)",
+          "oklch(70% 0.006 0)",
+          "oklch(50% 0.009 0)",
+          "oklch(30% 0.012 0)",
+          "oklch(15% 0.008 0)"
+        ]
+      },
+      "app-bg": {
+        "role": "app-shell-background",
+        "displayName": "App Shell Background",
+        "canonical": "oklch(88% 0.002 40)",
+        "tonalRamp": [
+          "oklch(96% 0.0005 40)",
+          "oklch(90% 0.003 40)",
+          "oklch(80% 0.006 40)",
+          "oklch(60% 0.008 40)",
+          "oklch(40% 0.01 40)",
+          "oklch(20% 0.012 40)",
+          "oklch(10% 0.008 40)"
+        ]
+      },
+      "surface-stroke": {
+        "role": "dark-divider",
+        "displayName": "Surface Stroke",
+        "canonical": "rgba(255, 255, 255, 0.06)",
+        "tonalRamp": [
+          "rgba(255, 255, 255, 0.02)",
+          "rgba(255, 255, 255, 0.04)",
+          "rgba(255, 255, 255, 0.06)",
+          "rgba(255, 255, 255, 0.08)",
+          "rgba(255, 255, 255, 0.1)",
+          "rgba(255, 255, 255, 0.15)",
+          "rgba(255, 255, 255, 0.2)"
+        ]
+      },
+      "brand-gradient-135": {
+        "role": "primary-gradient-angled",
+        "displayName": "Primary Gradient 135°",
+        "canonical": "linear-gradient(135deg, oklch(72% 0.18 165), oklch(58% 0.2 275))",
+        "tonalRamp": []
+      },
+      "brand-gradient-90": {
+        "role": "primary-gradient-horizontal",
+        "displayName": "Primary Gradient 90°",
+        "canonical": "linear-gradient(90deg, oklch(72% 0.18 165), oklch(58% 0.2 275))",
+        "tonalRamp": []
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Landing hero headlines, section titles on landing"
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headers on both landing and app"
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card headings, question text, modal headers"
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraph content on landing and within study areas"
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Button text, form labels, badge/counter text, streak/XP labels"
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "AI-generated transcript blocks, code snippets, token display"
+      },
+      "landing-headline": {
+        "displayName": "Landing Headline",
+        "purpose": "Navbar logo only — SpaceGrotesk @font-face"
+      }
+    },
+    "shadows": [
+      {
+        "name": "Ambient-low",
+        "value": "0 10px 30px rgba(0,0,0,0.2)",
+        "purpose": "Default card hover on light surfaces"
+      },
+      {
+        "name": "Teal-glow-loud",
+        "value": "0 6px 20px rgba(32,201,151,0.5)",
+        "purpose": "Landing CTA button glow and mastery milestone badge"
+      },
+      {
+        "name": "Purple-glow-loud",
+        "value": "0 10px 20px rgba(127,99,244,0.3)",
+        "purpose": "Secondary accent attractor for purple cards and interactive elements"
+      },
+      {
+        "name": "Ambient-large",
+        "value": "0 30px 60px rgba(0,0,0,0.3)",
+        "purpose": "Wider dark-card hover/active focus spread"
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for state transitions (GSAP/CSS)"
+      },
+      {
+        "name": "ease-out-back",
+        "value": "cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        "purpose": "Overshoot for playful confetti/UI pop"
+      },
+      {
+        "name": "lenis-smooth",
+        "value": "Lenis smooth scroll instance",
+        "purpose": "Global smooth scrolling behavior"
+      },
+      {
+        "name": "gsap-stagger",
+        "value": "GSAP staggered hero text animation",
+        "purpose": "Landing hero text entrance effect"
+      },
+      {
+        "name": "wavy-background",
+        "value": "Animated CSS background via GSAP",
+        "purpose": "Landing page ambient wave motion"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ],
+    "components": [
+      {
+        "name": "Primary Button (In-app)",
+        "kind": "button",
+        "refersTo": "button-primary",
+        "description": "Primary action button used throughout the study app (Dashboard, Home, Classroom, Settings)",
+        "html": "<button class=\"ds-btn-primary\">SAVE CHANGES</button>",
+        "css": ".ds-btn-primary { background: #7F63F4; color: #FFFFFF; border-radius: 50px; padding: 12px 32px; font-weight: 600; font-size: 0.75rem; text-transform: none; border: none; transition: background 0.2s ease; } .ds-btn-primary:hover { background: #8BF0BF; transform: translateY(-2px); }"
+      },
+      {
+        "name": "Landing CTA Button",
+        "kind": "button",
+        "refersTo": "button-primary-landing",
+        "description": "Hero call-to-action on the landing page",
+        "html": "<button class=\"ds-btn-primary-landing\">GET STARTED</button>",
+        "css": ".ds-btn-primary-landing { background: linear-gradient(135deg, #20C997, #7F63F4); color: #FFFFFF; border-radius: 50px; padding: 14px 36px; font-weight: 600; border: none; } .ds-btn-primary-landing:hover { box-shadow: 0 6px 20px rgba(32,201,151,0.5); transform: translateY(-2px); transition: all 0.3s ease; }"
+      },
+      {
+        "name": "Landing Outline Button",
+        "kind": "button",
+        "refersTo": "button-outline-landing",
+        "description": "Secondary outline button on the landing page",
+        "html": "<button class=\"ds-btn-outline-landing\">LEARN MORE</button>",
+        "css": ".ds-btn-outline-landing { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #FFFFFF; border-radius: 50px; padding: 10px 24px; font-weight: 500; } .ds-btn-outline-landing:hover { background: rgba(255,255,255,0.05); color: #20C997; }"
+      },
+      {
+        "name": "Study Card (App)",
+        "kind": "card",
+        "refersTo": "card",
+        "description": "Default card used in Dashboard, Home, CSV Study, Video Study, Classroom views",
+        "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Study Session</h3><p class=\"ds-card-body\">Review your progress and continue learning.</p></div>",
+        "css": ".ds-card { background: #FFFFFF; border-radius: 15px; border: 0.5px solid #E1E5EA; padding: 24px; } .ds-card-title { color: #1A2A3A; font-weight: 600; margin-bottom: 12px; } .ds-card-body { color: #6C7A89; line-height: 1.6; }"
+      },
+      {
+        "name": "Landing Card (Feature/Benefit)",
+        "kind": "card",
+        "refersTo": "card-landing",
+        "description": "Feature/benefit card on the landing page",
+        "html": "<div class=\"ds-card-landing\"><h3 class=\"ds-card-title-landing\">Adaptive Learning</h3><p class=\"ds-card-body-landing\">AI tailors each review to your exact needs.</p></div>",
+        "css": ".ds-card-landing { background: #1A2A3A; border-radius: 20px; padding: 24px; } .ds-card-title-landing { color: #FFFFFF; font-weight: 600; margin-bottom: 12px; } .ds-card-body-landing { color: #E0F5EF; line-height: 1.6; }"
+      },
+      {
+        "name": "Navbar (Landing)",
+        "kind": "nav",
+        "refersTo": "navbar-dark",
+        "description": "Fixed top navigation bar on the landing page with backdrop-blur",
+        "html": "<nav class=\"ds-navbar-landing\"><div class=\"ds-logo-landing\"><i class=\"ri-brain-line\"></i><span>RedLin</span></div><ul class=\"ds-nav-links-landing\"><li><a href=\"#features\">Features</a></li><li><a href=\"#benefits\">Benefits</a></li><li><a href=\"#how-it-works\">How It Works</a></li><li><a href=\"#pricing\">Pricing</a></li></ul></nav>",
+        "css": ".ds-navbar-landing { position: fixed; top: 0; left: 0; width: 100%; height: 80px; display: flex; justify-content: space-between; align-items: center; padding: 0 60px; background: rgba(26,42,58,0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.06); z-index: 1000; } .ds-logo-landing { display: flex; align-items: center; gap: 12px; } .ds-logo-landing i { font-size: 28px; } .ds-nav-links-landing { display: flex; gap: 24px; } .ds-nav-links-landing a { color: #FFFFFF; text-decoration: none; font-weight: 500; } .ds-nav-links-landing a:hover { color: #20C997; }"
+      },
+      {
+        "name": "Sidebar (App MiniDrawer)",
+        "kind": "nav",
+        "refersTo": "sidebar",
+        "description": "Left collapsible navigation drawer in the app (Dashboard, Home, etc.)",
+        "html": "<div class=\"ds-sidebar\"><div class=\"ds-sidebar-header\"><h3>Spaces</h3></div><div class=\"ds-sidebar-item ds-sidebar-item-active\">Physics Notes</div><div class=\"ds-sidebar-item\">Math Problems</div></div>",
+        "css": ".ds-sidebar { position: fixed; top: 80px; left: 0; width: 260px; height: calc(100vh - 80px); background: #1e1e1e; border-right: 1px solid rgba(255,255,255,0.06); overflow-y: auto; z-index: 900; padding: 24px 0; } .ds-sidebar-header { padding: 0 24px 16px 24px; margin-bottom: 16px; } .ds-sidebar-header h3 { color: #FFFFFF; font-weight: 600; } .ds-sidebar-item { display: flex; align-items: center; padding: 12px 24px; color: #E1E5EA; cursor: pointer; border-radius: 8px; } .ds-sidebar-item:hover { background: rgba(255,255,255,0.03); } .ds-sidebar-item-active { background: #20C997; color: #FFFFFF; } .ds-sidebar-item-active:hover { background: #2ADFAA; }"
+      }
+    ],
+    "narrative": {
+      "northStar": "The Neural Lab",
+      "overview": "Redlin's visual system is a learning science laboratory where intelligence is being forged — not a sanitized dashboard that tracks it. It lives in deep, calm surfaces (navy #1A2A3A, near-black #07141f, light gray #F5F7FA) sliced open by the teal-to-purple gradient that is the product's brand signature. Teal (#20C997) is the dominant voice — it signals action, progress, correctness, and mastery. Purple (#7F63F4) joins it as an equal partner in the gradient, and stands alone as a secondary accent in the study interface. The warm coral (#FF7E67) and amber (#FFB400) provide contrast and warmth in a system that would otherwise read as purely tech-forward.\n\nThe system operates across two visual registers that share one palette and one motion identity:\n\n1. **The Landing (Persuade):** a cinematic, motion-driven, semi-dark surface with hero gradient, floating blobs, and GSAP-staggered hero text. Deep navy background, frosted-glass navbar (backdrop-blur), and bold teal-purple accents fill the viewport.\n2. **The App Shell (Operate):** a light-gray ground (#e9e9e9) with a dark-themed sidebar, light study cards, and teal-purple accents. Sharper, quieter, no radial gradients — the intelligence shows its work through clean structure and precise color rather than spectacle.\n\nThe motion identity is a settled fact: GSAP + Lenis smooth scroll, the WavyBackground ribbon, canvas-confetti on success milestones, and audio cues (button click, card flip, drop card, UI pop) give every interaction physical presence.\n\nThis system actively rejects three aesthetics: no clinical flat-minimal science-tool corporate, no childish gamification (bright candy colors and cartoon hue), and no generic dark-mode-default (the same dark floor). The anti-reference is: not an AI tool that looks like all the other AI tools.",
+      "keyCharacteristics": [
+        "Teal-first: #20C997 owns the most surface presence — landing CTA, primary app button, selected state, mastery marker, XP indicator.",
+        "Dark + light hybrid: the landing lives on deep navy; the app shell on light gray. Both pull from the same palette family.",
+        "Gradient as signature: the 135deg teal→purple gradient is the brand symbol — deployed at hero CTA, logo mark, progress bar, mastery milestone, but NEVER as a background wash.",
+        "Colored shadows: shadows are sparse here but they glow — teal glow shadows on landing hero buttons and card groups. Every shadow is deliberate, not ambient elevation.",
+        "Motion is the continuum: Lenis smooth scroll, GSAP text animation, canvas-confetti on mastery — these are qualities of the identity, not decoration.",
+        "Sound presence: four cue mp3s (button click, card flip, drop, pop) + the WavyBackground's canvas wave. Removing sound removes 30% of the system's immediate character."
+      ],
+      "rules": [
+        {
+          "name": "The Teal Reserve Rule",
+          "body": "Every screen in the product must carry at least one teal or purple accent element — a button, a marker, a badge, an icon, a divider. An entirely neutral screen should not exist in the codebase.",
+          "section": "colors|typography|layout"
+        },
+        {
+          "name": "The Gradient Moderation Rule",
+          "body": "The 135deg teal→purple gradient is used in only three places: the landing hero CTA button, the logo mark, and the mastery-accomplishment badge. Its rarity is the point — never used as a background wash.",
+          "section": "colors|layout"
+        },
+        {
+          "name": "The Two-Register Separation Rule",
+          "body": "Landing surfaces use navy, gradient, glow. App (dashboard) surfaces use light gray + solid teal or purple — never the gradient. No app surface should contain a rotational or horizontal teal-to-purple gradient container.",
+          "section": "layout|components"
+        }
+      ],
+      "dos": [
+        "Do use the teal→purple gradient only on the landing and on hero/milestone moments in the app — never as a full-container fill.",
+        "Do carry teal or purple as an enduring accent on every screen in the product — boxes, active states, progress indicators.",
+        "Do keep the two visual registers cleanly separate: the landing uses dark navy + gradient + backdrop-shader; the app uses light gray + solid teal/purple.",
+        "Do animate with attention and precision — GSAP or using CSS transitions for all interactive state changes and appearances.",
+        "Do use the color confetti explosion on success/milestone moments to make the loop feel earned and rewarded."
+      ],
+      "donts": [
+        "Do not ever use a flat zero-shadow, zero-radius 'sanitized lab' look anywhere. This system has, can, and will be actively rejects that.",
+        "Do not insert the gradient into the static in-app pages' solid main content area — the text is not allowed; it is: for hero pom-only.",
+        "Do not mix the two registers inside the product — landing colors do not belong in the app shell, and the app-shell gray is not used on the landing.",
+        "Do not remove the frosted-glass blur effect from the landing navbar; it's a characteristic stroke of dark brand identity.",
+        "Do not ship screens that lack a motion identity — even if the screen is static, its hover/transition/tab/expand should carry the motion signature.",
+        "Do not introduce a fresh high-frequency color to the palette without code-safe review — the teal/purple/slate family is the ceiling."
+      ]
+    }
+  }
+}
