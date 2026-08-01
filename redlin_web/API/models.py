@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 
+from .services.llm_encryption import decrypt_api_key, encrypt_api_key
+
 # Create your models here.
 
 class User(models.Model):
@@ -185,6 +187,46 @@ class FeynmanAttempt(models.Model):
         if self.score is not None:
             self.tier = self.classify_tier()
         super().save(*args, **kwargs)
+
+
+class UserLLMSettings(models.Model):
+    """Per-user LLM provider configuration.
+
+    The API key is stored Fernet-encrypted at rest; only ``encrypted_api_key``
+    (ciphertext) ever touches the DB. The ``api_key`` property decrypts in
+    memory for generation calls and encrypts on assignment.
+    """
+
+    PROVIDER_CHOICES = [
+        ("gemini", "Gemini"),
+        ("claude", "Claude (Anthropic)"),
+        ("openai", "OpenAI"),
+        ("ollama", "Ollama"),
+        ("nvidia_nim", "Nvidia NIM"),
+        ("openrouter", "OpenRouter"),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='llm_settings')
+    provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES, default="gemini")
+    encrypted_api_key = models.TextField(blank=True, default="")  # Fernet ciphertext, never served plaintext
+    base_url = models.CharField(max_length=500, blank=True, default="")  # Ollama host / NIM / OpenRouter
+    model_name = models.CharField(max_length=200, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def api_key(self) -> str | None:
+        if not self.encrypted_api_key:
+            return None
+        return decrypt_api_key(self.encrypted_api_key)
+
+    @api_key.setter
+    def api_key(self, value: str | None) -> None:
+        self.encrypted_api_key = encrypt_api_key(value) if value else ""
+
+    def __str__(self) -> str:
+        return f"LLM settings for {self.user.username}"
+
 
 # Suggested UML Diagram Description:
 # 1. User has a one-to-many relationship with Document.
