@@ -145,7 +145,7 @@ const Dashboard = () => {
             <div className="progress-strip" data-role="progress">
               <div className="progress-text">&nbsp;</div>
               <div className="progress-bar-outer">
-                <div className="progress-bar-fill" style={{ '--progress': '0%' }} />
+                <div className="progress-bar-fill" style={{ '--progress': 0 }} />
               </div>
               <div className="progress-text">&nbsp;</div>
             </div>

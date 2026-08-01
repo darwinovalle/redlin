@@ -188,10 +188,12 @@
 .progress-bar-fill {
   position: absolute;
   left: 0; top: 0; bottom: 0;
-  width: var(--progress, 0%);
+  width: 100%;
+  transform: scaleX(var(--progress, 0));
+  transform-origin: left;
   background: #20C997;
   border-radius: 3px;
-  transition: width .3s ease;
+  transition: transform .3s ease;
 }
 
 .study-content-scroll {
