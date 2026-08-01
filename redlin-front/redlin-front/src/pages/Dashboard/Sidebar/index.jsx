@@ -53,11 +53,11 @@ const SidebarShell = styled('div')(() => ({
   borderRight: '1px solid rgba(255,255,255,0.08)',
   zIndex: 10
 }));
-const NavItem = styled('div')(() => ({
-  display: 'flex', alignItems: 'center', padding: '14px 24px', color: 'rgba(255,255,255,0.8)', fontSize: 16, cursor: 'pointer', position: 'relative', transition: 'background .25s,color .25s', userSelect: 'none', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' }, '&.active': { backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' }
+const NavItem = styled('button')(() => ({
+  display: 'flex', alignItems: 'center', width: '100%', padding: '14px 24px', color: 'rgba(255,255,255,0.8)', fontSize: 16, cursor: 'pointer', position: 'relative', transition: 'background .25s,color .25s', userSelect: 'none', background: 'none', border: 'none', textAlign: 'left', fontFamily: 'inherit', lineHeight: 'inherit', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' }, '&.active': { backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' }, '&:focus-visible': { outline: '2px solid #20C997', outlineOffset: '-2px' }
 }));
 const SectionTitle = styled('div')(() => ({ padding: '0 24px', margin: '16px 0 8px', fontSize: 12, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', letterSpacing: 1 }));
-const AddSpaceButton = styled('div')(() => ({ margin: '8px 24px', padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.1)', border: '1px dashed rgba(255,255,255,0.3)', borderRadius: 6, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, cursor: 'pointer', transition: 'background .25s', '&:hover': { backgroundColor: 'rgba(255,255,255,0.15)' } }));
+const AddSpaceButton = styled('button')(() => ({ width: '100%', margin: '8px 24px', padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.1)', border: '1px dashed rgba(255,255,255,0.3)', borderRadius: 6, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, cursor: 'pointer', transition: 'background .25s', fontFamily: 'inherit', '&:hover': { backgroundColor: 'rgba(255,255,255,0.15)' }, '&:focus-visible': { outline: '2px solid #20C997', outlineOffset: '-2px' } }));
 const ItemIcon = styled('span')(() => ({ display: 'inline-flex', marginRight: 16, fontSize: 20, alignItems: 'center', justifyContent: 'center' }));
 const HoverActions = styled('div')(() => ({ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', opacity: 0, transition: 'opacity .2s' }));
 const NestedList = styled('div')(() => ({ paddingLeft: 8 }));
@@ -226,11 +226,11 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
         </div>
         <div style={{ flex:1, overflowY:'auto' }}>
           <div className="nav-section" style={{ marginBottom:24 }}>
-            <NavItem className={isHome?'active':''} onClick={()=>navigate('/home')}>
+            <NavItem type="button" className={isHome?'active':''} onClick={()=>navigate('/home')}>
               <ItemIcon><HomeIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span>Home</span>
             </NavItem>
-            <NavItem onClick={()=>setClassroomOpen(v=>!v)} className={classroomOpen?'active':''}>
+            <NavItem type="button" onClick={()=>setClassroomOpen(v=>!v)} className={classroomOpen?'active':''}>
               <ItemIcon><SchoolIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Classroom Spaces</span>
               {classroomOpen? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
@@ -241,7 +241,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 {classroomError && <Typography sx={{ px:3, py:1, color:'#ff6b6b' }}>{classroomError}</Typography>}
                 {!loadingClassroomSessions && !classroomError && classroomSessions.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No classroom spaces yet.</Typography>}
                 {classroomSessions.map((session)=> { const active = currentClassroomSessionId && String(session.id)===currentClassroomSessionId; return (
-                  <NavItem key={session.id} className={active?'active':''} style={{ paddingLeft:40 }} onClick={()=>navigate(`/classroom/${session.id}`)}>
+                  <NavItem type="button" key={session.id} className={active?'active':''} style={{ paddingLeft:40 }} onClick={()=>navigate(`/classroom/${session.id}`)}>
                     <ItemIcon><MicIcon sx={{ fontSize:18 }} /></ItemIcon>
                     <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{session.title}</span>
                     <span style={{ fontSize:11, opacity:0.6 }}>{session.status}</span>
@@ -249,7 +249,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 );})}
               </NestedList>
             </Collapse>
-            <NavItem onClick={()=>setDocsOpen(v=>!v)} className={docsOpen?'active':''}>
+            <NavItem type="button" onClick={()=>setDocsOpen(v=>!v)} className={docsOpen?'active':''}>
               <ItemIcon><FolderIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Study Documents</span>
               {docsOpen? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
@@ -260,7 +260,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 {fetchError && <Typography sx={{ px:3, py:1, color:'#ff6b6b' }}>Error: {fetchError}</Typography>}
                 {!loadingDocs && !fetchError && userDocuments.length===0 && user && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No documents yet.</Typography>}
                 {userDocuments.map(doc=>{ const active = selectedDocumentId===doc.id || (currentDocSlug && slugify(doc.title||String(doc.id))===currentDocSlug); return (
-                  <NavItem key={doc.id} className={active?'active':''} style={{ paddingLeft:40 }}
+                  <NavItem type="button" key={doc.id} className={active?'active':''} style={{ paddingLeft:40 }}
                     onClick={()=>{ const slug=slugify(doc.title||String(doc.id)); try{ localStorage.setItem('lastDocSlug', slug);}catch{} navigate(`/documents/${slug}`); onDocumentSelect?.(doc.id); }}
                     onMouseEnter={e=>{const a=e.currentTarget.querySelector('.hover-actions'); if(a)a.style.opacity='1';}}
                     onMouseLeave={e=>{const a=e.currentTarget.querySelector('.hover-actions'); if(a)a.style.opacity='0';}}
@@ -275,7 +275,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 );})}
               </NestedList>
             </Collapse>
-            <NavItem onClick={()=>setVideosOpen(v=>!v)} className={videosOpen?'active':''}>
+            <NavItem type="button" onClick={()=>setVideosOpen(v=>!v)} className={videosOpen?'active':''}>
               <ItemIcon><OndemandVideoIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Videos</span>
               {videosOpen? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
@@ -286,7 +286,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 {videoError && <Typography sx={{ px:3, py:1, color:'#ff6b6b' }}>{videoError}</Typography>}
                 {!loadingVideos && !videoError && videos.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No videos yet.</Typography>}
                 {videos.map(v=> { const active = currentVideoId && String(v.id)===currentVideoId; return (
-                  <NavItem key={v.id} className={active?'active':''} style={{ paddingLeft:40 }} onClick={()=>navigate(`/videos/${v.id}`)}>
+                  <NavItem type="button" key={v.id} className={active?'active':''} style={{ paddingLeft:40 }} onClick={()=>navigate(`/videos/${v.id}`)}>
                     <ItemIcon><OndemandVideoIcon sx={{ fontSize:18 }} /></ItemIcon>
                     <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{v.title||v.video_id||'Video '+v.id}</span>
                     <span style={{ fontSize:11, opacity:0.6 }}>{v.processing_status}</span>
@@ -296,7 +296,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </Collapse>
           </div>
           {/* <div className="nav-section">
-            <NavItem onClick={()=>setSheetsOpen(v=>!v)} className={sheetsOpen?'active':''}>
+            <NavItem type="button" onClick={()=>setSheetsOpen(v=>!v)} className={sheetsOpen?'active':''}>
               <ItemIcon><DescriptionIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Study Sheets</span>
               {sheetsOpen? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
@@ -304,7 +304,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             <Collapse in={sheetsOpen} timeout="auto" unmountOnExit>
               <NestedList>
                 {csvImports.length===0 ? <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'rgba(255,255,255,0.6)' }}>No sheets yet.</Typography> : csvImports.map(imp=>{ const name=(imp.filename||'csv').replace(/\.[^/.]+$/, ''); const slug=slugify(name); const active=currentCsvSlug && slug===currentCsvSlug; return (
-                  <NavItem key={imp.id} className={active?'active':''} style={{ paddingLeft:40 }}
+                  <NavItem type="button" key={imp.id} className={active?'active':''} style={{ paddingLeft:40 }}
                     onClick={()=>navigate(`/csv/${slug}?importId=${imp.id}`)}
                     onMouseEnter={e=>{const a=e.currentTarget.querySelector('.hover-actions'); if(a)a.style.opacity='1';}}
                     onMouseLeave={e=>{const a=e.currentTarget.querySelector('.hover-actions'); if(a)a.style.opacity='0';}}
@@ -321,7 +321,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </Collapse>
           </div> */}
           <div className="nav-section">
-            <NavItem onClick={()=>setKanbanOpen(v=>!v)} className={kanbanOpen?'active':''}>
+            <NavItem type="button" onClick={()=>setKanbanOpen(v=>!v)} className={kanbanOpen?'active':''}>
               <ItemIcon><ViewKanbanIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Kanban Tasks</span>
               {kanbanOpen? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
@@ -333,7 +333,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </Collapse>
           </div>
           <div className="nav-section">
-            <NavItem onClick={()=>setStatsOpen(v=>!v)} className={statsOpen?'active':''}>
+            <NavItem type="button" onClick={()=>setStatsOpen(v=>!v)} className={statsOpen?'active':''}>
               <ItemIcon><BarChartIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Stats</span>
               {statsOpen? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
@@ -344,14 +344,14 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
               </NestedList>
             </Collapse>
           </div>
-          <AddSpaceButton onClick={()=>setOpenSampleModal(true)}>
+          <AddSpaceButton type="button" onClick={()=>setOpenSampleModal(true)}>
             <AddIcon sx={{ fontSize:18, mr:1 }} />
             <span>Add Space</span>
           </AddSpaceButton>
           <SectionTitle>Settings</SectionTitle>
-          <NavItem onClick={()=>navigate('/pricing')}><ItemIcon><WorkspacePremiumIcon sx={{ fontSize:20 }}/></ItemIcon><span>Upgrade Plan</span></NavItem>
-          <NavItem onClick={()=>onOpenSettings?.()}><ItemIcon><SettingsIcon sx={{ fontSize:20 }}/></ItemIcon><span>Settings</span></NavItem>
-          <NavItem onClick={onLogout}><ItemIcon><LogoutIcon sx={{ fontSize:20 }}/></ItemIcon><span>Logout</span></NavItem>
+          <NavItem type="button" onClick={()=>navigate('/pricing')}><ItemIcon><WorkspacePremiumIcon sx={{ fontSize:20 }}/></ItemIcon><span>Upgrade Plan</span></NavItem>
+          <NavItem type="button" onClick={()=>onOpenSettings?.()}><ItemIcon><SettingsIcon sx={{ fontSize:20 }}/></ItemIcon><span>Settings</span></NavItem>
+          <NavItem type="button" onClick={onLogout}><ItemIcon><LogoutIcon sx={{ fontSize:20 }}/></ItemIcon><span>Logout</span></NavItem>
         </div>
         <UserProfile>
           <Avatar>{(user?.username || user?.email || 'U?').slice(0,2).toUpperCase()}</Avatar>

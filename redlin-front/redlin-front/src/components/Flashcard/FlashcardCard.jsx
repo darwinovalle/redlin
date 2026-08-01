@@ -33,7 +33,16 @@ const FlashcardCard = ({
     <Card
       elevation={0}
       square
+      role="button"
+      tabIndex={0}
+      aria-pressed={Boolean(isFlipped)}
       onClick={onToggleFlip}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onToggleFlip?.();
+        }
+      }}
       sx={{
         position: 'relative',
         width: '100%',
@@ -55,6 +64,7 @@ const FlashcardCard = ({
         borderRadius: 0,
   isolation: 'isolate',
         '&:hover': { transform: 'scale(1.02)' },
+        '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 4 },
         ...sx,
       }}
     >
