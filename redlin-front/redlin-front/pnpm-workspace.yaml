@@ -1,0 +1,5 @@
+allowBuilds:
+  canvas: true
+  esbuild: true
+  protobufjs: true
+  sharp: true
