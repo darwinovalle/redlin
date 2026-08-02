@@ -39,6 +39,19 @@ export const videoService = {
     return resp.data;
   },
 
+  renameVideo: async (id, title) => {
+    if (!id) throw new Error('id required');
+    if (!title || !title.trim()) throw new Error('title required');
+    const resp = await api.patch(`/video/videos/${id}/`, { title: title.trim() });
+    return resp.data;
+  },
+
+  deleteVideo: async (id) => {
+    if (!id) throw new Error('id required');
+    const resp = await api.delete(`/video/videos/${id}/`);
+    return resp.data;
+  },
+
   getVideoSummary: async (id) => {
     const resp = await api.get(`/video/videos/${id}/summary/`);
     return resp.data; // { id, video, content }

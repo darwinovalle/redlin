@@ -16,7 +16,7 @@ const AppLayout = () => {
       <a href="#main-content" className="skip-link">Skip to content</a>
 
       <MiniDrawer
-        onLogout={() => { logout(); navigate('/login'); }}
+        onLogout={() => { logout(); navigate('/'); }}
         onOpenSettings={() => setSettingsOpen(true)}
       />
 
