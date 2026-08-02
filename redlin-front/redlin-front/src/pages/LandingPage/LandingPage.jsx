@@ -54,7 +54,7 @@ const LandingPage = () => {
                 </div>
                 
                 <div className="nav-links-landing">
-                    <a href="var(--color-warning-faint)tures" className="nav-link-landing magnetic-target-landing">Features</a>
+                    <a href="#features" className="nav-link-landing magnetic-target-landing">Features</a>
                     <a href="#benefits" className="nav-link-landing magnetic-target-landing">Benefits</a>
                     <a href="#how-it-works" className="nav-link-landing magnetic-target-landing">How It Works</a>
                     <a href="#pricing" className="nav-link-landing magnetic-target-landing">Self-Host</a>
@@ -209,6 +209,16 @@ const LandingPage = () => {
                     <div className="timeline-item-landing">
                         <div className="timeline-step-landing">1</div>
                         <div className="timeline-content-landing">
+                            <div className="timeline-mock-landing">
+                                <div className="mock-profile-landing">
+                                    <div className="mock-avatar-landing"></div>
+                                    <div className="mock-lines-landing">
+                                        <div className="mock-line-landing" style={{width: '70%'}}></div>
+                                        <div className="mock-line-landing" style={{width: '50%'}}></div>
+                                        <div className="mock-line-landing" style={{width: '85%'}}></div>
+                                    </div>
+                                </div>
+                            </div>
                             <h3 className="timeline-title-landing">Create Your Profile</h3>
                             <p className="timeline-description-landing">Sign up and complete a comprehensive learning assessment that helps our AI understand your learning style, goals, and preferences.</p>
                         </div>
@@ -216,6 +226,14 @@ const LandingPage = () => {
                     <div className="timeline-item-landing">
                         <div className="timeline-step-landing">2</div>
                         <div className="timeline-content-landing">
+                            <div className="timeline-mock-landing">
+                                <div className="mock-brain-landing">
+                                    <i className="ri-brain-line"></i>
+                                    <div className="mock-node-landing mock-node-a-landing"></div>
+                                    <div className="mock-node-landing mock-node-b-landing"></div>
+                                    <div className="mock-node-landing mock-node-c-landing"></div>
+                                </div>
+                            </div>
                             <h3 className="timeline-title-landing">AI Personalization</h3>
                             <p className="timeline-description-landing">Our advanced algorithms analyze your data to create a customized learning path designed specifically for your needs and objectives.</p>
                         </div>
@@ -223,6 +241,13 @@ const LandingPage = () => {
                     <div className="timeline-item-landing">
                         <div className="timeline-step-landing">3</div>
                         <div className="timeline-content-landing">
+                            <div className="timeline-mock-landing">
+                                <div className="mock-cards-landing">
+                                    <div className="mock-flashcard-landing mock-flashcard-a-landing"></div>
+                                    <div className="mock-flashcard-landing mock-flashcard-b-landing"></div>
+                                    <div className="mock-flashcard-landing mock-flashcard-c-landing"></div>
+                                </div>
+                            </div>
                             <h3 className="timeline-title-landing">Interactive Learning</h3>
                             <p className="timeline-description-landing">Engage with dynamic content that adapts in real-time based on your interactions, ensuring optimal comprehension and retention.</p>
                         </div>
@@ -230,6 +255,15 @@ const LandingPage = () => {
                     <div className="timeline-item-landing">
                         <div className="timeline-step-landing">4</div>
                         <div className="timeline-content-landing">
+                            <div className="timeline-mock-landing">
+                                <div className="mock-chart-landing">
+                                    <div className="mock-bar-landing" style={{height: '40%'}}></div>
+                                    <div className="mock-bar-landing" style={{height: '65%'}}></div>
+                                    <div className="mock-bar-landing" style={{height: '50%'}}></div>
+                                    <div className="mock-bar-landing" style={{height: '80%'}}></div>
+                                    <div className="mock-bar-landing" style={{height: '95%'}}></div>
+                                </div>
+                            </div>
                             <h3 className="timeline-title-landing">Track Progress</h3>
                             <p className="timeline-description-landing">Monitor your advancement through detailed analytics and receive AI-generated insights to continuously improve your learning efficiency.</p>
                         </div>
