@@ -15,9 +15,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   import MicIcon from '@mui/icons-material/Mic';                                                                                                              
   import PauseCircleIcon from '@mui/icons-material/PauseCircle';                                                                                              
   import PlayArrowIcon from '@mui/icons-material/PlayArrow';                                                                                                  
-  import RefreshIcon from '@mui/icons-material/Refresh';                                                                                                      
-  import UploadFileIcon from '@mui/icons-material/UploadFile';                                                                                                
-  import ReactMarkdown from 'react-markdown';                                                                                                                 
+  import RefreshIcon from '@mui/icons-material/Refresh';
+  import UploadFileIcon from '@mui/icons-material/UploadFile';
+  import DescriptionIcon from '@mui/icons-material/Description';
+  import CloseIcon from '@mui/icons-material/Close';
+  import IconButton from '@mui/material/IconButton';
+  import Dialog from '@mui/material/Dialog';
+  import DialogContent from '@mui/material/DialogContent';
+  import ReactMarkdown from 'react-markdown';
   import remarkGfm from 'remark-gfm';                                                                                                                         
   import { classroomService } from '../../services/api/classroom';                                                                                            
   import ClassroomQuiz from '../../components/Classroom/ClassroomQuiz';
@@ -77,8 +82,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
       },
     };
 
-    const [activeTab, setActiveTab] = useState(0);                                                                                                            
-    const tabs = ['Summary', 'MCQs', 'Clozes', 'Feynman'];
+    const [activeTab, setActiveTab] = useState(0);
+    const [transcriptOpen, setTranscriptOpen] = useState(false);
+    const tabs = ['MCQs', 'Clozes', 'Feynman'];
 
     const mediaRecorderRef = useRef(null);                                                                                                                    
     const streamRef = useRef(null);                                                                                                                           
@@ -427,14 +433,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
       <div className="classroom-root">                                                                                                                        
         <div className="classroom-mesh classroom-mesh-top" />                                                                                                 
         <div className="classroom-mesh classroom-mesh-bottom" />                                                                                              
-        <div className="classroom-shell">                                                                                                                     
-          <div className="classroom-hero">                                                                                                                    
-            <div>                                                                                                                                             
-              {/* <Chip label={`Session ${session?.id || sessionId}`} color={statusTone(session?.status)} sx={{ mb: 2 }} />                                        */}
-              <Typography variant="h3" className="classroom-title">{session?.title || 'Classroom space'}</Typography>                                         
-              <Typography variant="body1" className="classroom-subtitle">                                                                                     
-                Record the lecture audio, stop when the class ends, then queue the transcription pipeline.                                                    
-              </Typography>                                                                                                                                   
+        <div className="classroom-shell">
+          <div className="classroom-grid">
+            <div className="classroom-column">
+              <div className="classroom-hero">
+            <div>
+              <Typography variant="h3" className="classroom-title">{session?.title || 'Classroom space'}</Typography>
+              <Typography variant="body1" className="classroom-subtitle">
+                Record the lecture audio, stop when the class ends, then queue the transcription pipeline.
+              </Typography>
             </div>                                                                                                                                            
               {!isCompleted && (
               <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">                                                                           
@@ -459,29 +466,46 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               </Button>                                                                                                                                       
               </Stack>
               )}
-          </div>                                                                                                                                              
-                                                                                                                                                              
-          <div className="classroom-grid">                                                                                                                    
-            <Paper className={`classroom-card classroom-card-console ${isCompleted ? 'classroom-card-console-completed' : ''}`} elevation={0}>           
-              <div className="classroom-card-header">                                                                                                         
-                <div>                                                                                                                                         
+          </div>
+
+            <Paper className={`classroom-card classroom-card-console ${isCompleted ? 'classroom-card-console-completed' : ''}`} elevation={0}>
+              <div className="classroom-card-header">
+                <div>
                   <Typography variant="overline" sx={{ letterSpacing: 3, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>{isCompleted ? 'Completed session' : 'Recording console'}</Typography>
-                  <Typography variant="h5" sx={{ color: 'var(--color-white)', mt: 0.5 }}>{isCompleted ? 'Stored transcript' : 'Capture lecture audio'}</Typography>
-                </div>                                                                                                                                        
+                  <Typography variant="h5" sx={{ color: 'var(--color-white)', mt: 0.5 }}>{isCompleted ? 'Summary' : 'Capture lecture audio'}</Typography>
+                </div>
                 {isCompleted ? (
                 <Chip label="Completed" color={statusTone(session?.status)} size="small" sx={statusChipSx} />
                 ) : (
                 <Chip icon={recording ? <FiberManualRecordIcon /> : undefined} label={recording ? 'Live' : session?.status || 'Idle'}
   color={statusTone(session?.status)} size="small" sx={statusChipSx} />
-                )}                                                                                                                      
-              </div>                                                                                                                                          
+                )}
+              </div>
               {isCompleted ? (
-                <Box sx={{ mt: 2, p: 2.5, borderRadius: 2, bgcolor: 'color-mix(in srgb, var(--color-white) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                  <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>Transcription</Typography>
-                  <Typography variant="body1" sx={{ color: 'var(--color-white)', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
-                    {storedTranscript || 'No transcript available.'}
-                  </Typography>
-                </Box>
+                <>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)' }}>Summary</Typography>
+                    <IconButton
+                      size="small"
+                      aria-label="Show transcript"
+                      onClick={() => setTranscriptOpen(true)}
+                      title="Show transcription"
+                      sx={{
+                        ml: 'auto',
+                        color: 'color-mix(in srgb, var(--color-white) 70%, transparent)',
+                        '&:hover': { color: 'var(--color-white)', backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)' },
+                      }}
+                    >
+                      <DescriptionIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                  <Box
+                    className="classroom-markdown"
+                    sx={{ mt: 1.5, flex: 1, minHeight: 0, overflowY: 'auto', pr: 1 }}
+                  >
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{results?.summary?.content || 'No summary available.'}</ReactMarkdown>
+                  </Box>
+                </>
               ) : (
                 <>
               <div className="classroom-wave" data-active={recording ? 'true' : 'false'}>                                                                     
@@ -515,9 +539,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               </Stack>                                                                                                                                         
                 </>
               )}
-            </Paper>                                                                                                                                          
-                                                                                                                                                              
-            <Paper className="classroom-card classroom-card-output" elevation={0}>                                                                           
+            </Paper>
+            </div>
+
+            <Paper className="classroom-card classroom-card-output" elevation={0}>
               <div className="classroom-card-header">                                                                                                         
                 <div>                                                                                                                                         
                   <Typography variant="overline" sx={{ letterSpacing: 3, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>Generated study space</Typography>                
@@ -551,32 +576,24 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                 </Box>                                                                                                                                        
                                                                                                                                                               
                 <div className="classroom-tab-content" style={{ mt: 2 }}>                                                                                     
-                  {results ? (                                                                                                                                
-                    <>                                                                                                                                        
-                      {activeTab === 0 && (                                                                                                                   
-                        <div className="classroom-output-block">                                                                                              
-                          <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>Summary</Typography>                                 
-                          <div className="classroom-markdown">                                                                                                
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{results.summary?.content || 'No summary available.'}</ReactMarkdown>                  
-                          </div>                                                                                                                              
-                        </div>                 
-                      )}                                                                                                                                      
-                      {activeTab === 1 && (                                                                                                                   
-                        <div className="classroom-output-block">                                                                                              
-                          <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>MCQs ({results.mcqs?.length || 0})</Typography>      
+                  {results ? (
+                    <>
+                      {activeTab === 0 && (
+                        <div className="classroom-output-block">
+                          <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>MCQs ({results.mcqs?.length || 0})</Typography>
                           <ClassroomQuiz mcqs={results.mcqs} />
-                        </div>                                                                                                                                
-                      )}                                                                                                                                      
-                      {activeTab === 2 && (                                                                                                                   
-                        <div className="classroom-output-block">                                                                                              
+                        </div>
+                      )}
+                      {activeTab === 1 && (
+                        <div className="classroom-output-block">
                           <ClassroomClozePanel clozes={results.clozes} />
-                        </div>                                                                                                                                
-                      )}                                                                                                                                      
-                      {activeTab === 3 && (                                                                                                                   
-                        <div className="classroom-output-block">                                                                                              
+                        </div>
+                      )}
+                      {activeTab === 2 && (
+                        <div className="classroom-output-block">
                           <ClassroomFeynmanPanel sessionId={session.id} prompts={results.feynmans} />
-                        </div>                                                                                                                                
-                      )}                                                                                                                                      
+                        </div>
+                      )}
                     </>                                                                                                                                       
                   ) : (                                                                                                                                       
                     <div className="classroom-empty-state">                                                                                                   
@@ -588,10 +605,42 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                 </div>                                                                                                                                        
               </div>                                                                                                                                          
             </Paper>                                                                                                                                          
-          </div>                                                                                                                                              
-        </div>                                                                                                                                                
-      </div>                                                                                                                                                  
-    );                                                                                                                                                        
-  };                                                                                                                                                          
-                                                                                                                                                              
+          </div>
+
+          <Dialog
+            open={transcriptOpen}
+            onClose={() => setTranscriptOpen(false)}
+            fullWidth
+            maxWidth="md"
+            PaperProps={{
+              style: { backgroundColor: '#1A2A3A' },
+              sx: {
+                borderRadius: '20px',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+                overflow: 'hidden',
+              },
+            }}
+            slotProps={{
+              backdrop: { sx: { backgroundColor: 'color-mix(in srgb, var(--color-black) 60%, transparent)' } },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2.25, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <Typography sx={{ color: 'white', fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>
+                Transcription
+              </Typography>
+              <IconButton onClick={() => setTranscriptOpen(false)} size="small" sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <DialogContent sx={{ p: 3, maxHeight: '70vh' }}>
+              <Typography variant="body1" sx={{ color: 'var(--color-white)', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
+                {storedTranscript || 'No transcript available.'}
+              </Typography>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+    );
+  };
+
 export default Classroom;      

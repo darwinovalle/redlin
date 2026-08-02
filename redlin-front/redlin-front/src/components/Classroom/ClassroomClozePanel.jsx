@@ -140,7 +140,7 @@ const ClassroomClozePanel = ({ clozes }) => {
         </Typography>
       </Box>
 
-      <Stack spacing={2}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2, alignItems: 'start' }}>
         {practiceClozes.map((cloze) => (
           <ClassroomClozeCard
             key={cloze.id}
@@ -149,7 +149,7 @@ const ClassroomClozePanel = ({ clozes }) => {
             onResult={handleResult}
           />
         ))}
-      </Stack>
+      </Box>
     </Box>
   );
 };

@@ -36,8 +36,13 @@
   position: relative;
   z-index: 1;
   max-width: 1600px;
+  height: 100vh;
   margin: 0 auto;
   padding: 28px 28px 40px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .classroom-hero {
@@ -46,6 +51,7 @@
   justify-content: space-between;
   gap: 24px;
   margin-bottom: 24px;
+  flex-shrink: 0;
 }
 
 .classroom-title {
@@ -64,8 +70,25 @@
 
 .classroom-grid {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
+  grid-template-columns: 1fr 1.05fr;
   gap: 18px;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+/* Left column stacks the hero on top of the Summary/console card. */
+.classroom-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+}
+
+/* When a session is completed, the left card hosts the Summary + keeps
+   a balanced reading column next to the study tabs. */
+.classroom-card-console-completed .classroom-markdown {
+  font-size: 0.96rem;
 }
 
 .classroom-card {
@@ -76,26 +99,27 @@
   box-shadow: 0 24px 70px color-mix(in srgb, var(--color-black) 32%, transparent) !important;
   padding: 24px;
   color: var(--color-white);
-  min-height: 74vh;
+  min-height: 0;
 }
 
 .classroom-card-console {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .classroom-card-console-completed {
-  height: 74vh;
-  justify-content: flex-start;
   gap: 18px;
-  overflow: hidden;
 }
 
 .classroom-card-output {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  overflow: hidden;
 }
 
 .classroom-card-header {
