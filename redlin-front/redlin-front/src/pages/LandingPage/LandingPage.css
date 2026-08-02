@@ -501,12 +501,13 @@ section[id] {
 }
 
 .features-container-landing {
-    display: inline-flex; /* Cambiado a inline-flex */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 40px;
-    padding: 20px 60px; /* Añadido padding para que no se pegue a los bordes */
-    overflow-x: auto;
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    padding: 20px 0;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
 }
 
 .features-container-landing::-webkit-scrollbar {
@@ -519,7 +520,8 @@ section[id] {
     border: 1px solid color-mix(in srgb, var(--color-white) 10%, transparent);
     border-radius: 20px;
     padding: 40px;
-    flex: 0 0 300px;
+    min-width: 250px;
+    max-width: 350px;
     text-align: center;
     transition: all 0.3s ease;
     position: relative;
@@ -560,7 +562,6 @@ section[id] {
 .feature-card-landing {
     /* ...existing code... */
     padding: 40px;
-    flex: 0 0 300px; /* Asigna una base de 300px, sin encogerse ni crecer */
     text-align: center;
     transition: all 0.3s ease;
 }
