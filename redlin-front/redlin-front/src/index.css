@@ -433,3 +433,38 @@ body{
   outline: 2px solid var(--color-teal);
   outline-offset: -2px;
 }
+
+/* ============================================================
+   Unified minimalist scrollbar (all browsers)
+   Thin rounded gray thumb over a transparent track — no solid
+   white background. Firefox uses scrollbar-width/scrollbar-color;
+   Chrome/Edge/Safari use the ::-webkit-* pseudo-elements.
+   ============================================================ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-text-dim) 55%, transparent) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--color-text-dim) 50%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--color-text-dim) 75%, transparent);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
