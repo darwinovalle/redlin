@@ -354,7 +354,9 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             <span>Add Space</span>
           </AddSpaceButton>
           <SectionTitle>Settings</SectionTitle>
-          <NavItem type="button" onClick={()=>navigate('/pricing')}><ItemIcon><WorkspacePremiumIcon sx={{ fontSize:20 }}/></ItemIcon><span>Upgrade Plan</span></NavItem>
+          {/* TODO: Re-enable when SaaS/Stripe launches — see MVP scope.
+          <NavItem type="button" onClick={()=>navigate('/pricing')}><ItemIcon><WorkspacePremiumIcon sx={{ fontSize:20 }}/></ItemIcon><span>Upgrade Plan</span></NavItem> */}
+
           <NavItem type="button" onClick={()=>onOpenSettings?.()}><ItemIcon><SettingsIcon sx={{ fontSize:20 }}/></ItemIcon><span>Settings</span></NavItem>
           <NavItem type="button" onClick={onLogout}><ItemIcon><LogoutIcon sx={{ fontSize:20 }}/></ItemIcon><span>Logout</span></NavItem>
         </div>

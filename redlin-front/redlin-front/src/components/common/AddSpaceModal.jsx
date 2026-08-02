@@ -100,14 +100,23 @@ const AddSpaceModal = ({
       onClose={onClose}
       maxWidth={false}
       PaperProps={{
+        style: {
+          backgroundColor: '#1A2A3A',
+        },
         sx: {
-          width: { xs: '96vw', sm: '94vw', md: 1080, lg: 1200 },
-          maxWidth: '96vw',
-          minHeight: { xs: 600, md: 700, lg: 800 },
-          borderRadius: 4,
-          boxShadow: 20,
+          width: { xs: '92vw', sm: 520, md: 580 },
+          maxWidth: '92vw',
+          minHeight: { xs: 400, md: 440 },
+          borderRadius: '20px',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
           overflow: 'hidden',
-          backgroundColor: 'var(--color-black)', // forced for visual verification
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            background: 'transparent',
+            pointerEvents: 'none',
+          },
         },
       }}
       slotProps={{
@@ -127,9 +136,9 @@ const AddSpaceModal = ({
             top: 12,
             zIndex: 2,
             p: 0.5,
-            color: 'text.secondary',
+            color: 'var(--color-text-muted-on-dark)',
             backgroundColor: 'transparent',
-            '&:hover': { backgroundColor: 'transparent', color: 'text.secondary' },
+            '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)', color: 'var(--color-white)' },
             '&:active': { backgroundColor: 'transparent' },
             '&:focus': { outline: 'none' },
           }}
@@ -148,25 +157,28 @@ const AddSpaceModal = ({
           }}
         >
           {/* Left menu */}
-          <Box sx={{ width: { xs: 250, md: 280 }, p: { xs: 2, md: 3 } }}>
+          <Box sx={{ width: { xs: 180, md: 200 }, p: { xs: 1.5, md: 2 } }}>
             <List dense disablePadding>
               {options.map((opt) => (
-                <ListItem key={opt.key} disablePadding sx={{ mb: 1 }}>
+                <ListItem key={opt.key} disablePadding sx={{ mb: 0.5 }}>
                   <ListItemButton
                     selected={selected === opt.key}
                     onClick={() => setSelected(opt.key)}
                     sx={{
-                      borderRadius: 2,
+                      borderRadius: '10px',
+                      py: 1,
+                      color: 'var(--color-text-muted-on-dark)',
                       '&.Mui-selected': {
-                        backgroundColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)',
+                        backgroundColor: 'rgba(32, 201, 151, 0.15)',
+                        color: 'var(--color-white)',
                       },
                       '&.Mui-selected:hover': {
-                        backgroundColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)',
+                        backgroundColor: 'rgba(32, 201, 151, 0.22)',
                       },
                     }}
                   >
                     <ListItemIcon sx={{ minWidth: 28 }}>{opt.icon}</ListItemIcon>
-                    <ListItemText primaryTypographyProps={{ variant: 'body2' }} primary={opt.label} />
+                    <ListItemText primaryTypographyProps={{ variant: 'body2', sx: { color: 'inherit' } }} primary={opt.label} />
                   </ListItemButton>
                 </ListItem>
               ))}
@@ -174,13 +186,12 @@ const AddSpaceModal = ({
           </Box>
 
           {/* Centered vertical divider with spacing (not full height) */}
-          <Box aria-hidden sx={{ display: 'flex', alignItems: 'center', mx: { xs: 1, md: 2 } }}>
+          <Box aria-hidden sx={{ display: 'flex', alignItems: 'center', mx: { xs: 0.5, md: 1 } }}>
             <Box
               sx={{
                 width: 1,
-                height: { xs: '76%', md: '82%' },
-                bgcolor: 'divider',
-                opacity: 0.25,
+                height: { xs: '70%', md: '75%' },
+                bgcolor: 'rgba(255,255,255,0.08)',
                 borderRadius: 1,
               }}
             />
@@ -196,7 +207,7 @@ const AddSpaceModal = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              p: { xs: 3, md: 6 },
+              p: { xs: 2, md: 3 },
             }}
           >
             {selected === 'document' && (
@@ -205,17 +216,16 @@ const AddSpaceModal = ({
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: 96,
-                  height: 96,
-                  borderRadius: 3,
-                  border: '2px solid',
-                  borderColor: 'divider',
+                  width: 72,
+                  height: 72,
+                  borderRadius: '16px',
+                  border: '2px dashed rgba(255,255,255,0.12)',
                   mb: 2,
                 }}>
-                  <FolderOpenOutlinedIcon sx={{ fontSize: 52 }} />
+                  <FolderOpenOutlinedIcon sx={{ fontSize: 36, color: 'var(--color-text-muted-on-dark)' }} />
                 </Box>
-                <Typography variant="h5" sx={{ mb: 1.5, letterSpacing: 0.2 }}>Choose a File to Import</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+                <Typography variant="h5" sx={{ mb: 1.5, letterSpacing: 0.2, color: 'var(--color-white)' }}>Choose a File to Import</Typography>
+                <Typography variant="body2" sx={{ mb: 2.5, color: 'var(--color-text-muted-on-dark)' }}>
                   Drag and drop your PDF to create the Document space.
                   <br />
                   or
@@ -224,11 +234,13 @@ const AddSpaceModal = ({
                   variant="contained"
                   onClick={handleOpenFile}
                   sx={{
-                    color: 'white',
-                    borderRadius: 2,
+                    color: 'var(--color-navy)',
+                    borderRadius: '12px',
                     px: 3,
-                    backgroundColor: (t) => t.palette.grey[700],
-                    '&:hover': { backgroundColor: (t) => t.palette.grey[600] },
+                    py: 1.2,
+                    background: 'var(--color-teal)',
+                    fontWeight: 600,
+                    '&:hover': { background: 'var(--color-teal-deep)', boxShadow: '0 6px 20px rgba(32, 201, 151, 0.3)' },
                   }}
                 >
                   Import from files
@@ -241,7 +253,7 @@ const AddSpaceModal = ({
                   onChange={(e) => handleFiles(e.target.files)}
                 />
                 {isDragging && (
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+                  <Typography variant="caption" color="var(--color-text-muted-on-dark)" sx={{ display: 'block', mt: 2 }}>
                     Drop the file to import
                   </Typography>
                 )}
@@ -250,8 +262,8 @@ const AddSpaceModal = ({
 
             {selected === 'sheet' && (
               <Box sx={{ textAlign: 'center', maxWidth: 520 }}>
-                <Typography variant="h6" sx={{ mb: 1.5 }}>Import a Sheet</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ mb: 1.5, color: 'var(--color-white)' }}>Import a Sheet</Typography>
+                <Typography variant="body2" color="var(--color-text-muted-on-dark)" sx={{ mb: 2 }}>
                   Drag and drop your sheet file or choose from your files.
                 </Typography>
                 <Button variant="contained" onClick={handleOpenFile}>Choose file</Button>
@@ -267,8 +279,8 @@ const AddSpaceModal = ({
 
             {/* {selected === 'tutorial' && (
               <Box sx={{ textAlign: 'center', maxWidth: 520 }}>
-                <Typography variant="h6" sx={{ mb: 1.5 }}>Create Tutorial</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ mb: 1.5, color: 'var(--color-white)' }}>Create Tutorial</Typography>
+                <Typography variant="body2" color="var(--color-text-muted-on-dark)" sx={{ mb: 2 }}>
                   Start a new tutorial space.
                 </Typography>
                 <Button variant="contained" onClick={onCreateTutorial}>Create</Button>
@@ -277,8 +289,8 @@ const AddSpaceModal = ({
 
             {selected === 'video' && (
               <Box sx={{ maxWidth: 520, width: '100%' }}>
-                <Typography variant="h6" sx={{ mb: 1.5 }}>Add a YouTube Video</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ mb: 1.5, color: 'var(--color-white)' }}>Add a YouTube Video</Typography>
+                <Typography variant="body2" color="var(--color-text-muted-on-dark)" sx={{ mb: 2 }}>
                   Paste a YouTube URL. We will fetch transcript, summary and MCQs.
                 </Typography>
                 <Box component="form" onSubmit={(e)=>{e.preventDefault(); onCreateVideo?.({ url: videoUrl.trim(), languages: videoLangs.split(',').map(l=>l.trim()).filter(Boolean) });}}>
@@ -327,8 +339,8 @@ const AddSpaceModal = ({
 
             {selected === 'classroom' && (
               <Box sx={{ maxWidth: 520, width: '100%' }}>
-                <Typography variant="h6" sx={{ mb: 1.5 }}>Create a Classroom Space</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ mb: 1.5, color: 'var(--color-white)' }}>Create a Classroom Space</Typography>
+                <Typography variant="body2" color="var(--color-text-muted-on-dark)" sx={{ mb: 2 }}>
                   Start a dedicated space for a live class recording. After you stop, you can process the transcription.
                 </Typography>
                 <Box component="form" onSubmit={(e) => { e.preventDefault(); onCreateClassroom?.({ title: classroomTitle.trim(), language: classroomLanguage.trim() || 'es' }); }}>
@@ -377,8 +389,8 @@ const AddSpaceModal = ({
 
             {selected === 'kanban' && (
               <Box sx={{ textAlign: 'center', maxWidth: 520 }}>
-                <Typography variant="h6" sx={{ mb: 1.5 }}>Create Kanban Task</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ mb: 1.5, color: 'var(--color-white)' }}>Create Kanban Task</Typography>
+                <Typography variant="body2" color="var(--color-text-muted-on-dark)" sx={{ mb: 2 }}>
                   Start a new kanban task space.
                 </Typography>
                 <Button variant="contained" onClick={onCreateKanban}>Create</Button>
