@@ -6,7 +6,10 @@ import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import MenuIcon from '@mui/icons-material/Menu';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
@@ -15,11 +18,9 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import HomeIcon from '@mui/icons-material/Home';
-import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
-import EditIcon from '@mui/icons-material/Edit';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import AddIcon from '@mui/icons-material/Add';
 import SchoolIcon from '@mui/icons-material/School';
@@ -34,6 +35,7 @@ import { csvService } from '../../../services/api/csv';
 import LoaderOverlay from '../../../components/common/LoaderOverlay';
 import SuccessAlert from '../../../components/common/SuccessAlert';
 import RenameDialog from '../../../components/common/RenameDialog';
+import ConfirmDialog from '../../../components/common/ConfirmDialog';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const SIDEBAR_WIDTH = 288;
@@ -63,10 +65,60 @@ const NavItem = styled('button')(() => ({
 const SectionTitle = styled('div')(() => ({ padding: '0 24px', margin: '16px 0 8px', fontSize: 12, textTransform: 'uppercase', color: 'color-mix(in srgb, var(--color-white) 50%, transparent)', letterSpacing: 1 }));
 const AddSpaceButton = styled('button')(() => ({ width: '82%', margin: '8px 24px', padding: '10px 16px', backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', border: '1px dashed color-mix(in srgb, var(--color-white) 30%, transparent)', borderRadius: 6, color: 'var(--color-white)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, cursor: 'pointer', transition: 'background .25s', fontFamily: 'inherit', '&:hover': { backgroundColor: 'color-mix(in srgb, var(--color-white) 15%, transparent)' }, '&:focus-visible': { outline: '2px solid var(--color-teal)', outlineOffset: '-2px' } }));
 const ItemIcon = styled('span')(() => ({ display: 'inline-flex', marginRight: 16, fontSize: 20, alignItems: 'center', justifyContent: 'center' }));
-const HoverActions = styled('div')(() => ({ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', opacity: 0, transition: 'opacity .2s' }));
 const NestedList = styled('div')(() => ({ paddingLeft: 8 }));
 const UserProfile = styled('div')(() => ({ padding: '16px 24px', borderTop: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', display: 'flex', alignItems: 'center' }));
 const Avatar = styled('div')(() => ({ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--color-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 12, fontWeight: 500, fontSize: 14 }));
+
+// Reusable 3-dot kebab menu for sidebar items (Rename / Delete).
+const ItemMenu = ({ onRename, onDelete }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const handleOpen = (e) => { e.stopPropagation(); setAnchorEl(e.currentTarget); };
+  const handleClose = (e) => { e?.stopPropagation?.(); setAnchorEl(null); };
+  return (
+    <>
+      <IconButton
+        size="small"
+        aria-label="Item options"
+        onClick={handleOpen}
+        sx={{
+          color: 'color-mix(in srgb, var(--color-white) 70%, transparent)',
+          '&:hover': { color: 'var(--color-white)', backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)' },
+          '&:focus-visible': { outline: '2px solid var(--color-teal)', outlineOffset: '-2px' },
+        }}
+      >
+        <MoreVertIcon fontSize="small" />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 0.5,
+              borderRadius: 2,
+              minWidth: 150,
+              backgroundColor: 'var(--color-navy-700)',
+              color: 'var(--color-white)',
+              border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)',
+              boxShadow: '0 18px 48px color-mix(in srgb, var(--color-black) 40%, transparent)',
+            },
+          },
+        }}
+      >
+        <MenuItem onClick={(e) => { e.stopPropagation(); handleClose(); onRename?.(); }} sx={{ fontSize: 14, '&:hover': { backgroundColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' } }}>
+          Rename
+        </MenuItem>
+        <MenuItem onClick={(e) => { e.stopPropagation(); handleClose(); onDelete?.(); }} sx={{ fontSize: 14, color: 'var(--color-danger-soft)', '&:hover': { backgroundColor: 'color-mix(in srgb, var(--color-danger-softer) 14%, transparent)' } }}>
+          Delete
+        </MenuItem>
+      </Menu>
+    </>
+  );
+};
 
 export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDocumentDelete, onLogout, onOpenSettings }) {
   const [loading, setLoading] = useState(false);
@@ -106,6 +158,9 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [openSampleModal,setOpenSampleModal]=useState(false);
   const [renameState,setRenameState]=useState({open:false,doc:null,saving:false});
   const [renameSheetState,setRenameSheetState]=useState({open:false,imp:null,saving:false});
+  const [renameVideoState,setRenameVideoState]=useState({open:false,video:null,saving:false});
+  const [renameClassState,setRenameClassState]=useState({open:false,session:null,saving:false});
+  const [confirmState,setConfirmState]=useState({open:false,title:'',message:'',onConfirm:null,confirming:false});
   const [error,setError]=useState(null);
   const slugify = (str)=> (str||'').toString().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-').replace(/-+/g,'-');
   const fetchUserDocuments=async()=>{ if(!user?.id){setUserDocuments([]);return;} setLoadingDocs(true); setFetchError(null); try{ const docs=await documentService.getUserDocuments(user.id); setUserDocuments(docs);}catch(e){ setFetchError(e?.message||'Could not load documents'); } finally { setLoadingDocs(false);} };
@@ -143,8 +198,19 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       }                                                                                                                                                       
     }; 
   const uploadFile=async(file)=>{ if(!file||!user?.id) return; setLoading(true); setError(null); try{ await documentService.uploadDocument(file,user.id); await fetchUserDocuments(); setSuccessAlertOpen(true);}catch(e){ setError(e?.error||'Upload failed'); } finally { setLoading(false);} };
-  const handleDeleteDocument=async(doc)=>{ if(!window.confirm('Delete this document?')) return; try{ await documentService.deleteDocument(doc.id); setUserDocuments(d=>d.filter(x=>x.id!==doc.id)); if(currentDocSlug && slugify(doc.title||String(doc.id))===currentDocSlug) navigate('/home'); }catch{ alert('Failed to delete'); } };
-  const handleDeleteSheet=async(imp)=>{ if(!window.confirm('Delete this sheet?')) return; try{ await csvService.deleteImport(imp.id); setCsvImports(s=>s.filter(x=>x.id!==imp.id)); }catch{ alert('Failed to delete sheet'); } };
+  const openConfirm=({title,message,onConfirm})=> setConfirmState({open:true,title,message,onConfirm,confirming:false});
+  const closeConfirm=()=> setConfirmState({open:false,title:'',message:'',onConfirm:null,confirming:false});
+  const runConfirm=async()=>{ if(!confirmState.onConfirm) return; try{ setConfirmState(s=>({...s,confirming:true})); await confirmState.onConfirm(); closeConfirm(); }catch{ closeConfirm(); alert('Failed to delete'); } };
+  const handleDeleteDocument=(doc)=> openConfirm({ title:'Delete document?', message:`Are you sure you want to delete "${doc.title}"? This cannot be undone.`, onConfirm:async()=>{ await documentService.deleteDocument(doc.id); setUserDocuments(d=>d.filter(x=>x.id!==doc.id)); if(currentDocSlug && slugify(doc.title||String(doc.id))===currentDocSlug) navigate('/home'); } });
+  const handleDeleteSheet=(imp)=> openConfirm({ title:'Delete sheet?', message:`Are you sure you want to delete "${imp.filename}"? This cannot be undone.`, onConfirm:async()=>{ await csvService.deleteImport(imp.id); setCsvImports(s=>s.filter(x=>x.id!==imp.id)); } });
+  const openRenameVideo=(v)=> setRenameVideoState({open:true,video:v,saving:false});
+  const closeRenameVideo=()=> setRenameVideoState({open:false,video:null,saving:false});
+  const submitRenameVideo=async(newTitle)=>{ if(!renameVideoState.video) return; try{ setRenameVideoState(s=>({...s,saving:true})); await videoService.renameVideo(renameVideoState.video.id,newTitle); setVideos(d=>d.map(x=>x.id===renameVideoState.video.id?{...x,title:newTitle}:x)); closeRenameVideo(); }catch(e){ setError(e?.error||'Rename failed'); setRenameVideoState(s=>({...s,saving:false})); } };
+  const handleDeleteVideo=(v)=> openConfirm({ title:'Delete video?', message:`Are you sure you want to delete "${v.title||v.video_id||'this video'}"? This cannot be undone.`, onConfirm:async()=>{ await videoService.deleteVideo(v.id); setVideos(d=>d.filter(x=>x.id!==v.id)); } });
+  const openRenameClass=(s)=> setRenameClassState({open:true,session:s,saving:false});
+  const closeRenameClass=()=> setRenameClassState({open:false,session:null,saving:false});
+  const submitRenameClass=async(newTitle)=>{ if(!renameClassState.session) return; try{ setRenameClassState(s=>({...s,saving:true})); await classroomService.renameSession(renameClassState.session.id,newTitle); setClassroomSessions(d=>d.map(x=>x.id===renameClassState.session.id?{...x,title:newTitle}:x)); closeRenameClass(); }catch(e){ setError(e?.error||'Rename failed'); setRenameClassState(s=>({...s,saving:false})); } };
+  const handleDeleteClass=(s)=> openConfirm({ title:'Delete classroom space?', message:`Are you sure you want to delete "${s.title}"? This cannot be undone.`, onConfirm:async()=>{ await classroomService.deleteSession(s.id); setClassroomSessions(d=>d.filter(x=>x.id!==s.id)); } });
   useEffect(() => {
     sidebarStateHydratedRef.current = false;
 
@@ -250,6 +316,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                     <ItemIcon><MicIcon sx={{ fontSize:18 }} /></ItemIcon>
                     <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{session.title}</span>
                     <span style={{ fontSize:11, opacity:0.6 }}>{session.status}</span>
+                    <ItemMenu onRename={()=>openRenameClass(session)} onDelete={()=>handleDeleteClass(session)} />
                   </NavItem>
                 );})}
               </NestedList>
@@ -267,15 +334,10 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 {userDocuments.map(doc=>{ const active = selectedDocumentId===doc.id || (currentDocSlug && slugify(doc.title||String(doc.id))===currentDocSlug); return (
                   <NavItem type="button" key={doc.id} className={active?'active':''} style={{ paddingLeft:40 }}
                     onClick={()=>{ const slug=slugify(doc.title||String(doc.id)); try{ localStorage.setItem('lastDocSlug', slug);}catch{} navigate(`/documents/${slug}`); onDocumentSelect?.(doc.id); }}
-                    onMouseEnter={e=>{const a=e.currentTarget.querySelector('.hover-actions'); if(a)a.style.opacity='1';}}
-                    onMouseLeave={e=>{const a=e.currentTarget.querySelector('.hover-actions'); if(a)a.style.opacity='0';}}
                   >
                     <ItemIcon><InsertDriveFileIcon sx={{ fontSize:18 }} /></ItemIcon>
                     <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{doc.title}</span>
-                    <HoverActions className="hover-actions">
-                      <IconButton size="small" onClick={(e)=>{e.stopPropagation(); openRename(doc);}} sx={{ color:'color-mix(in srgb, var(--color-white) 70%, transparent)' }}><EditIcon fontSize="inherit" /></IconButton>
-                      <IconButton size="small" onClick={(e)=>{e.stopPropagation(); handleDeleteDocument(doc);}} sx={{ color:'var(--color-danger-soft)' }}><DeleteIcon fontSize="inherit" /></IconButton>
-                    </HoverActions>
+                    <ItemMenu onRename={()=>openRename(doc)} onDelete={()=>handleDeleteDocument(doc)} />
                   </NavItem>
                 );})}
               </NestedList>
@@ -295,6 +357,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                     <ItemIcon><OndemandVideoIcon sx={{ fontSize:18 }} /></ItemIcon>
                     <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{v.title||v.video_id||'Video '+v.id}</span>
                     <span style={{ fontSize:11, opacity:0.6 }}>{v.processing_status}</span>
+                    <ItemMenu onRename={()=>openRenameVideo(v)} onDelete={()=>handleDeleteVideo(v)} />
                   </NavItem>
                 );})}
               </NestedList>
@@ -417,6 +480,16 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       />
       <RenameDialog open={renameState.open} initialValue={renameState.doc?.title || ''} onClose={closeRename} onSubmit={submitRename} submitting={renameState.saving} />
       <RenameDialog open={renameSheetState.open} initialValue={(renameSheetState.imp?.filename || '').replace(/\.[^/.]+$/, '')} onClose={closeRenameSheet} onSubmit={submitRenameSheet} submitting={renameSheetState.saving} title="Rename Sheet" label="Sheet name" />
+      <RenameDialog open={renameVideoState.open} initialValue={renameVideoState.video?.title || ''} onClose={closeRenameVideo} onSubmit={submitRenameVideo} submitting={renameVideoState.saving} title="Rename video" label="Video title" />
+      <RenameDialog open={renameClassState.open} initialValue={renameClassState.session?.title || ''} onClose={closeRenameClass} onSubmit={submitRenameClass} submitting={renameClassState.saving} title="Rename classroom space" label="Session title" />
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        onConfirm={runConfirm}
+        onClose={closeConfirm}
+        confirming={confirmState.confirming}
+      />
     </>
   );
 }
