@@ -732,17 +732,69 @@ section[id] {
 
 /* How It Works Section */
 .how-it-works-landing {
-    padding: 120px 80px;
+    padding: 64px 80px;
     position: relative;
     background-color: var(--color-navy);
     width: 100%;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.how-it-works-landing::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        repeating-linear-gradient(
+            0deg,
+            color-mix(in srgb, var(--color-white) 4%, transparent) 0px,
+            color-mix(in srgb, var(--color-white) 4%, transparent) 1px,
+            transparent 1px,
+            transparent 32px
+        ),
+        repeating-linear-gradient(
+            90deg,
+            color-mix(in srgb, var(--color-white) 4%, transparent) 0px,
+            color-mix(in srgb, var(--color-white) 4%, transparent) 1px,
+            transparent 1px,
+            transparent 32px
+        );
+    pointer-events: none;
+    z-index: 0;
+    mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        black 15%,
+        black 85%,
+        transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        black 15%,
+        black 85%,
+        transparent 100%
+    );
+}
+
+.how-it-works-landing::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-teal) 35%, transparent) 30%, color-mix(in srgb, var(--color-purple) 35%, transparent) 70%, transparent);
+    pointer-events: none;
+    z-index: 1;
 }
 
 .timeline-landing {
     position: relative;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 40px 0;
+    padding: 16px 0;
+    z-index: 1;
 }
 
 .timeline-landing::before {
@@ -754,14 +806,27 @@ section[id] {
     height: 100%;
     background: linear-gradient(180deg, var(--color-purple), var(--color-teal));
     transform: translateX(-50%);
+    z-index: 0;
+}
+
+.timeline-landing::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-purple) 35%, transparent) 30%, color-mix(in srgb, var(--color-teal) 35%, transparent) 70%, transparent);
+    pointer-events: none;
+    z-index: 0;
 }
 
 .timeline-item-landing {
     position: relative;
     width: 50%;
-    padding: 30px;
+    padding: 20px;
     box-sizing: border-box;
-    margin-bottom: 60px;
+    margin-bottom: 32px;
 }
 
 .timeline-item-landing:nth-child(odd) {
@@ -776,7 +841,7 @@ section[id] {
 
 .timeline-content-landing {
     position: relative;
-    padding: 30px;
+    padding: 20px;
     background: color-mix(in srgb, var(--color-white) 5%, transparent);
     border-radius: 15px;
     transition: all 0.3s ease;
