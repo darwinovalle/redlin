@@ -1185,21 +1185,23 @@ section[id] {
 .final-cta-landing {
     padding: 120px 80px;
     position: relative;
-    background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-purple) 100%);
+    background: linear-gradient(225deg, var(--color-navy) 0%, var(--color-purple) 50%, var(--color-teal) 100%);
     text-align: center;
     overflow: hidden;
     width: 100%;
+    isolation: isolate;
 }
 
-.final-cta-landing::before {
+.final-cta-landing::after {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle at 30% 50%, color-mix(in srgb, var(--color-teal) 30%, transparent) 0%, transparent 70%);
-    z-index: 1;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-teal) 20%, var(--color-purple) 50%, var(--color-teal) 80%, transparent);
+    pointer-events: none;
+    z-index: 0;
 }
 
 .final-cta-content-landing {
