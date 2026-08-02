@@ -22,6 +22,7 @@ const VideoSummary = ({ summary, loading, error }) => {
       position:'relative',
       overflow:'hidden',
       backgroundColor:'var(--color-white)',
+      color:'var(--color-text)',
       '&::before': {
         content:'""',
         position:'absolute',
@@ -40,6 +41,7 @@ const VideoSummary = ({ summary, loading, error }) => {
       <Box sx={{
         lineHeight: 1.6,
         fontSize: '0.95rem',
+        color: 'var(--color-text)',
         '& h1, & h2, & h3, & h4': { fontWeight: 600, mt: 3, mb: 1 },
         '& p': { mb: 2 },
         '& ul': { pl: 3, mb: 2 },

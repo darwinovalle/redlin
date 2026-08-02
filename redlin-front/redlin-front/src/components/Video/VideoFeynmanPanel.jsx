@@ -94,13 +94,13 @@ const VideoFeynmanPanel = ({ videoId }) => {
   }, [currentIndex, sessionActive, sessionFinished, questionDone]);
 
   if (!videoId) {
-    return <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><Typography color="text.secondary">Select a video to start Feynman practice.</Typography></Box>;
+    return <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><Typography sx={{ color: 'var(--color-text)' }}>Select a video to start Feynman practice.</Typography></Box>;
   }
   if (loading) {
     return <Box sx={{ p: 3 }}><Typography>Loading prompts...</Typography></Box>;
   }
   if (!prompts.length) {
-    return <Box sx={{ p: 3 }}><Typography color="text.secondary">No Feynman prompts yet. Generate backend side first.</Typography></Box>;
+    return <Box sx={{ p: 3 }}><Typography sx={{ color: 'var(--color-text)' }}>No Feynman prompts yet. Generate backend side first.</Typography></Box>;
   }
   // Start screen
   if (!sessionActive && !sessionFinished) {

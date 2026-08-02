@@ -66,7 +66,7 @@ const VideoClozePanel = ({ videoId }) => {
     return (
       <Box sx={{ p:4, height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', textAlign:'center', width:'100%', maxWidth:640, mx:'auto' }}>
         <Typography variant="h4" gutterBottom sx={{ fontWeight:'bold' }} color="black">Cloze Practice</Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb:3, maxWidth:520 }}>Ready? This set contains {clozes.length} cloze {clozes.length===1?'item':'items'}. Fill in the blanks accurately. Click start when you're ready.</Typography>
+        <Typography variant="body1" sx={{ mb:3, maxWidth:520, color:'var(--color-text)' }}>Ready? This set contains {clozes.length} cloze {clozes.length===1?'item':'items'}. Fill in the blanks accurately. Click start when you're ready.</Typography>
         <Button variant="contained" size="large" onClick={() => { setClozes(prev => shuffle(prev)); setSessionKey(Date.now()); setStarted(true); }} sx={{ backgroundColor:'var(--color-black)', borderRadius:'20px' }}>Start Cloze Practice</Button>
       </Box>
     );
@@ -88,8 +88,8 @@ const VideoClozePanel = ({ videoId }) => {
   }
 
   return (
-    <Box sx={{ p:2, height:'100%', overflowY:'auto' }}>
-      <Box sx={{ mb:1, px:1, fontSize:12, color:'text.secondary' }}>Progress: {answeredCount} / {total}</Box>
+    <Box sx={{ p:2, height:'100%', overflowY:'auto', color:'var(--color-text)' }}>
+      <Box sx={{ mb:1, px:1, fontSize:12, color:'var(--color-text-dim)' }}>Progress: {answeredCount} / {total}</Box>
       {clozes.map(c => (
         <VideoClozeCard
           key={c.id}

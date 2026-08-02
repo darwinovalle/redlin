@@ -60,7 +60,7 @@ const VideoClozeCard = ({ cloze, onValidate, sessionKey, onResult }) => {
       {displayOptions.length > 0 && (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
           {displayOptions.map((opt, i) => (
-            <Chip key={i} label={opt} onClick={() => { if (result==null) setUserAnswer(opt); }} variant={userAnswer===opt? 'filled':'outlined'} disabled={result!=null} />
+            <Chip key={i} label={opt} onClick={() => { if (result==null) setUserAnswer(opt); }} variant={userAnswer===opt? 'filled':'outlined'} disabled={result!=null} sx={{ color: userAnswer===opt ? 'var(--color-white) !important' : 'var(--color-text) !important', borderColor: userAnswer===opt ? 'var(--color-teal)' : 'var(--color-divider)', bgcolor: userAnswer===opt ? 'var(--color-teal)' : 'transparent' }} />
           ))}
         </Box>
       )}
