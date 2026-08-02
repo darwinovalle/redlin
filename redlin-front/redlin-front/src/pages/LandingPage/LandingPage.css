@@ -448,7 +448,37 @@ section[id] {
     background-color: var(--color-navy);
     overflow: hidden;
     width: 100%;
-    text-align: center; /* Para centrar el contenedor inline-flex */
+    text-align: center;
+    isolation: isolate;
+}
+
+.features-landing::before,
+.features-landing::after {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+    z-index: -1;
+    border-radius: 50%;
+    filter: blur(80px);
+    will-change: transform;
+}
+
+.features-landing::before {
+    width: 520px;
+    height: 520px;
+    top: -120px;
+    left: -120px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-teal) 22%, transparent) 0%, transparent 70%);
+    animation: aura-drift-1 24s ease-in-out infinite alternate;
+}
+
+.features-landing::after {
+    width: 420px;
+    height: 420px;
+    bottom: -100px;
+    right: -80px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-purple) 18%, transparent) 0%, transparent 70%);
+    animation: aura-drift-2 28s ease-in-out infinite alternate;
 }
 
 .section-title-landing {
@@ -570,6 +600,20 @@ section[id] {
     position: relative;
     background-color: var(--color-navy);
     width: 100%;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.benefits-landing::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background-image: radial-gradient(circle 1px at 1px 1px, color-mix(in srgb, var(--color-teal) 10%, transparent) 1px, transparent 1.5px);
+    background-size: 22px 22px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 80%);
 }
 
 .benefits-container-landing {
@@ -809,6 +853,38 @@ section[id] {
     position: relative;
     background-color: var(--color-navy);
     width: 100%;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.testimonials-landing::before {
+    content: '';
+    position: absolute;
+    top: -150px;
+    right: -150px;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-purple) 26%, transparent) 0%, transparent 65%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: -1;
+    animation: aura-drift-3 30s ease-in-out infinite alternate;
+}
+
+.testimonials-landing::after {
+    content: '';
+    position: absolute;
+    bottom: -200px;
+    left: 10%;
+    width: 480px;
+    height: 480px;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-teal) 14%, transparent) 0%, transparent 70%);
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: -1;
+    animation: aura-drift-2 26s ease-in-out infinite alternate-reverse;
 }
 
 .testimonials-container-landing {
@@ -895,6 +971,35 @@ section[id] {
     position: relative;
     background-color: var(--color-navy);
     width: 100%;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.pricing-landing::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 800px;
+    height: 800px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-teal) 10%, transparent) 0%, transparent 60%);
+    filter: blur(70px);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.pricing-landing::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-teal) 30%, transparent) 50%, transparent);
+    pointer-events: none;
+    z-index: 0;
 }
 
 .pricing-container-landing {
@@ -1160,6 +1265,33 @@ section[id] {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@keyframes aura-drift-1 {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        transform: translate(40px, 60px) scale(1.08);
+    }
+}
+
+@keyframes aura-drift-2 {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        transform: translate(-50px, -40px) scale(1.12);
+    }
+}
+
+@keyframes aura-drift-3 {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        transform: translate(-30px, 50px) scale(1.1);
     }
 }
 
