@@ -61,24 +61,14 @@ section[id] {
 .logo-icon-landing {
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, var(--color-teal), var(--color-purple));
+    background: linear-gradient(135deg, var(--color-teal), var(--color-blue));
     border-radius: 10px;
     margin-right: 12px;
     position: relative;
-    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-.logo-icon-landing::before {
-    content: "";
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background: color-mix(in srgb, var(--color-white) 90%, transparent);
-    border-radius: 50%;
-    animation: pulse-landing 2s infinite;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-teal) 30%, transparent);
 }
 
 .logo-icon-landing i {
