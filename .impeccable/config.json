@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "georgia",
+        "createdAt": "2026-08-01T23:42:17.588Z",
+        "reason": "Decorative serif quote glyph on testimonial cards — intentional typographic accent, not body text"
+      }
+    ]
+  }
+}

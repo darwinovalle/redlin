@@ -16,6 +16,7 @@ redlin_web/media/
 node_modules/
 dist/
 build/
+.vite/
 
 # Entornos / IDE
 .venv/
@@ -38,6 +39,11 @@ redlin_web/celerybeat-schedule
 # Claude Code session config / Graphify output
 .claude/
 graphify-out/
+
+# Impeccable design-hook local state (config.json & design.json are tracked)
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/live/
 
 # Misc
 *.log
