@@ -58,3 +58,19 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focu
   .login-form-container { padding:28px 20px; }
   .login-form-container h1, .login-title { font-size:22px; }
 }
+
+/* Password reveal toggle — flex-sibling layout (accepted live variant 2).
+   The eye icon is a real in-flow flex item of the field, so it is never
+   affected by the .input-with-icon i absolute-position rule above. */
+.input-with-icon:has(.toggle-password) { position: relative; display:flex; align-items:center; }
+.input-with-icon:has(.toggle-password) input { flex:1; min-width:0; padding-right:6px; }
+.input-with-icon:has(.toggle-password) .toggle-password {
+  position:static; transform:none;
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px; height:34px;
+  margin-right:8px; flex-shrink:0; border-radius:8px;
+  color:var(--color-text-muted-on-dark); background:transparent; border:none; cursor:pointer;
+  transition:color .2s, background .2s;
+}
+.input-with-icon:has(.toggle-password) .toggle-password i { position:static; transform:none; font-size:18px; line-height:1; }
+.input-with-icon:has(.toggle-password) .toggle-password:hover { color:var(--color-teal); background:color-mix(in srgb, var(--color-white) 6%, transparent); }
