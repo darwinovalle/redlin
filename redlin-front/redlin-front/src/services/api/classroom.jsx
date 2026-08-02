@@ -49,6 +49,19 @@ export const classroomService = {
     return response.data;
   },
 
+  async renameSession(sessionId, title) {
+    if (!sessionId) throw new Error('sessionId is required');
+    if (!title || !title.trim()) throw new Error('title is required');
+    const response = await api.patch(`/classroom/sessions/${sessionId}/`, { title: title.trim() });
+    return response.data;
+  },
+
+  async deleteSession(sessionId) {
+    if (!sessionId) throw new Error('sessionId is required');
+    const response = await api.delete(`/classroom/sessions/${sessionId}/`);
+    return response.data;
+  },
+
   async getFeynmanPrompts(sessionId) {
     if (!sessionId) throw new Error('sessionId is required');
     const response = await api.get(`/classroom/sessions/${sessionId}/feynman/prompts/`);
