@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, Stack } from '@mui/material';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 import { clozeService } from '../../services/api/cloze.jsx';
 import VideoClozeCard from './VideoClozeCard';
@@ -47,27 +47,62 @@ const VideoClozePanel = ({ videoId }) => {
   };
 
   if (!videoId) {
-    return <Box sx={{ p:3, display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}><Typography color="text.secondary">Select a video to practice clozes.</Typography></Box>;
+    return (
+      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Select a video to practice clozes.</Typography>
+      </Box>
+    );
   }
 
   if (loading) {
-    return <Box sx={{ p:3, display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}><img src={GearSvg} alt="Loading" width={30} height={30} /><Typography sx={{ ml:2 }}>Loading Clozes...</Typography></Box>;
+    return (
+      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <img src={GearSvg} alt="Loading" width={30} height={30} />
+        <Typography sx={{ ml: 2, color: 'var(--color-white)' }}>Loading Clozes...</Typography>
+      </Box>
+    );
   }
 
   if (error) {
-    return <Box sx={{ p:3, display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}><Typography color="error">Error: {error}</Typography></Box>;
+    return (
+      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <Typography sx={{ color: 'var(--color-danger-softer)' }}>Error: {error}</Typography>
+      </Box>
+    );
   }
 
   if (!clozes || clozes.length === 0) {
-    return <Box sx={{ p:3, textAlign:'center' }}><Typography color="text.secondary" sx={{ maxWidth:480 }}>This video doesn't have Cloze exercises enabled yet.</Typography></Box>;
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography sx={{ maxWidth: 480, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+          This video doesn't have Cloze exercises enabled yet.
+        </Typography>
+      </Box>
+    );
   }
 
   if (!started) {
     return (
-      <Box sx={{ p:4, height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', textAlign:'center', width:'100%', maxWidth:640, mx:'auto' }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight:'bold' }} color="black">Cloze Practice</Typography>
-        <Typography variant="body1" sx={{ mb:3, maxWidth:520, color:'var(--color-text)' }}>Ready? This set contains {clozes.length} cloze {clozes.length===1?'item':'items'}. Fill in the blanks accurately. Click start when you're ready.</Typography>
-        <Button variant="contained" size="large" onClick={() => { setClozes(prev => shuffle(prev)); setSessionKey(Date.now()); setStarted(true); }} sx={{ backgroundColor:'var(--color-black)', borderRadius:'20px' }}>Start Cloze Practice</Button>
+      <Box sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', textAlign: 'center', width: '100%', maxWidth: 640, mx: 'auto' }}>
+        <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: 'var(--color-white)' }}>Cloze Practice</Typography>
+        <Typography variant="body1" sx={{ mb: 3, maxWidth: 520, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+          Ready? This set contains {clozes.length} cloze {clozes.length === 1 ? 'item' : 'items'}. Fill in the blanks accurately. Click start when you're ready.
+        </Typography>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={() => { setClozes(prev => shuffle(prev)); setSessionKey(Date.now()); setStarted(true); }}
+          sx={{
+            backgroundColor: 'var(--color-success)',
+            borderRadius: '999px',
+            px: 4,
+            color: 'var(--color-navy-deep)',
+            fontWeight: 800,
+            '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+          }}
+        >
+          Start Cloze Practice
+        </Button>
       </Box>
     );
   }
@@ -79,26 +114,51 @@ const VideoClozePanel = ({ videoId }) => {
 
   if (answeredCount === total) {
     return (
-      <Box sx={{ p:4, height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', textAlign:'center' }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight:'bold' }} color="black">Results</Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb:3 }}>Score: {correctCount} / {total}</Typography>
-        <Button variant="contained" onClick={() => { setStarted(false); setSessionKey(Date.now()); }} sx={{ backgroundColor:'var(--color-success)', borderRadius:'20px' }}>Exit</Button>
+      <Box sx={{ p: 3, textAlign: 'center', maxWidth: 760, mx: 'auto' }}>
+        <Stack spacing={2} alignItems="center">
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'var(--color-white)' }}>Results</Typography>
+          <Typography variant="body1" sx={{ color: 'color-mix(in srgb, var(--color-white) 74%, transparent)' }}>Score: {correctCount} / {total}</Typography>
+          <Button
+            variant="contained"
+            onClick={() => { setStarted(false); setSessionKey(Date.now()); }}
+            sx={{
+              borderRadius: 999,
+              px: 4,
+              bgcolor: 'var(--color-success)',
+              color: 'var(--color-navy-deep)',
+              fontWeight: 800,
+              '&:hover': { bgcolor: 'var(--color-teal-pale)' },
+            }}
+          >
+            Restart practice
+          </Button>
+        </Stack>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p:2, height:'100%', overflowY:'auto', color:'var(--color-text)' }}>
-      <Box sx={{ mb:1, px:1, fontSize:12, color:'var(--color-text-dim)' }}>Progress: {answeredCount} / {total}</Box>
-      {clozes.map(c => (
-        <VideoClozeCard
-          key={c.id}
-          cloze={c}
-          onValidate={handleValidate}
-          sessionKey={sessionKey}
-          onResult={({ clozeId, correct }) => setAnsweredMap(prev => prev[clozeId] == null ? { ...prev, [clozeId]: correct } : prev)}
-        />
-      ))}
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2, height: '100%', overflowY: 'auto' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
+        <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', letterSpacing: 2 }}>
+          CLOZES ({total})
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+          Progress: {answeredCount} / {total}
+        </Typography>
+      </Box>
+
+      <Stack spacing={2}>
+        {clozes.map(c => (
+          <VideoClozeCard
+            key={c.id}
+            cloze={c}
+            onValidate={handleValidate}
+            sessionKey={sessionKey}
+            onResult={({ clozeId, correct }) => setAnsweredMap(prev => prev[clozeId] == null ? { ...prev, [clozeId]: correct } : prev)}
+          />
+        ))}
+      </Stack>
     </Box>
   );
 };

@@ -215,7 +215,7 @@ const DocReview = ({ documentId, onReviewChange = () => {} }) => {
             mx: 'auto'
           }}
         >
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }} color="black">
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: 'var(--color-white)' }}>
             Review Your Study Cards
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: '500px' }}>
@@ -228,7 +228,11 @@ const DocReview = ({ documentId, onReviewChange = () => {} }) => {
             size="large" 
             onClick={() => { playClick(); setIsReviewActive(true); }} 
             disabled={studyBatch.length === 0 || loading}
-            sx={{ backgroundColor: 'var(--color-black)', borderRadius: '20px' }}
+            sx={{
+              backgroundColor: 'var(--color-success)', color: 'var(--color-navy-deep)',
+              borderRadius: '999px', px: 4, fontWeight: 700,
+              '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+            }}
           >
             {studyBatch.length > 0 ? 'Start Review' : 'No Cards Due'}
           </Button>
@@ -338,7 +342,7 @@ const DocReview = ({ documentId, onReviewChange = () => {} }) => {
                 }}
               >
                 <Box sx={{ textAlign: 'center' }}>
-                  <Typography sx={{ fontWeight: 700, color: 'var(--color-black)' }}>{label}</Typography>
+                  <Typography sx={{ fontWeight: 700, color: 'var(--color-white)' }}>{label}</Typography>
                   <Typography variant="caption" color="text.secondary">
                     {bucketItems[key].length} assigned
                   </Typography>

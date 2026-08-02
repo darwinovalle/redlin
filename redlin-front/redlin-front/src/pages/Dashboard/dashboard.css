@@ -7,10 +7,12 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  /* Fallback solid color */
-  background: var(--color-navy);
-  /* Requested gradient from var(--color-teal) to sidebar blue var(--color-navy) */
-  background: linear-gradient(135deg, var(--color-teal) 0%, var(--color-navy) 70%);
+  position: relative;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--color-teal) 16%, transparent), transparent 30%),
+    radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-blue) 18%, transparent), transparent 32%),
+    linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%);
+  color: var(--color-white);
   font-family: 'Poppins', 'Titillium Web', Arial, sans-serif;
   overflow: hidden;
 }
@@ -119,7 +121,10 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--color-white);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-navy-deep) 92%, transparent) 0%, color-mix(in srgb, var(--color-navy) 96%, transparent) 100%);
+  backdrop-filter: blur(14px);
+  color: var(--color-white);
 }
 
 /* Header with tabs */
@@ -150,38 +155,19 @@
   border-radius: 3px 3px 0 0;
 }
 
-.progress-strip {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+.study-divider {
+  height: 1px;
   margin-top: 10px;
-  padding: 0 2px 14px 2px;
-}
-.progress-text { font-size: 12px; color: color-mix(in srgb, var(--color-white) 75%, transparent); }
-.progress-bar-outer {
-  flex: 1;
-  height: 6px;
-  background: color-mix(in srgb, var(--color-white) 18%, transparent);
-  border-radius: 3px;
-  position: relative;
-  overflow: hidden;
-}
-.progress-bar-fill {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 100%;
-  transform: scaleX(var(--progress, 0));
-  transform-origin: left;
-  background: var(--color-teal);
-  border-radius: 3px;
-  transition: transform .3s ease;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-purple) 35%, transparent) 30%, color-mix(in srgb, var(--color-teal) 35%, transparent) 70%, transparent);
+  pointer-events: none;
 }
 
 .study-content-scroll {
   flex: 1;
   overflow: auto;
   padding: 24px 26px 32px 26px;
-  background: var(--color-white);
+  background: color-mix(in srgb, var(--color-navy-deep) 34%, transparent);
+  color: var(--color-white);
 }
 
 /* Card Overview (Flashcards) */

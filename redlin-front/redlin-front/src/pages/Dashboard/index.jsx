@@ -142,13 +142,7 @@ const Dashboard = () => {
               <Tab label="CLOZE" />
               <Tab label="FEYNMAN" />
             </Tabs>
-            <div className="progress-strip" data-role="progress">
-              <div className="progress-text">&nbsp;</div>
-              <div className="progress-bar-outer">
-                <div className="progress-bar-fill" style={{ '--progress': 0 }} />
-              </div>
-              <div className="progress-text">&nbsp;</div>
-            </div>
+            <div className="study-divider" aria-hidden="true" />
           </div>
           <div className="study-content-scroll">
             <TabPanel value={activeTab} index={0}>

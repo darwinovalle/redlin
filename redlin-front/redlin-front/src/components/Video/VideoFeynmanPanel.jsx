@@ -94,23 +94,49 @@ const VideoFeynmanPanel = ({ videoId }) => {
   }, [currentIndex, sessionActive, sessionFinished, questionDone]);
 
   if (!videoId) {
-    return <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><Typography sx={{ color: 'var(--color-text)' }}>Select a video to start Feynman practice.</Typography></Box>;
+    return (
+      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Select a video to start Feynman practice.</Typography>
+      </Box>
+    );
   }
   if (loading) {
-    return <Box sx={{ p: 3 }}><Typography>Loading prompts...</Typography></Box>;
+    return (
+      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <img src={GearSvg} width={30} height={30} alt="Loading" />
+        <Typography sx={{ ml: 2, color: 'var(--color-white)' }}>Loading prompts...</Typography>
+      </Box>
+    );
   }
   if (!prompts.length) {
-    return <Box sx={{ p: 3 }}><Typography sx={{ color: 'var(--color-text)' }}>No Feynman prompts yet. Generate backend side first.</Typography></Box>;
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>No Feynman prompts yet. Generate backend side first.</Typography>
+      </Box>
+    );
   }
   // Start screen
   if (!sessionActive && !sessionFinished) {
     return (
-      <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 2, color: 'var(--color-black)' }}>
-        <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'var(--color-black)' }}>Feynman Session</Typography>
-        <Typography variant="body2" sx={{ maxWidth: 600, color: 'var(--color-black)' }}>
+      <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 2, color: 'var(--color-white)' }}>
+        <Typography variant="h5" sx={{ fontWeight: 800, color: 'var(--color-white)' }}>Feynman Session</Typography>
+        <Typography variant="body2" sx={{ maxWidth: 640, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
           You will have 60 seconds per question to write your explanation. When time ends, your answer (even if incomplete) is auto-submitted. After evaluation, click Next to continue. You'll see a summary at the end.
         </Typography>
-        <Button variant="contained" onClick={startSession} sx={{ background: 'var(--color-black)', borderRadius: '24px', px: 4 }}>Start Session ({prompts.length} questions)</Button>
+        <Button
+          variant="contained"
+          onClick={startSession}
+          sx={{
+            backgroundColor: 'var(--color-success)',
+            color: 'var(--color-navy-deep)',
+            borderRadius: '999px',
+            px: 4,
+            fontWeight: 800,
+            '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+          }}
+        >
+          Start Session ({prompts.length} questions)
+        </Button>
       </Box>
     );
   }
@@ -118,26 +144,42 @@ const VideoFeynmanPanel = ({ videoId }) => {
   const current = prompts[currentIndex];
 
   return (
-    <Box sx={{ p: 2, height: '100%', position: 'relative', overflowY: 'auto', color: 'var(--color-black)' }}>
+    <Box sx={{ p: 2, height: '100%', position: 'relative', overflowY: 'auto', color: 'var(--color-white)' }}>
       {sessionFinished ? (
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2, color: 'var(--color-black)' }}>Session Summary</Typography>
-          <Typography variant="body2" sx={{ mb: 3, color: 'var(--color-black)' }}>You completed {results.length} / {prompts.length} questions.</Typography>
-          <Divider sx={{ mb: 2 }} />
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 2, color: 'var(--color-white)' }}>Session Summary</Typography>
+          <Typography variant="body2" sx={{ mb: 3, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+            You completed {results.length} / {prompts.length} questions.
+          </Typography>
+          <Divider sx={{ mb: 2, borderColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' }} />
           {results.map(r => (
-            <Box key={r.id} sx={{ mb: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, background: 'var(--color-surface-muted)' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'var(--color-black)' }}>Question</Typography>
-              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 1, color: 'var(--color-black)' }}>{(prompts.find(p => p.id === r.feynman) || {}).prompt}</Typography>
-              {r.score != null && <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'var(--color-black)' }}>Score: {r.score}</Typography>}
+            <Box key={r.id} sx={{ mb: 2, p: 2, border: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)', borderRadius: 3, bgcolor: 'color-mix(in srgb, var(--color-white) 3%, transparent)' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Question</Typography>
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 1, color: 'var(--color-white)' }}>{(prompts.find(p => p.id === r.feynman) || {}).prompt}</Typography>
+              {r.score != null && <Typography variant="caption" sx={{ fontWeight: 800, color: 'var(--color-white)' }}>Score: {r.score}</Typography>}
               <AIFeedback attempt={r} />
             </Box>
           ))}
-          <Button variant="contained" onClick={startSession} sx={{ mt: 2, background: 'var(--color-black)', borderRadius: '20px' }}>Restart Session</Button>
+          <Button
+            variant="contained"
+            onClick={startSession}
+            sx={{
+              mt: 2,
+              backgroundColor: 'var(--color-success)',
+              color: 'var(--color-navy-deep)',
+              borderRadius: '999px',
+              px: 4,
+              fontWeight: 800,
+              '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+            }}
+          >
+            Restart Session
+          </Button>
         </Box>
       ) : (
         <>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'var(--color-black)' }}>Question {currentIndex + 1} / {prompts.length}</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--color-white)' }}>Question {currentIndex + 1} / {prompts.length}</Typography>
             <Timer
               key={currentIndex}
               active={sessionActive && !questionDone}
@@ -147,9 +189,9 @@ const VideoFeynmanPanel = ({ videoId }) => {
               onExpire={() => { if (!justAdvancedRef.current) submitCurrent(); }}
             />
           </Box>
-          <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 2, background: 'var(--color-surface-card)', color: 'var(--color-black)' }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'var(--color-black)' }}>Question</Typography>
-            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.4, color: 'var(--color-black)' }}>{current.prompt}</Typography>
+          <Box sx={{ p: 2, border: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)', borderRadius: 3, mb: 2, background: 'color-mix(in srgb, var(--color-white) 3%, transparent)', color: 'var(--color-white)' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Question</Typography>
+            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.45, color: 'var(--color-white)' }}>{current.prompt}</Typography>
           </Box>
           <FeynmanAttemptForm
             value={answers[current.id] || ''}
@@ -159,13 +201,24 @@ const VideoFeynmanPanel = ({ videoId }) => {
             countdownSeconds={countdownRemaining}
             totalSeconds={COUNTDOWN}
           />
-          {!questionDone && <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'var(--color-black)' }}>Time ends → auto-submit.</Typography>}
+          {!questionDone && (
+            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+              Time ends → auto-submit.
+            </Typography>
+          )}
           {questionDone && (
             <Box sx={{ mt: 2 }}>
               <AIFeedback attempt={currentAttempt} />
               <Button
                 variant="contained"
-                sx={{ mt: 2, background: 'var(--color-black)', borderRadius: '18px' }}
+                sx={{
+                  mt: 2,
+                  backgroundColor: 'var(--color-success)',
+                  color: 'var(--color-navy-deep)',
+                  borderRadius: '999px',
+                  fontWeight: 800,
+                  '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+                }}
                 onClick={() => {
                   // Clean up any pending evaluation state
                   autoSubmittingRef.current = false;
@@ -184,15 +237,29 @@ const VideoFeynmanPanel = ({ videoId }) => {
                     setSessionActive(false);
                   }
                 }}
-              >Next Question</Button>
+              >
+                Next Question
+              </Button>
             </Box>
           )}
         </>
       )}
       {submitting && (
-        <Box sx={{ position: 'absolute', inset: 0, background: 'color-mix(in srgb, var(--color-white) 65%, transparent)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            background: 'color-mix(in srgb, var(--color-navy-deep) 72%, transparent)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10,
+            backdropFilter: 'blur(4px)',
+          }}
+        >
           <img src={GearSvg} width={60} height={60} alt="Evaluating" />
-          <Typography variant="body2" sx={{ mt: 1 }}>Evaluating...</Typography>
+          <Typography variant="body2" sx={{ mt: 1, color: 'var(--color-white)' }}>Evaluating...</Typography>
         </Box>
       )}
     </Box>
