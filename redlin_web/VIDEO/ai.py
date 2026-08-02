@@ -620,7 +620,7 @@ DOCUMENT TEXT:
         # -------------------------------------------------------------------
         try:
             print("[Video] Generating Cloze items (AI-first)...")
-            ai_enabled = os.getenv("AI_CLOZE_ENABLED", "false").lower() in {"1","true","yes","on"}
+            ai_enabled = os.getenv("AI_CLOZE_ENABLED", "true").lower() in {"1","true","yes","on"}
             words = full_text.split()
             words_per_item = int(os.getenv("AI_CLOZE_WORDS_PER_ITEM", "120"))
             unlimited = os.getenv("AI_CLOZE_MAX", "").strip() == "0"

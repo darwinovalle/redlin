@@ -167,7 +167,7 @@ def generate_document_clozes(document: Document, text: str, summary_content: str
     """Generate document Cloze items with AI-first + local fallback strategy."""
     try:
         print("Generating Cloze items (AI-first)...")
-        ai_enabled = os.getenv("AI_CLOZE_ENABLED", "false").lower() in {"1", "true", "yes", "on"}
+        ai_enabled = os.getenv("AI_CLOZE_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
         words = text.split()
         default_words_per_item = int(os.getenv("AI_CLOZE_WORDS_PER_ITEM", "120"))
 

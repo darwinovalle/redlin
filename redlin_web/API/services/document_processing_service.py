@@ -3,7 +3,7 @@ from PyPDF2 import PdfReader
 from API.models import Document
 
 from .cloze_generation_service import generate_document_clozes
-# from .feynman_generation_service import generate_document_feynman
+from .feynman_generation_service import generate_document_feynman
 # from .flashcard_generation_service import generate_flashcards
 from .mcq_generation_service import generate_mcqs
 from .processing_common import detect_language
@@ -38,7 +38,7 @@ def process_document_text(document_id: int, text: str) -> None:
         # generate_flashcards(document, cleaned_text, lang_label)
         generate_mcqs(document, cleaned_text, lang_label)
         generate_document_clozes(document, cleaned_text, summary_content, lang_label)
-        # generate_document_feynman(document, cleaned_text, summary_content, lang_label)
+        generate_document_feynman(document, cleaned_text, summary_content, lang_label)
 
         document.processing_status = "completed"
         document.save(update_fields=["processing_status"])

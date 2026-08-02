@@ -4,15 +4,16 @@ import { useParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import { FlashcardProvider } from '../../context/FlashcardContext';
+// import { FlashcardProvider } from '../../context/FlashcardContext'; // MVP: Flashcards hidden
 import { documentService } from '../../services/api';
 import PdfViewer from '../../components/PdfViewer/PdfViewer';
 import { useAuth } from '../../context/AuthContext';
 import './dashboard.css';
 
 const SummaryLazy = React.lazy(() => import('../../components/Summary'));
-const FlashcardLazy = React.lazy(() => import('../../components/Flashcard/Flashcard'));
-const DocReviewLazy = React.lazy(() => import('../../components/Flashcard/DocReview'));
+// MVP: Flashcards + Review hidden (see study tabs below)
+// const FlashcardLazy = React.lazy(() => import('../../components/Flashcard/Flashcard'));
+// const DocReviewLazy = React.lazy(() => import('../../components/Flashcard/DocReview'));
 const QuizViewLazy = React.lazy(() => import('../../components/Flashcard/QuizView'));
 const ClozePanelLazy = React.lazy(() => import('../../components/Cloze/ClozePanel'));
 const FeynmanPanelLazy = React.lazy(() => import('../../components/Feynman/FeynmanPanel'));
@@ -61,7 +62,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = React.useState(0); 
 
   const [selectedDocumentId, setSelectedDocumentId] = useState(null);
-  const [flashcardsRefreshKey, setFlashcardsRefreshKey] = useState(0);
+  // const [flashcardsRefreshKey, setFlashcardsRefreshKey] = useState(0); // MVP: Flashcards hidden
   const { user: authUser } = useAuth();
   const { docSlug } = useParams();
 
@@ -112,10 +113,9 @@ const Dashboard = () => {
     setActiveTab(newValue);
   };
 
-  const handleReviewChange = () => {
-    // Increment key to force Flashcard component to refetch ordered list
-    setFlashcardsRefreshKey((k) => k + 1);
-  };
+  // const handleReviewChange = () => { // MVP: Review hidden
+  //   setFlashcardsRefreshKey((k) => k + 1);
+  // };
 
   return (
     <div className="dashboard-root">
@@ -136,8 +136,9 @@ const Dashboard = () => {
               className="dashboard-tabs"
             >
               <Tab label="SUMMARY" />
-              <Tab label="FLASHCARDS" />
-              <Tab label="REVIEW" />
+              {/* MVP: Flashcards + Review hidden */}
+              {/* <Tab label="FLASHCARDS" /> */}
+              {/* <Tab label="REVIEW" /> */}
               <Tab label="QUIZ" />
               <Tab label="CLOZE" />
               <Tab label="FEYNMAN" />
@@ -150,7 +151,8 @@ const Dashboard = () => {
                 <SummaryLazy documentId={selectedDocumentId} />
               </React.Suspense>
             </TabPanel>
-            <TabPanel value={activeTab} index={1}>
+            {/* MVP: Flashcards + Review hidden */}
+            {/* <TabPanel value={activeTab} index={1}>
               <React.Suspense fallback={<LoadingPanel />}>
                 <FlashcardProvider>
                   <FlashcardLazy documentId={selectedDocumentId} refreshKey={flashcardsRefreshKey} />
@@ -161,18 +163,18 @@ const Dashboard = () => {
               <React.Suspense fallback={<LoadingPanel />}>
                 <DocReviewLazy documentId={selectedDocumentId} onReviewChange={handleReviewChange} />
               </React.Suspense>
-            </TabPanel>
-            <TabPanel value={activeTab} index={3}>
+            </TabPanel> */}
+            <TabPanel value={activeTab} index={1}>
               <React.Suspense fallback={<LoadingPanel />}>
                 <QuizViewLazy documentId={selectedDocumentId} />
               </React.Suspense>
             </TabPanel>
-            <TabPanel value={activeTab} index={4}>
+            <TabPanel value={activeTab} index={2}>
               <React.Suspense fallback={<LoadingPanel />}>
                 <ClozePanelLazy documentId={selectedDocumentId} />
               </React.Suspense>
             </TabPanel>
-            <TabPanel value={activeTab} index={5}>
+            <TabPanel value={activeTab} index={3}>
               {/* Feynman Panel */}
               {selectedDocumentId && (
                 <React.Suspense fallback={<LoadingPanel />}>
