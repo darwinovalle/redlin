@@ -121,7 +121,7 @@ const Dashboard = () => {
     <div className="dashboard-root">
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', gap: 0, p: 0, m: 0, height: '100%', overflow: 'hidden' }}>
         {/* PDF Viewer reverted to original styling */}
-        <Box sx={{ flex: 1, minWidth: 480, maxWidth: 'calc(100% - 700px)', height: '100%', overflow: 'hidden', borderRight: '1px solid #eee' }}>
+        <Box sx={{ flex: 1, minWidth: 480, maxWidth: 'calc(100% - 700px)', height: '100%', overflow: 'hidden', borderRight: '1px solid var(--color-divider-soft)' }}>
           <PdfViewer url={pdfUrl} />
         </Box>
         {/* Study / Flashcard Panel retains new style */}
@@ -145,7 +145,7 @@ const Dashboard = () => {
             <div className="progress-strip" data-role="progress">
               <div className="progress-text">&nbsp;</div>
               <div className="progress-bar-outer">
-                <div className="progress-bar-fill" style={{ '--progress': '0%' }} />
+                <div className="progress-bar-fill" style={{ '--progress': 0 }} />
               </div>
               <div className="progress-text">&nbsp;</div>
             </div>

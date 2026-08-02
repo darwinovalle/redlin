@@ -32,8 +32,8 @@ const popIn = keyframes`
 `;
 
 const glow = keyframes`
-  0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.0); }
-  100% { box-shadow: 0 0 0 6px rgba(255,255,255,0); }
+  0% { box-shadow: 0 0 0 0 transparent; }
+  100% { box-shadow: 0 0 0 6px transparent; }
 `;
 
 const CSVStudy = () => {
@@ -225,12 +225,12 @@ const CSVStudy = () => {
           textColor="inherit" 
           centered
           sx={{ 
-            '& .MuiTabs-indicator': { backgroundColor: '#ffffff' },
+            '& .MuiTabs-indicator': { backgroundColor: 'var(--color-white)' },
             '& .MuiTabs-flexContainer': { justifyContent: 'center' }
           }}
         >
-          <Tab label="Flashcards" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }} />
-          <Tab label="Review" sx={{ fontWeight: 900, color: '#000000', '&.Mui-selected': { color: '#fff' } }} />
+          <Tab label="Flashcards" sx={{ fontWeight: 900, color: 'var(--color-black)', '&.Mui-selected': { color: 'var(--color-white)' } }} />
+          <Tab label="Review" sx={{ fontWeight: 900, color: 'var(--color-black)', '&.Mui-selected': { color: 'var(--color-white)' } }} />
         </Tabs>
       </Box>
       <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%', display: 'flex', flexDirection: 'column', p: 3 }}>
@@ -266,7 +266,7 @@ const CSVStudy = () => {
               size="large" 
               onClick={() => { playClick(); setIsReviewActive(true); }} 
               disabled={studyBatch.length === 0}
-              sx={{ backgroundColor: '#000', borderRadius: '20px' }}
+              sx={{ backgroundColor: 'var(--color-black)', borderRadius: '20px' }}
             >
               {studyBatch.length > 0 ? 'Start Review' : 'No Cards Due'}
             </Button>
@@ -293,7 +293,7 @@ const CSVStudy = () => {
                     '&:active': { cursor: 'grabbing' },
                     transition: 'transform 0.2s ease, filter 0.2s ease',
                     transform: isDragging ? 'scale(1.04) rotateZ(0.4deg)' : 'none',
-                    filter: isDragging ? 'drop-shadow(0 8px 24px rgba(0,0,0,0.35))' : 'none',
+                    filter: isDragging ? 'drop-shadow(0 8px 24px color-mix(in srgb, var(--color-black) 35%, transparent))' : 'none',
                     '&:hover .grabOverlay': { opacity: 1, transform: 'translate(-50%, 0)' },
                   }}
                 >
@@ -321,7 +321,7 @@ const CSVStudy = () => {
                       transition: 'opacity .2s ease, transform .2s ease',
                     }}
                   >
-                    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.25, py: 0.5, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.55)', color: '#fff', backdropFilter: 'blur(4px)', fontSize: 12 }}>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.25, py: 0.5, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--color-black) 55%, transparent)', color: 'var(--color-white)', backdropFilter: 'blur(4px)', fontSize: 12 }}>
                       <BackHandIcon sx={{ fontSize: 16 }} /> Drag to sort
                     </Box>
                   </Box>
@@ -359,7 +359,7 @@ const CSVStudy = () => {
                     const active = dragOver === key;
                     return {
                       p: 2,
-                      border: '1.5px dashed #000',
+                      border: '1.5px dashed var(--color-black)',
                       // borderColor: theme.palette.divider,
                       borderRadius: 2,
                       minHeight: 140,
@@ -371,7 +371,7 @@ const CSVStudy = () => {
                       justifyContent: 'flex-start',
                       transition: 'transform .2s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease',
                       bgcolor: 'transparent',
-                      boxShadow: active ? '0 6px 20px rgba(0,0,0,0.06)' : 'none',
+                      boxShadow: active ? '0 6px 20px color-mix(in srgb, var(--color-black) 6%, transparent)' : 'none',
                       transform: active ? 'translateY(-2px)' : 'none',
                       outline: active ? `2px solid ${alpha(theme.palette.text.primary, 0.15)}` : 'none',
                       outlineOffset: '-2px',
@@ -379,7 +379,7 @@ const CSVStudy = () => {
                   }}
                 >
                   <Box sx={{ textAlign: 'center' }}>
-                    <Typography sx={{ fontWeight: 700, color: '#000' }}>{label}</Typography>
+                    <Typography sx={{ fontWeight: 700, color: 'var(--color-black)' }}>{label}</Typography>
                     <Typography variant="caption" color="text.secondary">
                       {bucketItems[key].length} assigned
                     </Typography>
@@ -414,17 +414,17 @@ const CSVStudy = () => {
             {/* Keyboard shortcuts helper */}
             <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, color: 'text.secondary' }}>
               {/* <Typography variant="caption">Shortcuts:</Typography> */}
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.06)' }}>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--color-black) 6%, transparent)' }}>
                 <Typography variant="caption">Press</Typography>
                 <Box component="img" src={Key1Png} alt="Tecla 1" sx={{ height: 28, opacity: 0.85 }} />
                 <Typography variant="caption">to set as Hard</Typography>
               </Box>
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.06)' }}>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--color-black) 6%, transparent)' }}>
                 <Typography variant="caption">Press</Typography>
                 <Box component="img" src={Key2Png} alt="Tecla 2" sx={{ height: 28, opacity: 0.85 }} />
                 <Typography variant="caption">to set as Medium</Typography>
               </Box>
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.06)' }}>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1, py: 0.5, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--color-black) 6%, transparent)' }}>
                 <Typography variant="caption">Press</Typography>
                 <Box component="img" src={Key3Png} alt="Tecla 3" sx={{ height: 28, opacity: 0.85 }} />
                 <Typography variant="caption">to set as Easy</Typography>
@@ -433,8 +433,8 @@ const CSVStudy = () => {
 
             {/* Footer actions */}
             <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-              <Button variant="contained" onClick={() => { playClick(); resetReview(); }} disabled={submitting} sx={{ backgroundColor: '#000' }}>Reset</Button>
-              <Button variant="contained" onClick={() => { playClick(); handleSubmit(); }} disabled={!canSubmit} sx={{ backgroundColor: '#6be0a6' }}>
+              <Button variant="contained" onClick={() => { playClick(); resetReview(); }} disabled={submitting} sx={{ backgroundColor: 'var(--color-black)' }}>Reset</Button>
+              <Button variant="contained" onClick={() => { playClick(); handleSubmit(); }} disabled={!canSubmit} sx={{ backgroundColor: 'var(--color-success)' }}>
                 {submitting ? 'Submitting…' : 'Submit Reviews'}
               </Button>
             </Box>

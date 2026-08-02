@@ -39,6 +39,8 @@ const LandingPage = () => {
     });
 
     return (
+        <>
+        <a href="#main-content" className="skip-link">Skip to content</a>
         <div className="container-landing" ref={rootRef}>
             {/* Navigation Bar */}
             <nav className="navbar-landing">
@@ -55,7 +57,7 @@ const LandingPage = () => {
                     <a href="#features" className="nav-link-landing magnetic-target-landing">Features</a>
                     <a href="#benefits" className="nav-link-landing magnetic-target-landing">Benefits</a>
                     <a href="#how-it-works" className="nav-link-landing magnetic-target-landing">How It Works</a>
-                    <a href="#pricing" className="nav-link-landing magnetic-target-landing">Pricing</a>
+                    <a href="#pricing" className="nav-link-landing magnetic-target-landing">Self-Host</a>
                 </div>
                 
                 <div className="auth-buttons-landing">
@@ -63,7 +65,9 @@ const LandingPage = () => {
                     <Link to="/register" className="btn-landing btn-primary-landing magnetic-target-landing">Sign Up</Link>
                 </div>
             </nav>
-            
+
+            {/* Main content */}
+            <main id="main-content" tabIndex={-1}>
             {/* Hero Section */}
             <section className="hero-landing" id="hero" ref={heroRef}>
                 <div className="hero-bg-landing"></div>
@@ -205,6 +209,16 @@ const LandingPage = () => {
                     <div className="timeline-item-landing">
                         <div className="timeline-step-landing">1</div>
                         <div className="timeline-content-landing">
+                            <div className="timeline-mock-landing">
+                                <div className="mock-profile-landing">
+                                    <div className="mock-avatar-landing"></div>
+                                    <div className="mock-lines-landing">
+                                        <div className="mock-line-landing" style={{width: '70%'}}></div>
+                                        <div className="mock-line-landing" style={{width: '50%'}}></div>
+                                        <div className="mock-line-landing" style={{width: '85%'}}></div>
+                                    </div>
+                                </div>
+                            </div>
                             <h3 className="timeline-title-landing">Create Your Profile</h3>
                             <p className="timeline-description-landing">Sign up and complete a comprehensive learning assessment that helps our AI understand your learning style, goals, and preferences.</p>
                         </div>
@@ -212,6 +226,14 @@ const LandingPage = () => {
                     <div className="timeline-item-landing">
                         <div className="timeline-step-landing">2</div>
                         <div className="timeline-content-landing">
+                            <div className="timeline-mock-landing">
+                                <div className="mock-brain-landing">
+                                    <i className="ri-brain-line"></i>
+                                    <div className="mock-node-landing mock-node-a-landing"></div>
+                                    <div className="mock-node-landing mock-node-b-landing"></div>
+                                    <div className="mock-node-landing mock-node-c-landing"></div>
+                                </div>
+                            </div>
                             <h3 className="timeline-title-landing">AI Personalization</h3>
                             <p className="timeline-description-landing">Our advanced algorithms analyze your data to create a customized learning path designed specifically for your needs and objectives.</p>
                         </div>
@@ -219,6 +241,13 @@ const LandingPage = () => {
                     <div className="timeline-item-landing">
                         <div className="timeline-step-landing">3</div>
                         <div className="timeline-content-landing">
+                            <div className="timeline-mock-landing">
+                                <div className="mock-cards-landing">
+                                    <div className="mock-flashcard-landing mock-flashcard-a-landing"></div>
+                                    <div className="mock-flashcard-landing mock-flashcard-b-landing"></div>
+                                    <div className="mock-flashcard-landing mock-flashcard-c-landing"></div>
+                                </div>
+                            </div>
                             <h3 className="timeline-title-landing">Interactive Learning</h3>
                             <p className="timeline-description-landing">Engage with dynamic content that adapts in real-time based on your interactions, ensuring optimal comprehension and retention.</p>
                         </div>
@@ -226,6 +255,15 @@ const LandingPage = () => {
                     <div className="timeline-item-landing">
                         <div className="timeline-step-landing">4</div>
                         <div className="timeline-content-landing">
+                            <div className="timeline-mock-landing">
+                                <div className="mock-chart-landing">
+                                    <div className="mock-bar-landing" style={{height: '40%'}}></div>
+                                    <div className="mock-bar-landing" style={{height: '65%'}}></div>
+                                    <div className="mock-bar-landing" style={{height: '50%'}}></div>
+                                    <div className="mock-bar-landing" style={{height: '80%'}}></div>
+                                    <div className="mock-bar-landing" style={{height: '95%'}}></div>
+                                </div>
+                            </div>
                             <h3 className="timeline-title-landing">Track Progress</h3>
                             <p className="timeline-description-landing">Monitor your advancement through detailed analytics and receive AI-generated insights to continuously improve your learning efficiency.</p>
                         </div>
@@ -233,37 +271,37 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* Testimonials Section */}
+            {/* Why RedLin Section */}
             <section className="testimonials-landing" ref={testimonialsRef}>
-                <h2 className="section-title-landing">What Our Users Say</h2>
+                <h2 className="section-title-landing">Built for the Way You Learn</h2>
                 <div className="testimonials-container-landing">
-                    <div className="testimonial-card-landing">
-                        <p className="testimonial-quote-landing">Redlin completely transformed how I approach learning. The personalized content and AI tutoring helped me master complex topics in half the time it would have taken otherwise.</p>
+                    <div className="testimonial-card-landing feature-card-landing">
+                        <p className="testimonial-quote-landing">Turn the PDFs, CSVs, and videos you already study into interactive practice — MCQ, Cloze, Feynman, and summaries generated from your own material.</p>
                         <div className="testimonial-author-landing">
-                            <div className="author-avatar-landing">JD</div>
+                            <div className="author-avatar-landing"><i className="ri-file-text-line"></i></div>
                             <div className="author-info-landing">
-                                <div className="author-name-landing">James Davis</div>
-                                <div className="author-position-landing">Software Engineer</div>
+                                <div className="author-name-landing">Your Material</div>
+                                <div className="author-position-landing">Your context, your stakes</div>
                             </div>
                         </div>
                     </div>
-                    <div className="testimonial-card-landing">
-                        <p className="testimonial-quote-landing">As an educator, I&apos;ve integrated Redlin into my classroom with amazing results. My students are more engaged and show significantly better comprehension of difficult concepts.</p>
+                    <div className="testimonial-card-landing feature-card-landing">
+                        <p className="testimonial-quote-landing">A spaced-repetition engine that keeps unmastered concepts coming back — across every study mode — until you actually feel secure in your knowledge.</p>
                         <div className="testimonial-author-landing">
-                            <div className="author-avatar-landing">SL</div>
+                            <div className="author-avatar-landing"><i className="ri-repeat-2-line"></i></div>
                             <div className="author-info-landing">
-                                <div className="author-name-landing">Sarah Liu</div>
-                                <div className="author-position-landing">High School Teacher</div>
+                                <div className="author-name-landing">Mastery, Not Just Exposure</div>
+                                <div className="author-position-landing">Concepts you own come back less often</div>
                             </div>
                         </div>
                     </div>
-                    <div className="testimonial-card-landing">
-                        <p className="testimonial-quote-landing">The progress analytics feature has been a game-changer for me. Being able to see exactly where I need to focus has made my study time incredibly efficient and effective.</p>
+                    <div className="testimonial-card-landing feature-card-landing">
+                        <p className="testimonial-quote-landing">Open answers are graded by AI against a rubric with evidence — not string-matched — so you get honest feedback on what you actually wrote.</p>
                         <div className="testimonial-author-landing">
-                            <div className="author-avatar-landing">MR</div>
+                            <div className="author-avatar-landing"><i className="ri-robot-2-line"></i></div>
                             <div className="author-info-landing">
-                                <div className="author-name-landing">Michael Rodriguez</div>
-                                <div className="author-position-landing">Medical Student</div>
+                                <div className="author-name-landing">AI-Evaluated Answers</div>
+                                <div className="author-position-landing">Cloze and Feynman, graded with context</div>
                             </div>
                         </div>
                     </div>
@@ -272,44 +310,30 @@ const LandingPage = () => {
 
             {/* Pricing Section */}
             <section className="pricing-landing" id="pricing" ref={pricingRef}>
-                <h2 className="section-title-landing">Choose Your Plan</h2>
+                <h2 className="section-title-landing">Self-Host It Free</h2>
                 <div className="pricing-container-landing">
-                    <div className="pricing-card-landing">
-                        <h3 className="pricing-title-landing">Basic</h3>
-                        <div className="pricing-price-landing">$19<span>/month</span></div>
-                        <ul className="pricing-features-landing">
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Personalized learning path</li>
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Basic AI tutoring</li>
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Progress tracking</li>
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> 5 courses per month</li>
-                            <li className="pricing-feature-landing"><i className="ri-close-line"></i> Advanced analytics</li>
-                        </ul>
-                        <Link to="/register" className="pricing-button-landing magnetic-target-landing">Get Started</Link>
-                    </div>
                     <div className="pricing-card-landing popular-landing">
-                        <div className="pricing-badge-landing">Most Popular</div>
-                        <h3 className="pricing-title-landing">Pro</h3>
-                        <div className="pricing-price-landing">$49<span>/month</span></div>
+                        <div className="pricing-badge-landing">Open &amp; Free</div>
+                        <h3 className="pricing-title-landing">Self-Hosted</h3>
+                        <div className="pricing-price-landing">Free<span>/ forever</span></div>
                         <ul className="pricing-features-landing">
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Personalized learning path</li>
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Advanced AI tutoring</li>
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Detailed progress analytics</li>
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Unlimited courses</li>
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Collaborative learning tools</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Bring your own AI — OpenAI, Anthropic, Gemini, Ollama</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Your data stays on your machine</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> No usage limits, no paywall</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> MCQ, Cloze, Feynman &amp; summaries</li>
                         </ul>
                         <Link to="/register" className="pricing-button-landing magnetic-target-landing">Get Started</Link>
                     </div>
                     <div className="pricing-card-landing">
-                        <h3 className="pricing-title-landing">Enterprise</h3>
-                        <div className="pricing-price-landing">$199<span>/month</span></div>
+                        <h3 className="pricing-title-landing">Hosted</h3>
+                        <div className="pricing-price-landing">Soon<span>/ managed for you</span></div>
                         <ul className="pricing-features-landing">
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> All Pro features</li>
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Custom learning solutions</li>
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> API access</li>
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Dedicated support</li>
-                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Team management tools</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> No setup — RedLin provides the AI</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> For learners who aren&apos;t technical</li>
+                            <li className="pricing-feature-landing"><i className="ri-check-line"></i> Free trial at launch</li>
+                            <li className="pricing-feature-landing"><i className="ri-close-line"></i> Not available yet</li>
                         </ul>
-                        <Link to="/pricing" className="pricing-button-landing magnetic-target-landing">Contact Sales</Link>
+                        <Link to="/register" className="pricing-button-landing magnetic-target-landing">Join the Waitlist</Link>
                     </div>
                 </div>
             </section>
@@ -318,13 +342,15 @@ const LandingPage = () => {
             <section className="final-cta-landing" ref={finalCtaRef}>
                 <div className="final-cta-content-landing">
                     <h2 className="final-cta-title-landing">Ready to Transform Your Learning?</h2>
-                    <p className="final-cta-description-landing">Join thousands of learners who have already revolutionized their education with our AI-powered platform.</p>
+                    <p className="final-cta-description-landing">Bring your own material and your own AI. RedLin turns them into a spaced-repetition practice loop — free, self-hosted, and unlimited.</p>
                     <form className="email-form-landing">
                         <input type="email" className="email-input-landing" placeholder="Enter your email address" />
                         <button type="submit" className="email-button-landing magnetic-target-landing">Get Started</button>
                     </form>
                 </div>
             </section>
+
+            </main>
 
             {/* Footer */}
             <footer className="footer-landing">
@@ -349,6 +375,7 @@ const LandingPage = () => {
                 </div>
             </footer>
         </div>
+        </>
     );
 };
 

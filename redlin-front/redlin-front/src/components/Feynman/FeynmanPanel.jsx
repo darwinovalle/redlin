@@ -105,12 +105,12 @@ const FeynmanPanel = ({ documentId }) => {
   // Start screen
   if(!sessionActive && !sessionFinished){
     return (
-      <Box sx={{ p:4, display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', gap:2, color:'#000' }}>
-        <Typography variant="h5" sx={{ fontWeight:'bold', color:'#000' }}>Feynman Session</Typography>
-        <Typography variant="body2" sx={{ maxWidth:600, color:'#000' }}>
+      <Box sx={{ p:4, display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', gap:2, color:'var(--color-black)' }}>
+        <Typography variant="h5" sx={{ fontWeight:'bold', color:'var(--color-black)' }}>Feynman Session</Typography>
+        <Typography variant="body2" sx={{ maxWidth:600, color:'var(--color-black)' }}>
           You will have 60 seconds per question to write your explanation. When time ends, your answer (even if incomplete) is auto-submitted and the next question begins. At the end you'll see scores & AI feedback.
         </Typography>
-        <Button variant="contained" onClick={startSession} sx={{ background:'#000', borderRadius:'24px', px:4 }}>Start Session ({prompts.length} questions)</Button>
+        <Button variant="contained" onClick={startSession} sx={{ background:'var(--color-black)', borderRadius:'24px', px:4 }}>Start Session ({prompts.length} questions)</Button>
       </Box>
     );
   }
@@ -118,26 +118,26 @@ const FeynmanPanel = ({ documentId }) => {
   const current = prompts[currentIndex];
 
   return (
-  <Box sx={{ p:2, height:'100%', position:'relative', overflowY:'auto', color:'#000' }}>
+  <Box sx={{ p:2, height:'100%', position:'relative', overflowY:'auto', color:'var(--color-black)' }}>
       {sessionFinished ? (
         <Box>
-          <Typography variant="h5" sx={{ fontWeight:'bold', mb:2, color:'#000' }}>Session Summary</Typography>
-          <Typography variant="body2" sx={{ mb:3, color:'#000' }}>You completed {results.length} / {prompts.length} questions.</Typography>
+          <Typography variant="h5" sx={{ fontWeight:'bold', mb:2, color:'var(--color-black)' }}>Session Summary</Typography>
+          <Typography variant="body2" sx={{ mb:3, color:'var(--color-black)' }}>You completed {results.length} / {prompts.length} questions.</Typography>
           <Divider sx={{ mb:2 }} />
           {results.map(r=> (
-            <Box key={r.id} sx={{ mb:2, p:2, border:'1px solid', borderColor:'divider', borderRadius:2, background:(theme)=> theme.palette.mode==='dark' ? '#20252b' : '#fafafa' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight:'bold', mb:1, color:'#000' }}>Question</Typography>
-              <Typography variant="body2" sx={{ whiteSpace:'pre-wrap', mb:1, color:'#000' }}>{(prompts.find(p=>p.id===r.feynman) || {}).prompt}</Typography>
-              {r.score!=null && <Typography variant="caption" sx={{ fontWeight:'bold', color:'#000' }}>Score: {r.score}</Typography>}
+            <Box key={r.id} sx={{ mb:2, p:2, border:'1px solid', borderColor:'divider', borderRadius:2, background:'var(--color-surface-muted)' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight:'bold', mb:1, color:'var(--color-black)' }}>Question</Typography>
+              <Typography variant="body2" sx={{ whiteSpace:'pre-wrap', mb:1, color:'var(--color-black)' }}>{(prompts.find(p=>p.id===r.feynman) || {}).prompt}</Typography>
+              {r.score!=null && <Typography variant="caption" sx={{ fontWeight:'bold', color:'var(--color-black)' }}>Score: {r.score}</Typography>}
               <AIFeedback attempt={r} />
             </Box>
           ))}
-          <Button variant="contained" onClick={startSession} sx={{ mt:2, background:'#000', borderRadius:'20px' }}>Restart Session</Button>
+          <Button variant="contained" onClick={startSession} sx={{ mt:2, background:'var(--color-black)', borderRadius:'20px' }}>Restart Session</Button>
         </Box>
       ) : (
         <>
           <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb:2 }}>
-            <Typography variant="h6" sx={{ fontWeight:'bold', color:'#000' }}>Question {currentIndex+1} / {prompts.length}</Typography>
+            <Typography variant="h6" sx={{ fontWeight:'bold', color:'var(--color-black)' }}>Question {currentIndex+1} / {prompts.length}</Typography>
             <Timer
               key={currentIndex}
               active={sessionActive && !questionDone}
@@ -147,9 +147,9 @@ const FeynmanPanel = ({ documentId }) => {
               onExpire={()=>{ if(!justAdvancedRef.current) submitCurrent(); }}
             />
           </Box>
-          <Box sx={{ p:2, border:'1px solid', borderColor:'divider', borderRadius:2, mb:2, background:(theme)=> theme.palette.mode==='dark' ? '#1e1e1e' : '#fdfdfd', color:'#000' }}>
-            <Typography variant="subtitle2" sx={{ fontWeight:'bold', mb:1, color:'#000' }}>Question</Typography>
-            <Typography variant="body1" sx={{ whiteSpace:'pre-wrap', lineHeight:1.4, color:'#000' }}>{current.prompt}</Typography>
+          <Box sx={{ p:2, border:'1px solid', borderColor:'divider', borderRadius:2, mb:2, background:'var(--color-surface-card)', color:'var(--color-black)' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight:'bold', mb:1, color:'var(--color-black)' }}>Question</Typography>
+            <Typography variant="body1" sx={{ whiteSpace:'pre-wrap', lineHeight:1.4, color:'var(--color-black)' }}>{current.prompt}</Typography>
           </Box>
           <FeynmanAttemptForm
             value={answers[current.id] || ''}
@@ -159,13 +159,13 @@ const FeynmanPanel = ({ documentId }) => {
             countdownSeconds={countdownRemaining}
             totalSeconds={COUNTDOWN}
           />
-          {!questionDone && <Typography variant="caption" sx={{ mt:1, display:'block', color:'#000' }}>Time ends → auto-submit.</Typography>}
+          {!questionDone && <Typography variant="caption" sx={{ mt:1, display:'block', color:'var(--color-black)' }}>Time ends → auto-submit.</Typography>}
           {questionDone && (
             <Box sx={{ mt:2 }}>
               <AIFeedback attempt={currentAttempt} />
               <Button
                 variant="contained"
-                sx={{ mt:2, background:'#000', borderRadius:'18px' }}
+                sx={{ mt:2, background:'var(--color-black)', borderRadius:'18px' }}
                 onClick={()=>{
                   // Limpiar cualquier estado de evaluación pendiente
                   autoSubmittingRef.current = false;
@@ -190,7 +190,7 @@ const FeynmanPanel = ({ documentId }) => {
         </>
       )}
       {submitting && (
-        <Box sx={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.65)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', zIndex:10 }}>
+        <Box sx={{ position:'absolute', inset:0, background:'color-mix(in srgb, var(--color-white) 65%, transparent)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', zIndex:10 }}>
           <img src={GearSvg} width={60} height={60} alt="Evaluating" />
           <Typography variant="body2" sx={{ mt:1 }}>Evaluating...</Typography>
         </Box>

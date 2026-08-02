@@ -465,8 +465,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             <Paper className={`classroom-card classroom-card-console ${isCompleted ? 'classroom-card-console-completed' : ''}`} elevation={0}>           
               <div className="classroom-card-header">                                                                                                         
                 <div>                                                                                                                                         
-                  <Typography variant="overline" sx={{ letterSpacing: 3, color: 'rgba(255,255,255,0.55)' }}>{isCompleted ? 'Completed session' : 'Recording console'}</Typography>
-                  <Typography variant="h5" sx={{ color: '#fff', mt: 0.5 }}>{isCompleted ? 'Stored transcript' : 'Capture lecture audio'}</Typography>
+                  <Typography variant="overline" sx={{ letterSpacing: 3, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>{isCompleted ? 'Completed session' : 'Recording console'}</Typography>
+                  <Typography variant="h5" sx={{ color: 'var(--color-white)', mt: 0.5 }}>{isCompleted ? 'Stored transcript' : 'Capture lecture audio'}</Typography>
                 </div>                                                                                                                                        
                 {isCompleted ? (
                 <Chip label="Completed" color={statusTone(session?.status)} size="small" sx={statusChipSx} />
@@ -476,9 +476,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                 )}                                                                                                                      
               </div>                                                                                                                                          
               {isCompleted ? (
-                <Box sx={{ mt: 2, p: 2.5, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>Transcription</Typography>
-                  <Typography variant="body1" sx={{ color: '#fff', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
+                <Box sx={{ mt: 2, p: 2.5, borderRadius: 2, bgcolor: 'color-mix(in srgb, var(--color-white) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                  <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>Transcription</Typography>
+                  <Typography variant="body1" sx={{ color: 'var(--color-white)', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
                     {storedTranscript || 'No transcript available.'}
                   </Typography>
                 </Box>
@@ -488,24 +488,24 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                 {[0, 1, 2, 3, 4, 5].map((bar) => (<span key={bar} style={{ animationDelay: `${bar * 120}ms` }} />))}                                          
               </div>                                                                                                                                          
               {recording && (                                                                                                                                 
-                <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 2, border: '1px solid rgba(255,255,255,0.1)' }}>              
-                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block', mb: 1 }}>Live Captions:</Typography>                  
-                  <Typography variant="body2" sx={{ color: '#fff', fontStyle: 'italic' }}>{liveTranscript || 'Listening...'}</Typography>                     
+                <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: 'color-mix(in srgb, var(--color-white) 5%, transparent)', borderRadius: 2, border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)' }}>              
+                  <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 50%, transparent)', display: 'block', mb: 1 }}>Live Captions:</Typography>                  
+                  <Typography variant="body2" sx={{ color: 'var(--color-white)', fontStyle: 'italic' }}>{liveTranscript || 'Listening...'}</Typography>                     
                 </Box>                                                                                                                                         
               )}                                                                                                                                              
               <Stack spacing={1.5} sx={{ mt: 3 }}>                                                                                                            
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>                                                                         
+                <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>                                                                         
                   {recording ? 'Your browser is listening now. Stop when the professor finishes speaking.' : audioReady ? 'Audio uploaded. Press Process transcription to start STT and content generation.' : 'Press Start listening to begin capturing the class audio.'}                                          
                 </Typography>                                                                                                                                 
                 {mediaError && <Typography variant="body2" color="error.main">{mediaError}</Typography>}                                                      
                 {session?.status === 'failed' && <Typography variant="body2" color="error.main" sx={{ fontWeight: 'bold' }}>Error: {session.error_message ||  
   'Transcription failed.'}</Typography>}                                                                                                                      
                 {error && <Typography variant="body2" color="error.main">{error}</Typography>}                                                                
-                <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />                                                                                    
+                <Divider sx={{ borderColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' }} />                                                                                    
                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">                                                                                
-                  <Chip label={`Language: ${session?.language || 'es'}`} variant="outlined" sx={{ color: '#fff' }} />                                         
-                  <Chip label={`Uploaded: ${audioReady ? 'Yes' : 'No'}`} variant="outlined" sx={{ color: '#fff' }} />                                         
-                  <Chip label={`Status: ${session?.status || 'unknown'}`} variant="outlined" sx={{ color: '#fff' }} />                                        
+                  <Chip label={`Language: ${session?.language || 'es'}`} variant="outlined" sx={{ color: 'var(--color-white)' }} />                                         
+                  <Chip label={`Uploaded: ${audioReady ? 'Yes' : 'No'}`} variant="outlined" sx={{ color: 'var(--color-white)' }} />                                         
+                  <Chip label={`Status: ${session?.status || 'unknown'}`} variant="outlined" sx={{ color: 'var(--color-white)' }} />                                        
                 </Stack>                                                                                                                                      
               </Stack>                                                                                                                                         
               <Stack direction="row" spacing={1.5} sx={{ mt: 4, flexWrap: 'wrap' }}>                                                                          
@@ -520,33 +520,33 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             <Paper className="classroom-card classroom-card-output" elevation={0}>                                                                           
               <div className="classroom-card-header">                                                                                                         
                 <div>                                                                                                                                         
-                  <Typography variant="overline" sx={{ letterSpacing: 3, color: 'rgba(255,255,255,0.55)' }}>Generated study space</Typography>                
-                  <Typography variant="h5" sx={{ color: '#fff', mt: 0.5 }}>Transcript and Learning Materials</Typography>                                     
+                  <Typography variant="overline" sx={{ letterSpacing: 3, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>Generated study space</Typography>                
+                  <Typography variant="h5" sx={{ color: 'var(--color-white)', mt: 0.5 }}>Transcript and Learning Materials</Typography>                                     
                 </div>                                                                                                                                        
                 <Button size="small" variant="outlined" onClick={refreshResults} sx={{ borderRadius: 999 }}><RefreshIcon fontSize="small" /></Button>         
               </div>                                                                                                                                          
                                                                                                                                                               
               <div className="classroom-output-stack">                                                                                                        
                 {!isCompleted && <div className="classroom-output-block">                                                                                     
-                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>Transcript</Typography>                                      
+                  <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>Transcript</Typography>                                      
                   <TextField                                                                                                                                  
                     value={manualTranscript}                                                                                                                  
                     onChange={(event) => setManualTranscript(event.target.value)}                                                                             
                     placeholder="Optional manual transcript fallback if the recording is not usable."                                                         
                     minRows={6} multiline fullWidth variant="outlined"                                                                                        
-                    sx={{ '& .MuiInputBase-root': { color: '#fff' }, '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.12)' } }}       
+                    sx={{ '& .MuiInputBase-root': { color: 'var(--color-white)' }, '& .MuiOutlinedInput-notchedOutline': { borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)' } }}       
                   />                                                                                                                                          
                 </div>}                                                                                                                                       
                                                                                                                                                               
-                <Box sx={{ mt: 3, borderBottom: 1, borderColor: 'rgba(255,255,255,0.1)' }}>                                                                   
+                <Box sx={{ mt: 3, borderBottom: 1, borderColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)' }}>                                                                   
                   <Tabs                                                                                                                                       
                     value={activeTab}                                                                                                                         
                     onChange={(e, newVal) => setActiveTab(newVal)}                                                                                            
-                    textColor="#fff"                                                                                                                          
+                    textColor="var(--color-white)"                                                                                                                          
                     indicatorColor="primary"                                                                                                                  
-                    sx={{ '& .MuiTab-root': { color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: 500 } }}                                              
+                    sx={{ '& .MuiTab-root': { color: 'color-mix(in srgb, var(--color-white) 60%, transparent)', fontSize: 14, fontWeight: 500 } }}                                              
                   >                                                                                                                                           
-                    {tabs.map((tab, index) => <Tab key={tab} label={tab} sx={{ color: activeTab === index ? '#fff' : 'rgba(255,255,255,0.6)' }} />)}          
+                    {tabs.map((tab, index) => <Tab key={tab} label={tab} sx={{ color: activeTab === index ? 'var(--color-white)' : 'color-mix(in srgb, var(--color-white) 60%, transparent)' }} />)}          
                   </Tabs>                                                                                                                                     
                 </Box>                                                                                                                                        
                                                                                                                                                               
@@ -555,7 +555,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                     <>                                                                                                                                        
                       {activeTab === 0 && (                                                                                                                   
                         <div className="classroom-output-block">                                                                                              
-                          <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>Summary</Typography>                                 
+                          <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>Summary</Typography>                                 
                           <div className="classroom-markdown">                                                                                                
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{results.summary?.content || 'No summary available.'}</ReactMarkdown>                  
                           </div>                                                                                                                              
@@ -563,7 +563,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                       )}                                                                                                                                      
                       {activeTab === 1 && (                                                                                                                   
                         <div className="classroom-output-block">                                                                                              
-                          <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>MCQs ({results.mcqs?.length || 0})</Typography>      
+                          <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>MCQs ({results.mcqs?.length || 0})</Typography>      
                           <ClassroomQuiz mcqs={results.mcqs} />
                         </div>                                                                                                                                
                       )}                                                                                                                                      
@@ -580,7 +580,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                     </>                                                                                                                                       
                   ) : (                                                                                                                                       
                     <div className="classroom-empty-state">                                                                                                   
-                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>                                                                   
+                      <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>                                                                   
                         {session?.status === 'completed' ? 'No materials found.' : 'Once transcription completes, the summary and learning items will appear  here.'}                                                                                                                                                     
                       </Typography>                                                                                                                           
                     </div>                                                                                                                                    

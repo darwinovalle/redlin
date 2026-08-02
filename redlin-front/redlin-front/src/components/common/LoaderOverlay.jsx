@@ -15,7 +15,7 @@ const LoaderOverlay = ({ open, text = 'Uploading...' }) => {
         left: 0,
         width: '100vw',
         height: '100vh',
-        bgcolor: 'rgba(0,0,0,0.85)',
+        bgcolor: 'color-mix(in srgb, var(--color-black) 85%, transparent)',
         zIndex: 1400,
         display: 'flex',
         flexDirection: 'column',

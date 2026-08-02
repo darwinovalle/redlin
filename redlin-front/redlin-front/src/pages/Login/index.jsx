@@ -53,20 +53,20 @@ const Login = () => {
         <div className="left-content">
           <div className="illustration">
             <svg width="500" height="300" viewBox="0 0 500 300" role="img" aria-label="Brain network illustration">
-              <path d="M250,50 C350,50 400,150 400,200 C400,250 350,280 300,280 C270,280 260,260 250,260 C240,260 230,280 200,280 C150,280 100,250 100,200 C100,150 150,50 250,50" fill="none" stroke="#4A90E2" strokeWidth="2" />
-              <circle cx="150" cy="120" r="10" fill="#20C997" />
-              <circle cx="200" cy="80" r="10" fill="#20C997" />
-              <circle cx="250" cy="100" r="10" fill="#20C997" />
-              <circle cx="300" cy="90" r="10" fill="#20C997" />
-              <circle cx="350" cy="130" r="10" fill="#20C997" />
-              <circle cx="180" cy="170" r="10" fill="#4A90E2" />
-              <circle cx="250" cy="160" r="10" fill="#4A90E2" />
-              <circle cx="320" cy="180" r="10" fill="#4A90E2" />
-              <circle cx="220" cy="230" r="10" fill="#FFFFFF" />
-              <circle cx="280" cy="240" r="10" fill="#FFFFFF" />
+              <path d="M250,50 C350,50 400,150 400,200 C400,250 350,280 300,280 C270,280 260,260 250,260 C240,260 230,280 200,280 C150,280 100,250 100,200 C100,150 150,50 250,50" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
+              <circle cx="150" cy="120" r="10" fill="var(--color-teal)" />
+              <circle cx="200" cy="80" r="10" fill="var(--color-teal)" />
+              <circle cx="250" cy="100" r="10" fill="var(--color-teal)" />
+              <circle cx="300" cy="90" r="10" fill="var(--color-teal)" />
+              <circle cx="350" cy="130" r="10" fill="var(--color-teal)" />
+              <circle cx="180" cy="170" r="10" fill="var(--color-blue)" />
+              <circle cx="250" cy="160" r="10" fill="var(--color-blue)" />
+              <circle cx="320" cy="180" r="10" fill="var(--color-blue)" />
+              <circle cx="220" cy="230" r="10" fill="var(--color-white)" />
+              <circle cx="280" cy="240" r="10" fill="var(--color-white)" />
             </svg>
           </div>
-          <h1 className="platform-tagline">AI-Powered Learning Platform</h1>
+          <div className="platform-tagline">AI-Powered Learning Platform</div>
           <p className="platform-description">Unlock your potential with our advanced AI learning system. Personalized education paths, real-time feedback, and adaptive learning technology to accelerate your growth.</p>
         </div>
       </div>
@@ -76,7 +76,7 @@ const Login = () => {
             <div className="logo"><i className="ri-brain-line" /></div>
             <div className="platform-name">Redlin</div>
           </div>
-          <h3 className="login-title">Login</h3>
+          <h1 className="login-title">Login</h1>
           {error && <div className="error-banner" role="alert">{error}</div>}
           <form onSubmit={handleLogin} autoComplete="on">
             <div className="form-group">
@@ -114,6 +114,7 @@ const Login = () => {
                   <i className={showPassword ? 'ri-eye-off-line' : 'ri-eye-line'} />
                 </button>
               </div>
+
             </div>
             <div className="remember-forgot">
               <div className="remember-me">

@@ -172,7 +172,7 @@ const QuizView = ({ documentId }) => {
       <Box sx={{ p:3, textAlign:'center' }}>
         <Typography variant="h5" sx={{ mb:2, fontWeight:'bold' }} color="black">Results</Typography>
         <Typography variant="body1" sx={{ mb:3 }} color="black">Score: {score} / {totalQuestions}</Typography>
-        <Button variant="contained" onClick={endQuizHandler} sx={{ borderRadius:'20px', px:4, backgroundColor: '#6be0a6'}}>Exit</Button>
+        <Button variant="contained" onClick={endQuizHandler} sx={{ borderRadius:'20px', px:4, backgroundColor: 'var(--color-success)'}}>Exit</Button>
       </Box>
     );
   }
@@ -213,7 +213,7 @@ const QuizView = ({ documentId }) => {
           size="large" 
           onClick={startQuizHandler} 
           disabled={!canStart || !documentId}
-          sx={{ backgroundColor: '#000' , borderRadius: '20px'}}
+          sx={{ backgroundColor: 'var(--color-black)' , borderRadius: '20px'}}
         >
           {canStart ? 'Start Quiz' : (documentId ? 'No Questions Found' : 'Select Document')}
         </Button>
@@ -291,7 +291,7 @@ const QuizView = ({ documentId }) => {
           <Box sx={{
             position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center',
             zIndex:10, pointerEvents:'none',
-            '& .fx': { fontSize:90, animation:'pop 0.9s ease forwards', color: feedback === 'correct' ? 'inherit' : '#ff0000', fontWeight: 'bold' },
+            '& .fx': { fontSize:90, animation:'pop 0.9s ease forwards', color: feedback === 'correct' ? 'inherit' : 'var(--color-danger-bright)', fontWeight: 'bold' },
             '@keyframes pop': { '0%':{ transform:'scale(.2)', opacity:0 }, '40%':{ transform:'scale(1.05)', opacity:1 }, '100%':{ transform:'scale(1)', opacity:0 } }
           }}>
             <span className="fx">{feedback === 'correct' ? '👏' : '✖'}</span>
@@ -342,7 +342,7 @@ const QuizView = ({ documentId }) => {
             variant="contained" 
             color="inherit" 
             onClick={endQuizHandler} 
-            sx={{ backgroundColor: '#6be0a6' }}
+            sx={{ backgroundColor: 'var(--color-success)' }}
           >
             Exit
           </Button>

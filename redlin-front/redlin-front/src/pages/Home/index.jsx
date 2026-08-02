@@ -63,9 +63,9 @@ const accessSeed = [
 ];
 
 const achievementsSeed = [
-  { icon: 'ri-medal-line', color: '#4A90E2', title: 'First Milestone', desc: 'Completed Basics Module' },
-  { icon: 'ri-fire-line', color: '#7F63F4', title: (s)=> `${s}-Day Streak`, desc: 'Keep it going!' },
-  { icon: 'ri-book-mark-line', color: '#20C997', title: 'Knowledge Hunter', desc: 'Completed 5 lessons' }
+  { icon: 'ri-medal-line', color: 'var(--color-blue)', title: 'First Milestone', desc: 'Completed Basics Module' },
+  { icon: 'ri-fire-line', color: 'var(--color-purple)', title: (s)=> `${s}-Day Streak`, desc: 'Keep it going!' },
+  { icon: 'ri-book-mark-line', color: 'var(--color-teal)', title: 'Knowledge Hunter', desc: 'Completed 5 lessons' }
 ];
 
 const Home = () => {
@@ -122,7 +122,7 @@ const Home = () => {
 
   return (
     <div className="home-main-content" ref={mainContentRef}>
-      {/* <div style={{ position: 'fixed', top: 10, right: 10, zIndex: 9999, background: '#20C997', color: '#fff', padding: '6px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700 }}>
+      {/* <div style={{ position: 'fixed', top: 10, right: 10, zIndex: 9999, background: 'var(--color-teal)', color: 'var(--color-white)', padding: '6px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700 }}>
         HOME MOUNTED
       </div> */}
       {/* Header */}
@@ -184,7 +184,7 @@ const Home = () => {
           <div className="progress-card-header"><h3>Meta diaria</h3></div>
           <div className="progress-card-content">
             <div className="goal-progress">
-              <div className="circular-progress" style={{ background: `conic-gradient(#20C997 0% ${percent}%, #F5F7FA ${percent}%, #F5F7FA 100%)` }}>
+              <div className="circular-progress" style={{ background: `conic-gradient(var(--color-teal) 0% ${percent}%, var(--color-cloud) ${percent}%, var(--color-cloud) 100%)` }}>
                 <div className="progress-value">{done}/{dailyGoal}</div>
               </div>
               <div className="goal-text">{done >= dailyGoal ? 'Has completado tu meta diaria' : 'Progreso hacia tu meta'}</div>
@@ -240,7 +240,7 @@ const Home = () => {
               </div>
             ))}
           </div>
-          <div style={{marginTop:20, textAlign:'center', color:'#666666', fontSize:14}}>
+          <div style={{marginTop:20, textAlign:'center', color:'var(--color-text-mid)', fontSize:14}}>
             <p>Average study time: 1.5 hours/day</p>
           </div>
         </div>

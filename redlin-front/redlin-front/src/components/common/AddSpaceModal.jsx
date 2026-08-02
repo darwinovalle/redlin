@@ -107,11 +107,11 @@ const AddSpaceModal = ({
           borderRadius: 4,
           boxShadow: 20,
           overflow: 'hidden',
-          backgroundColor: '#000000', // forced for visual verification
+          backgroundColor: 'var(--color-black)', // forced for visual verification
         },
       }}
       slotProps={{
-        backdrop: { sx: { backgroundColor: 'rgba(0,0,0,0.6)' } },
+        backdrop: { sx: { backgroundColor: 'color-mix(in srgb, var(--color-black) 60%, transparent)' } },
       }}
     >
       <Box sx={{ position: 'relative' }}>
@@ -158,10 +158,10 @@ const AddSpaceModal = ({
                     sx={{
                       borderRadius: 2,
                       '&.Mui-selected': {
-                        backgroundColor: 'rgba(255,255,255,0.08)',
+                        backgroundColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)',
                       },
                       '&.Mui-selected:hover': {
-                        backgroundColor: 'rgba(255,255,255,0.12)',
+                        backgroundColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)',
                       },
                     }}
                   >
@@ -291,8 +291,8 @@ const AddSpaceModal = ({
                       width: '100%',
                       padding: '12px 14px',
                       borderRadius: 8,
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid color-mix(in srgb, var(--color-white) 20%, transparent)',
+                      background: 'color-mix(in srgb, var(--color-white) 4%, transparent)',
                       color: 'white',
                       marginBottom: 12,
                       fontSize: 14
@@ -307,8 +307,8 @@ const AddSpaceModal = ({
                       width: '100%',
                       padding: '10px 14px',
                       borderRadius: 8,
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid color-mix(in srgb, var(--color-white) 20%, transparent)',
+                      background: 'color-mix(in srgb, var(--color-white) 4%, transparent)',
                       color: 'white',
                       marginBottom: 16,
                       fontSize: 13
@@ -341,8 +341,8 @@ const AddSpaceModal = ({
                       width: '100%',
                       padding: '12px 14px',
                       borderRadius: 8,
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid color-mix(in srgb, var(--color-white) 20%, transparent)',
+                      background: 'color-mix(in srgb, var(--color-white) 4%, transparent)',
                       color: 'white',
                       marginBottom: 12,
                       fontSize: 14
@@ -357,8 +357,8 @@ const AddSpaceModal = ({
                       width: '100%',
                       padding: '10px 14px',
                       borderRadius: 8,
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid color-mix(in srgb, var(--color-white) 20%, transparent)',
+                      background: 'color-mix(in srgb, var(--color-white) 4%, transparent)',
                       color: 'white',
                       marginBottom: 16,
                       fontSize: 13

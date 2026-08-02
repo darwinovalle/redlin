@@ -32,7 +32,7 @@ const ClassroomClozeCard = ({ cloze, sessionKey, onResult }) => {
 
     return text_with_blank.replace(
       '_____',
-      '<span style="background:rgba(107,224,166,0.14);padding:2px 6px;border-radius:6px;font-weight:700;letter-spacing:1px;border:1px solid rgba(107,224,166,0.18)">_____</span>'
+      '<span style="background:color-mix(in srgb, var(--color-success) 14%, transparent);padding:2px 6px;border-radius:6px;font-weight:700;letter-spacing:1px;border:1px solid color-mix(in srgb, var(--color-success) 18%, transparent)">_____</span>'
     );
   }, [text_with_blank]);
 
@@ -60,16 +60,16 @@ const ClassroomClozeCard = ({ cloze, sessionKey, onResult }) => {
   return (
     <Box
       sx={{
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)',
         borderRadius: 4,
         p: 2.25,
         mb: 2,
-        bgcolor: 'rgba(8, 14, 22, 0.82)',
-        boxShadow: '0 18px 48px rgba(0,0,0,0.24)',
+        bgcolor: 'color-mix(in srgb, var(--color-navy-deep) 82%, transparent)',
+        boxShadow: '0 18px 48px color-mix(in srgb, var(--color-black) 24%, transparent)',
       }}
     >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-        <Typography variant="overline" sx={{ letterSpacing: 2.5, color: 'rgba(255,255,255,0.5)' }}>
+        <Typography variant="overline" sx={{ letterSpacing: 2.5, color: 'color-mix(in srgb, var(--color-white) 50%, transparent)' }}>
           CLOZE
         </Typography>
         {difficulty && <Chip size="small" color={difficultyColor} label={difficulty} sx={{ fontWeight: 700, textTransform: 'capitalize' }} />}
@@ -77,7 +77,7 @@ const ClassroomClozeCard = ({ cloze, sessionKey, onResult }) => {
 
       <Typography
         variant="body1"
-        sx={{ mb: 1.5, color: '#fff', lineHeight: 1.55, fontSize: 16 }}
+        sx={{ mb: 1.5, color: 'var(--color-white)', lineHeight: 1.55, fontSize: 16 }}
         component="div"
         dangerouslySetInnerHTML={{ __html: renderedText }}
       />
@@ -95,9 +95,9 @@ const ClassroomClozeCard = ({ cloze, sessionKey, onResult }) => {
               disabled={result != null}
               sx={{
                 borderRadius: 999,
-                borderColor: 'rgba(255,255,255,0.14)',
-                color: '#fff',
-                bgcolor: userAnswer === option ? 'rgba(107,224,166,0.16)' : 'transparent',
+                borderColor: 'color-mix(in srgb, var(--color-white) 14%, transparent)',
+                color: 'var(--color-white)',
+                bgcolor: userAnswer === option ? 'color-mix(in srgb, var(--color-success) 16%, transparent)' : 'transparent',
                 '& .MuiChip-label': { px: 0.5 },
               }}
             />
@@ -116,14 +116,14 @@ const ClassroomClozeCard = ({ cloze, sessionKey, onResult }) => {
           sx={{
             flex: '1 1 320px',
             '& .MuiOutlinedInput-root': {
-              color: '#fff',
-              backgroundColor: 'rgba(255,255,255,0.03)',
+              color: 'var(--color-white)',
+              backgroundColor: 'color-mix(in srgb, var(--color-white) 3%, transparent)',
               borderRadius: 2,
-              '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
-              '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.22)' },
-              '&.Mui-focused fieldset': { borderColor: 'rgba(107,224,166,0.65)' },
+              '& fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
+              '&:hover fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 22%, transparent)' },
+              '&.Mui-focused fieldset': { borderColor: 'color-mix(in srgb, var(--color-success) 65%, transparent)' },
             },
-            '& .MuiInputBase-input::placeholder': { color: 'rgba(255,255,255,0.44)', opacity: 1 },
+            '& .MuiInputBase-input::placeholder': { color: 'color-mix(in srgb, var(--color-white) 44%, transparent)', opacity: 1 },
           }}
         />
 
@@ -134,11 +134,11 @@ const ClassroomClozeCard = ({ cloze, sessionKey, onResult }) => {
           sx={{
             minWidth: 110,
             borderRadius: 2,
-            bgcolor: '#6be0a6',
-            color: '#07141f',
+            bgcolor: 'var(--color-success)',
+            color: 'var(--color-navy-deep)',
             fontWeight: 800,
-            '&:hover': { bgcolor: '#8bf0bf' },
-            '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.36)' },
+            '&:hover': { bgcolor: 'var(--color-teal-pale)' },
+            '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' },
           }}
         >
           Check

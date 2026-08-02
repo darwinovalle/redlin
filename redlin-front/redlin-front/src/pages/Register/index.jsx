@@ -51,9 +51,9 @@ const Register = () => {
             <div key={i} className="node" style={{ top:n.t, left:n.l }} />
           ))}
         </div>
-        <div className="floating-element" style={{top:'15%', left:'20%', width:60, height:60, borderRadius:12, background:'rgba(32,201,151,0.1)', animationDelay:'0.5s'}} />
-        <div className="floating-element" style={{top:'70%', left:'75%', width:80, height:40, borderRadius:20, background:'rgba(74,144,226,0.1)', animationDelay:'1.2s'}} />
-        <div className="floating-element" style={{top:'40%', left:'80%', width:50, height:50, borderRadius:25, background:'rgba(127,99,244,0.1)', animationDelay:'0.8s'}} />
+        <div className="floating-element" style={{top:'15%', left:'20%', width:60, height:60, borderRadius:12, background:'color-mix(in srgb, var(--color-teal) 10%, transparent)', animationDelay:'0.5s'}} />
+        <div className="floating-element" style={{top:'70%', left:'75%', width:80, height:40, borderRadius:20, background:'color-mix(in srgb, var(--color-blue) 10%, transparent)', animationDelay:'1.2s'}} />
+        <div className="floating-element" style={{top:'40%', left:'80%', width:50, height:50, borderRadius:25, background:'color-mix(in srgb, var(--color-purple) 10%, transparent)', animationDelay:'0.8s'}} />
         <div className="brain-illustration">
           <div className="brain-circle">
             <div className="brain-inner">
@@ -66,7 +66,7 @@ const Register = () => {
           </div>
         </div>
         <div className="illustration-content">
-          <h2>Accelerate Your Learning with AI</h2>
+          <div className="illustration-title">Accelerate Your Learning with AI</div>
           <p>Join our advanced learning platform that adapts to your unique learning style. Personalized curriculum, real-time feedback, and AI-powered insights to help you master new skills faster than ever before.</p>
         </div>
       </div>

@@ -1,0 +1,1383 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-01T07:51:54.758Z",
+  "title": "Design System: RedLin — The Neural Lab",
+  "extensions": {
+    "colorMeta": {
+      "eco-teal": {
+        "role": "primary",
+        "displayName": "Teal",
+        "canonical": "oklch(74% 0.148 166)",
+        "tonalRamp": [
+          "oklch(96% 0.005 165)",
+          "oklch(92% 0.02 165)",
+          "oklch(85% 0.06 165)",
+          "oklch(72% 0.18 165)",
+          "oklch(60% 0.25 165)",
+          "oklch(45% 0.28 165)",
+          "oklch(30% 0.25 165)"
+        ]
+      },
+      "electric-purple": {
+        "role": "secondary",
+        "displayName": "Purple",
+        "canonical": "oklch(60% 0.208 287)",
+        "tonalRamp": [
+          "oklch(95% 0.005 275)",
+          "oklch(88% 0.03 275)",
+          "oklch(78% 0.09 275)",
+          "oklch(58% 0.2 275)",
+          "oklch(42% 0.22 275)",
+          "oklch(28% 0.2 275)",
+          "oklch(15% 0.12 275)"
+        ]
+      },
+      "deep-navy": {
+        "role": "dark-surface",
+        "displayName": "Navy",
+        "canonical": "oklch(28% 0.037 249)",
+        "tonalRamp": [
+          "oklch(96% 0.001 250)",
+          "oklch(90% 0.003 250)",
+          "oklch(80% 0.008 250)",
+          "oklch(60% 0.015 250)",
+          "oklch(40% 0.02 250)",
+          "oklch(25% 0.02 250)",
+          "oklch(12% 0.01 250)"
+        ]
+      },
+      "darker-navy": {
+        "role": "deepest-surface",
+        "displayName": "Darker Navy",
+        "canonical": "oklch(19% 0.029 245)",
+        "tonalRamp": [
+          "oklch(95% 0.001 250)",
+          "oklch(85% 0.003 250)",
+          "oklch(70% 0.006 250)",
+          "oklch(50% 0.008 250)",
+          "oklch(30% 0.01 250)",
+          "oklch(15% 0.005 250)",
+          "oklch(8% 0.003 250)"
+        ]
+      },
+      "slate-blue": {
+        "role": "tertiary",
+        "displayName": "Blue",
+        "canonical": "oklch(65% 0.142 254)",
+        "tonalRamp": [
+          "oklch(94% 0.005 240)",
+          "oklch(85% 0.015 240)",
+          "oklch(75% 0.025 240)",
+          "oklch(55% 0.15 240)",
+          "oklch(40% 0.18 240)",
+          "oklch(25% 0.18 240)",
+          "oklch(12% 0.15 240)"
+        ]
+      },
+      "coral": {
+        "role": "warm-accent",
+        "displayName": "Coral",
+        "canonical": "oklch(74% 0.162 32)",
+        "tonalRamp": [
+          "oklch(95% 0.005 30)",
+          "oklch(85% 0.02 30)",
+          "oklch(70% 0.04 30)",
+          "oklch(58% 0.18 30)",
+          "oklch(45% 0.22 30)",
+          "oklch(30% 0.21 30)",
+          "oklch(15% 0.15 30)"
+        ]
+      },
+      "warm-amber": {
+        "role": "warm-accent-alt",
+        "displayName": "Amber",
+        "canonical": "oklch(82% 0.171 78)",
+        "tonalRamp": [
+          "oklch(95% 0.005 70)",
+          "oklch(85% 0.02 70)",
+          "oklch(70% 0.04 70)",
+          "oklch(62% 0.15 70)",
+          "oklch(45% 0.2 70)",
+          "oklch(30% 0.2 70)",
+          "oklch(15% 0.15 70)"
+        ]
+      },
+      "cloud": {
+        "role": "light-surface",
+        "displayName": "Cloud",
+        "canonical": "oklch(98% 0.005 259)",
+        "tonalRamp": [
+          "oklch(98% 0.0005 90)",
+          "oklch(96% 0.001 90)",
+          "oklch(92% 0.004 90)",
+          "oklch(85% 0.008 90)",
+          "oklch(75% 0.012 90)",
+          "oklch(60% 0.015 90)",
+          "oklch(40% 0.018 90)"
+        ]
+      },
+      "mist": {
+        "role": "light-border",
+        "displayName": "Mist",
+        "canonical": "oklch(92% 0.008 254)",
+        "tonalRamp": [
+          "oklch(95% 0.001 10)",
+          "oklch(90% 0.003 10)",
+          "oklch(80% 0.006 10)",
+          "oklch(65% 0.008 10)",
+          "oklch(50% 0.01 10)",
+          "oklch(30% 0.012 10)",
+          "oklch(15% 0.008 10)"
+        ]
+      },
+      "pale-teal": {
+        "role": "light-accent-surface",
+        "displayName": "Pale Teal",
+        "canonical": "oklch(95% 0.023 177)",
+        "tonalRamp": [
+          "oklch(96% 0.002 165)",
+          "oklch(93% 0.005 165)",
+          "oklch(88% 0.008 165)",
+          "oklch(80% 0.012 165)",
+          "oklch(70% 0.015 165)",
+          "oklch(55% 0.018 165)",
+          "oklch(40% 0.02 165)"
+        ]
+      },
+      "charcoal": {
+        "role": "muted-text",
+        "displayName": "Charcoal",
+        "canonical": "oklch(49% 0.033 258)",
+        "tonalRamp": [
+          "oklch(97% 0.02 258)",
+          "oklch(90% 0.05 258)",
+          "oklch(80% 0.09 258)",
+          "oklch(70% 0.13 258)",
+          "oklch(55% 0.15 258)",
+          "oklch(40% 0.16 258)",
+          "oklch(25% 0.14 258)"
+        ]
+      },
+      "white": {
+        "role": "text-on-dark",
+        "displayName": "White",
+        "canonical": "oklch(100% 0 20)",
+        "tonalRamp": [
+          "oklch(100% 0 0)",
+          "oklch(95% 0.001 0)",
+          "oklch(85% 0.003 0)",
+          "oklch(70% 0.006 0)",
+          "oklch(50% 0.009 0)",
+          "oklch(30% 0.012 0)",
+          "oklch(15% 0.008 0)"
+        ]
+      },
+      "app-bg": {
+        "role": "app-shell-background",
+        "displayName": "App Background",
+        "canonical": "oklch(93% 0 20)",
+        "tonalRamp": [
+          "oklch(96% 0.0005 40)",
+          "oklch(90% 0.003 40)",
+          "oklch(80% 0.006 40)",
+          "oklch(60% 0.008 40)",
+          "oklch(40% 0.01 40)",
+          "oklch(20% 0.012 40)",
+          "oklch(10% 0.008 40)"
+        ]
+      },
+      "surface-stroke": {
+        "role": "dark-divider",
+        "displayName": "Surface Stroke",
+        "canonical": "rgba(255, 255, 255, 0.06)",
+        "tonalRamp": [
+          "rgba(255, 255, 255, 0.02)",
+          "rgba(255, 255, 255, 0.04)",
+          "rgba(255, 255, 255, 0.06)",
+          "rgba(255, 255, 255, 0.08)",
+          "rgba(255, 255, 255, 0.1)",
+          "rgba(255, 255, 255, 0.15)",
+          "rgba(255, 255, 255, 0.2)"
+        ]
+      },
+      "brand-gradient-135": {
+        "role": "primary-gradient-angled",
+        "displayName": "Primary Gradient 135°",
+        "canonical": "linear-gradient(135deg, oklch(72% 0.18 165), oklch(58% 0.2 275))",
+        "tonalRamp": []
+      },
+      "brand-gradient-90": {
+        "role": "primary-gradient-horizontal",
+        "displayName": "Primary Gradient 90°",
+        "canonical": "linear-gradient(90deg, oklch(72% 0.18 165), oklch(58% 0.2 275))",
+        "tonalRamp": []
+      },
+      "teal-deep": {
+        "role": "contrast-safe-primary",
+        "displayName": "Teal Deep",
+        "canonical": "oklch(51% 0.109 162)",
+        "tonalRamp": [
+          "oklch(97% 0.02 162)",
+          "oklch(90% 0.05 162)",
+          "oklch(80% 0.09 162)",
+          "oklch(70% 0.13 162)",
+          "oklch(55% 0.15 162)",
+          "oklch(40% 0.16 162)",
+          "oklch(25% 0.14 162)"
+        ]
+      },
+      "teal-deeper": {
+        "role": "contrast-safe-primary-hover",
+        "displayName": "Teal Deeper",
+        "canonical": "oklch(47% 0.097 163)",
+        "tonalRamp": [
+          "oklch(97% 0.02 163)",
+          "oklch(90% 0.05 163)",
+          "oklch(80% 0.09 163)",
+          "oklch(70% 0.13 163)",
+          "oklch(55% 0.15 163)",
+          "oklch(40% 0.16 163)",
+          "oklch(25% 0.14 163)"
+        ]
+      },
+      "teal-hover": {
+        "role": "primary-hover",
+        "displayName": "Teal Hover",
+        "canonical": "oklch(64% 0.122 169)",
+        "tonalRamp": [
+          "oklch(97% 0.02 169)",
+          "oklch(90% 0.05 169)",
+          "oklch(80% 0.09 169)",
+          "oklch(70% 0.13 169)",
+          "oklch(55% 0.15 169)",
+          "oklch(40% 0.16 169)",
+          "oklch(25% 0.14 169)"
+        ]
+      },
+      "teal-bright": {
+        "role": "primary-hover-alt",
+        "displayName": "Teal Bright",
+        "canonical": "oklch(64% 0.129 166)",
+        "tonalRamp": [
+          "oklch(97% 0.02 166)",
+          "oklch(90% 0.05 166)",
+          "oklch(80% 0.09 166)",
+          "oklch(70% 0.13 166)",
+          "oklch(55% 0.15 166)",
+          "oklch(40% 0.16 166)",
+          "oklch(25% 0.14 166)"
+        ]
+      },
+      "teal-pale": {
+        "role": "primary-light",
+        "displayName": "Teal Pale",
+        "canonical": "oklch(88% 0.118 162)",
+        "tonalRamp": [
+          "oklch(97% 0.02 162)",
+          "oklch(90% 0.05 162)",
+          "oklch(80% 0.09 162)",
+          "oklch(70% 0.13 162)",
+          "oklch(55% 0.15 162)",
+          "oklch(40% 0.16 162)",
+          "oklch(25% 0.14 162)"
+        ]
+      },
+      "purple-deep": {
+        "role": "contrast-safe-secondary",
+        "displayName": "Purple Deep",
+        "canonical": "oklch(50% 0.192 286)",
+        "tonalRamp": [
+          "oklch(97% 0.02 286)",
+          "oklch(90% 0.05 286)",
+          "oklch(80% 0.09 286)",
+          "oklch(70% 0.13 286)",
+          "oklch(55% 0.15 286)",
+          "oklch(40% 0.16 286)",
+          "oklch(25% 0.14 286)"
+        ]
+      },
+      "purple-deeper": {
+        "role": "contrast-safe-secondary-hover",
+        "displayName": "Purple Deeper",
+        "canonical": "oklch(46% 0.175 284)",
+        "tonalRamp": [
+          "oklch(97% 0.02 284)",
+          "oklch(90% 0.05 284)",
+          "oklch(80% 0.09 284)",
+          "oklch(70% 0.13 284)",
+          "oklch(55% 0.15 284)",
+          "oklch(40% 0.16 284)",
+          "oklch(25% 0.14 284)"
+        ]
+      },
+      "purple-light": {
+        "role": "secondary-light",
+        "displayName": "Purple Light",
+        "canonical": "oklch(78% 0.116 292)",
+        "tonalRamp": [
+          "oklch(97% 0.02 292)",
+          "oklch(90% 0.05 292)",
+          "oklch(80% 0.09 292)",
+          "oklch(70% 0.13 292)",
+          "oklch(55% 0.15 292)",
+          "oklch(40% 0.16 292)",
+          "oklch(25% 0.14 292)"
+        ]
+      },
+      "blue-deep": {
+        "role": "contrast-safe-tertiary",
+        "displayName": "Blue Deep",
+        "canonical": "oklch(53% 0.122 251)",
+        "tonalRamp": [
+          "oklch(97% 0.02 251)",
+          "oklch(90% 0.05 251)",
+          "oklch(80% 0.09 251)",
+          "oklch(70% 0.13 251)",
+          "oklch(55% 0.15 251)",
+          "oklch(40% 0.16 251)",
+          "oklch(25% 0.14 251)"
+        ]
+      },
+      "blue-deeper": {
+        "role": "tertiary-hover",
+        "displayName": "Blue Deeper",
+        "canonical": "oklch(52% 0.154 254)",
+        "tonalRamp": [
+          "oklch(97% 0.02 254)",
+          "oklch(90% 0.05 254)",
+          "oklch(80% 0.09 254)",
+          "oklch(70% 0.13 254)",
+          "oklch(55% 0.15 254)",
+          "oklch(40% 0.16 254)",
+          "oklch(25% 0.14 254)"
+        ]
+      },
+      "navy-800": {
+        "role": "dark-surface-800",
+        "displayName": "Navy 800",
+        "canonical": "oklch(27% 0.031 253)",
+        "tonalRamp": [
+          "oklch(97% 0.02 253)",
+          "oklch(90% 0.05 253)",
+          "oklch(80% 0.09 253)",
+          "oklch(70% 0.13 253)",
+          "oklch(55% 0.15 253)",
+          "oklch(40% 0.16 253)",
+          "oklch(25% 0.14 253)"
+        ]
+      },
+      "navy-700": {
+        "role": "dark-surface-700",
+        "displayName": "Navy 700",
+        "canonical": "oklch(30% 0.032 254)",
+        "tonalRamp": [
+          "oklch(97% 0.02 254)",
+          "oklch(90% 0.05 254)",
+          "oklch(80% 0.09 254)",
+          "oklch(70% 0.13 254)",
+          "oklch(55% 0.15 254)",
+          "oklch(40% 0.16 254)",
+          "oklch(25% 0.14 254)"
+        ]
+      },
+      "navy-600": {
+        "role": "dark-surface-600",
+        "displayName": "Navy 600",
+        "canonical": "oklch(33% 0.034 257)",
+        "tonalRamp": [
+          "oklch(97% 0.02 257)",
+          "oklch(90% 0.05 257)",
+          "oklch(80% 0.09 257)",
+          "oklch(70% 0.13 257)",
+          "oklch(55% 0.15 257)",
+          "oklch(40% 0.16 257)",
+          "oklch(25% 0.14 257)"
+        ]
+      },
+      "navy-500": {
+        "role": "dark-surface-500",
+        "displayName": "Navy 500",
+        "canonical": "oklch(31% 0.032 252)",
+        "tonalRamp": [
+          "oklch(97% 0.02 252)",
+          "oklch(90% 0.05 252)",
+          "oklch(80% 0.09 252)",
+          "oklch(70% 0.13 252)",
+          "oklch(55% 0.15 252)",
+          "oklch(40% 0.16 252)",
+          "oklch(25% 0.14 252)"
+        ]
+      },
+      "navy-400": {
+        "role": "dark-surface-400",
+        "displayName": "Navy 400",
+        "canonical": "oklch(26% 0.038 254)",
+        "tonalRamp": [
+          "oklch(97% 0.02 254)",
+          "oklch(90% 0.05 254)",
+          "oklch(80% 0.09 254)",
+          "oklch(70% 0.13 254)",
+          "oklch(55% 0.15 254)",
+          "oklch(40% 0.16 254)",
+          "oklch(25% 0.14 254)"
+        ]
+      },
+      "navy-300": {
+        "role": "dark-surface-300",
+        "displayName": "Navy 300",
+        "canonical": "oklch(38% 0.061 244)",
+        "tonalRamp": [
+          "oklch(97% 0.02 244)",
+          "oklch(90% 0.05 244)",
+          "oklch(80% 0.09 244)",
+          "oklch(70% 0.13 244)",
+          "oklch(55% 0.15 244)",
+          "oklch(40% 0.16 244)",
+          "oklch(25% 0.14 244)"
+        ]
+      },
+      "navy-200": {
+        "role": "dark-surface-200",
+        "displayName": "Navy 200",
+        "canonical": "oklch(26% 0.046 250)",
+        "tonalRamp": [
+          "oklch(97% 0.02 250)",
+          "oklch(90% 0.05 250)",
+          "oklch(80% 0.09 250)",
+          "oklch(70% 0.13 250)",
+          "oklch(55% 0.15 250)",
+          "oklch(40% 0.16 250)",
+          "oklch(25% 0.14 250)"
+        ]
+      },
+      "navy-100": {
+        "role": "dark-surface-100",
+        "displayName": "Navy 100",
+        "canonical": "oklch(22% 0.034 255)",
+        "tonalRamp": [
+          "oklch(97% 0.02 255)",
+          "oklch(90% 0.05 255)",
+          "oklch(80% 0.09 255)",
+          "oklch(70% 0.13 255)",
+          "oklch(55% 0.15 255)",
+          "oklch(40% 0.16 255)",
+          "oklch(25% 0.14 255)"
+        ]
+      },
+      "navy-050": {
+        "role": "dark-surface-050",
+        "displayName": "Navy 050",
+        "canonical": "oklch(20% 0.025 256)",
+        "tonalRamp": [
+          "oklch(97% 0.02 256)",
+          "oklch(90% 0.05 256)",
+          "oklch(80% 0.09 256)",
+          "oklch(70% 0.13 256)",
+          "oklch(55% 0.15 256)",
+          "oklch(40% 0.16 256)",
+          "oklch(25% 0.14 256)"
+        ]
+      },
+      "surface-muted": {
+        "role": "light-surface-muted",
+        "displayName": "Surface Muted",
+        "canonical": "oklch(99% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "surface-alt": {
+        "role": "light-surface-alt",
+        "displayName": "Surface Alt",
+        "canonical": "oklch(96% 0.005 259)",
+        "tonalRamp": [
+          "oklch(97% 0.02 259)",
+          "oklch(90% 0.05 259)",
+          "oklch(80% 0.09 259)",
+          "oklch(70% 0.13 259)",
+          "oklch(55% 0.15 259)",
+          "oklch(40% 0.16 259)",
+          "oklch(25% 0.14 259)"
+        ]
+      },
+      "surface-input": {
+        "role": "input-fill",
+        "displayName": "Surface Input",
+        "canonical": "oklch(97% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "surface-card": {
+        "role": "card-fill",
+        "displayName": "Surface Card",
+        "canonical": "oklch(99% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "surface-neutral": {
+        "role": "neutral-fill",
+        "displayName": "Surface Neutral",
+        "canonical": "oklch(96% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "surface-teal-tint": {
+        "role": "teal-tint-fill",
+        "displayName": "Surface Teal Tint",
+        "canonical": "oklch(96% 0.014 174)",
+        "tonalRamp": [
+          "oklch(97% 0.02 174)",
+          "oklch(90% 0.05 174)",
+          "oklch(80% 0.09 174)",
+          "oklch(70% 0.13 174)",
+          "oklch(55% 0.15 174)",
+          "oklch(40% 0.16 174)",
+          "oklch(25% 0.14 174)"
+        ]
+      },
+      "divider": {
+        "role": "divider",
+        "displayName": "Divider",
+        "canonical": "oklch(90% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "divider-soft": {
+        "role": "divider-soft",
+        "displayName": "Divider Soft",
+        "canonical": "oklch(95% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "border-mid": {
+        "role": "border-mid",
+        "displayName": "Border Mid",
+        "canonical": "oklch(80% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "border-grey": {
+        "role": "border-grey",
+        "displayName": "Border Grey",
+        "canonical": "oklch(83% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "border-faint": {
+        "role": "border-faint",
+        "displayName": "Border Faint",
+        "canonical": "oklch(92% 0.007 248)",
+        "tonalRamp": [
+          "oklch(97% 0.02 248)",
+          "oklch(90% 0.05 248)",
+          "oklch(80% 0.09 248)",
+          "oklch(70% 0.13 248)",
+          "oklch(55% 0.15 248)",
+          "oklch(40% 0.16 248)",
+          "oklch(25% 0.14 248)"
+        ]
+      },
+      "border-navy": {
+        "role": "dark-border",
+        "displayName": "Border Navy",
+        "canonical": "oklch(39% 0.031 256)",
+        "tonalRamp": [
+          "oklch(97% 0.02 256)",
+          "oklch(90% 0.05 256)",
+          "oklch(80% 0.09 256)",
+          "oklch(70% 0.13 256)",
+          "oklch(55% 0.15 256)",
+          "oklch(40% 0.16 256)",
+          "oklch(25% 0.14 256)"
+        ]
+      },
+      "border-navy-soft": {
+        "role": "dark-border-soft",
+        "displayName": "Border Navy Soft",
+        "canonical": "oklch(39% 0.036 260)",
+        "tonalRamp": [
+          "oklch(97% 0.02 260)",
+          "oklch(90% 0.05 260)",
+          "oklch(80% 0.09 260)",
+          "oklch(70% 0.13 260)",
+          "oklch(55% 0.15 260)",
+          "oklch(40% 0.16 260)",
+          "oklch(25% 0.14 260)"
+        ]
+      },
+      "text": {
+        "role": "text-on-light",
+        "displayName": "Text",
+        "canonical": "oklch(32% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "text-strong": {
+        "role": "text-on-light-strong",
+        "displayName": "Text Strong",
+        "canonical": "oklch(25% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "text-deep": {
+        "role": "text-on-light-deep",
+        "displayName": "Text Deep",
+        "canonical": "oklch(18% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "text-mid": {
+        "role": "text-mid",
+        "displayName": "Text Mid",
+        "canonical": "oklch(51% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "text-dim": {
+        "role": "text-dim",
+        "displayName": "Text Dim",
+        "canonical": "oklch(63% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "text-faint": {
+        "role": "text-faint",
+        "displayName": "Text Faint",
+        "canonical": "oklch(68% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "text-fainter": {
+        "role": "text-fainter",
+        "displayName": "Text Fainter",
+        "canonical": "oklch(74% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "text-muted-on-dark": {
+        "role": "muted-text-on-dark",
+        "displayName": "Text Muted On Dark",
+        "canonical": "oklch(78% 0.019 261)",
+        "tonalRamp": [
+          "oklch(97% 0.02 261)",
+          "oklch(90% 0.05 261)",
+          "oklch(80% 0.09 261)",
+          "oklch(70% 0.13 261)",
+          "oklch(55% 0.15 261)",
+          "oklch(40% 0.16 261)",
+          "oklch(25% 0.14 261)"
+        ]
+      },
+      "black": {
+        "role": "black",
+        "displayName": "Black",
+        "canonical": "oklch(0% 0 0)",
+        "tonalRamp": [
+          "oklch(97% 0.02 0)",
+          "oklch(90% 0.05 0)",
+          "oklch(80% 0.09 0)",
+          "oklch(70% 0.13 0)",
+          "oklch(55% 0.15 0)",
+          "oklch(40% 0.16 0)",
+          "oklch(25% 0.14 0)"
+        ]
+      },
+      "ink-surface": {
+        "role": "ink-surface",
+        "displayName": "Ink Surface",
+        "canonical": "oklch(24% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "ink": {
+        "role": "ink",
+        "displayName": "Ink",
+        "canonical": "oklch(29% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "ink-soft": {
+        "role": "ink-soft",
+        "displayName": "Ink Soft",
+        "canonical": "oklch(29% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "ink-mid": {
+        "role": "ink-mid",
+        "displayName": "Ink Mid",
+        "canonical": "oklch(30% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "ink-deep": {
+        "role": "ink-deep",
+        "displayName": "Ink Deep",
+        "canonical": "oklch(19% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "ink-2": {
+        "role": "ink-2",
+        "displayName": "Ink 2",
+        "canonical": "oklch(26% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "ink-3": {
+        "role": "ink-3",
+        "displayName": "Ink 3",
+        "canonical": "oklch(18% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "ink-4": {
+        "role": "ink-4",
+        "displayName": "Ink 4",
+        "canonical": "oklch(24% 0 20)",
+        "tonalRamp": [
+          "oklch(97% 0.02 20)",
+          "oklch(90% 0.05 20)",
+          "oklch(80% 0.09 20)",
+          "oklch(70% 0.13 20)",
+          "oklch(55% 0.15 20)",
+          "oklch(40% 0.16 20)",
+          "oklch(25% 0.14 20)"
+        ]
+      },
+      "danger": {
+        "role": "danger",
+        "displayName": "Danger",
+        "canonical": "oklch(51% 0.191 28)",
+        "tonalRamp": [
+          "oklch(97% 0.02 28)",
+          "oklch(90% 0.05 28)",
+          "oklch(80% 0.09 28)",
+          "oklch(70% 0.13 28)",
+          "oklch(55% 0.15 28)",
+          "oklch(40% 0.16 28)",
+          "oklch(25% 0.14 28)"
+        ]
+      },
+      "danger-deep": {
+        "role": "danger-deep",
+        "displayName": "Danger Deep",
+        "canonical": "oklch(50% 0.189 27)",
+        "tonalRamp": [
+          "oklch(97% 0.02 27)",
+          "oklch(90% 0.05 27)",
+          "oklch(80% 0.09 27)",
+          "oklch(70% 0.13 27)",
+          "oklch(55% 0.15 27)",
+          "oklch(40% 0.16 27)",
+          "oklch(25% 0.14 27)"
+        ]
+      },
+      "danger-soft": {
+        "role": "danger-soft",
+        "displayName": "Danger Soft",
+        "canonical": "oklch(71% 0.181 23)",
+        "tonalRamp": [
+          "oklch(97% 0.02 23)",
+          "oklch(90% 0.05 23)",
+          "oklch(80% 0.09 23)",
+          "oklch(70% 0.13 23)",
+          "oklch(55% 0.15 23)",
+          "oklch(40% 0.16 23)",
+          "oklch(25% 0.14 23)"
+        ]
+      },
+      "danger-softer": {
+        "role": "danger-softer",
+        "displayName": "Danger Softer",
+        "canonical": "oklch(73% 0.17 22)",
+        "tonalRamp": [
+          "oklch(97% 0.02 22)",
+          "oklch(90% 0.05 22)",
+          "oklch(80% 0.09 22)",
+          "oklch(70% 0.13 22)",
+          "oklch(55% 0.15 22)",
+          "oklch(40% 0.16 22)",
+          "oklch(25% 0.14 22)"
+        ]
+      },
+      "danger-faint": {
+        "role": "danger-faint",
+        "displayName": "Danger Faint",
+        "canonical": "oklch(84% 0.088 19)",
+        "tonalRamp": [
+          "oklch(97% 0.02 19)",
+          "oklch(90% 0.05 19)",
+          "oklch(80% 0.09 19)",
+          "oklch(70% 0.13 19)",
+          "oklch(55% 0.15 19)",
+          "oklch(40% 0.16 19)",
+          "oklch(25% 0.14 19)"
+        ]
+      },
+      "danger-bright": {
+        "role": "danger-bright",
+        "displayName": "Danger Bright",
+        "canonical": "oklch(63% 0.258 29)",
+        "tonalRamp": [
+          "oklch(97% 0.02 29)",
+          "oklch(90% 0.05 29)",
+          "oklch(80% 0.09 29)",
+          "oklch(70% 0.13 29)",
+          "oklch(55% 0.15 29)",
+          "oklch(40% 0.16 29)",
+          "oklch(25% 0.14 29)"
+        ]
+      },
+      "danger-warm": {
+        "role": "danger-warm",
+        "displayName": "Danger Warm",
+        "canonical": "oklch(69% 0.201 24)",
+        "tonalRamp": [
+          "oklch(97% 0.02 24)",
+          "oklch(90% 0.05 24)",
+          "oklch(80% 0.09 24)",
+          "oklch(70% 0.13 24)",
+          "oklch(55% 0.15 24)",
+          "oklch(40% 0.16 24)",
+          "oklch(25% 0.14 24)"
+        ]
+      },
+      "warning-faint": {
+        "role": "warning-faint",
+        "displayName": "Warning Faint",
+        "canonical": "oklch(95% 0.088 96)",
+        "tonalRamp": [
+          "oklch(97% 0.02 96)",
+          "oklch(90% 0.05 96)",
+          "oklch(80% 0.09 96)",
+          "oklch(70% 0.13 96)",
+          "oklch(55% 0.15 96)",
+          "oklch(40% 0.16 96)",
+          "oklch(25% 0.14 96)"
+        ]
+      },
+      "success": {
+        "role": "success",
+        "displayName": "Success",
+        "canonical": "oklch(82% 0.136 160)",
+        "tonalRamp": [
+          "oklch(97% 0.02 160)",
+          "oklch(90% 0.05 160)",
+          "oklch(80% 0.09 160)",
+          "oklch(70% 0.13 160)",
+          "oklch(55% 0.15 160)",
+          "oklch(40% 0.16 160)",
+          "oklch(25% 0.14 160)"
+        ]
+      },
+      "success-deep": {
+        "role": "success-deep",
+        "displayName": "Success Deep",
+        "canonical": "oklch(75% 0.135 159)",
+        "tonalRamp": [
+          "oklch(97% 0.02 159)",
+          "oklch(90% 0.05 159)",
+          "oklch(80% 0.09 159)",
+          "oklch(70% 0.13 159)",
+          "oklch(55% 0.15 159)",
+          "oklch(40% 0.16 159)",
+          "oklch(25% 0.14 159)"
+        ]
+      },
+      "success-soft": {
+        "role": "success-soft",
+        "displayName": "Success Soft",
+        "canonical": "oklch(91% 0.086 163)",
+        "tonalRamp": [
+          "oklch(97% 0.02 163)",
+          "oklch(90% 0.05 163)",
+          "oklch(80% 0.09 163)",
+          "oklch(70% 0.13 163)",
+          "oklch(55% 0.15 163)",
+          "oklch(40% 0.16 163)",
+          "oklch(25% 0.14 163)"
+        ]
+      },
+      "success-glow": {
+        "role": "success-glow",
+        "displayName": "Success Glow",
+        "canonical": "oklch(88% 0.234 151)",
+        "tonalRamp": [
+          "oklch(97% 0.02 151)",
+          "oklch(90% 0.05 151)",
+          "oklch(80% 0.09 151)",
+          "oklch(70% 0.13 151)",
+          "oklch(55% 0.15 151)",
+          "oklch(40% 0.16 151)",
+          "oklch(25% 0.14 151)"
+        ]
+      },
+      "green-bright": {
+        "role": "green-bright",
+        "displayName": "Green Bright",
+        "canonical": "oklch(87% 0.286 142)",
+        "tonalRamp": [
+          "oklch(97% 0.02 142)",
+          "oklch(90% 0.05 142)",
+          "oklch(80% 0.09 142)",
+          "oklch(70% 0.13 142)",
+          "oklch(55% 0.15 142)",
+          "oklch(40% 0.16 142)",
+          "oklch(25% 0.14 142)"
+        ]
+      },
+      "amber-soft": {
+        "role": "amber-soft",
+        "displayName": "Amber Soft",
+        "canonical": "oklch(85% 0.155 84)",
+        "tonalRamp": [
+          "oklch(97% 0.02 84)",
+          "oklch(90% 0.05 84)",
+          "oklch(80% 0.09 84)",
+          "oklch(70% 0.13 84)",
+          "oklch(55% 0.15 84)",
+          "oklch(40% 0.16 84)",
+          "oklch(25% 0.14 84)"
+        ]
+      },
+      "google": {
+        "role": "social-google",
+        "displayName": "Google",
+        "canonical": "oklch(60% 0.19 29)",
+        "tonalRamp": [
+          "oklch(97% 0.02 29)",
+          "oklch(90% 0.05 29)",
+          "oklch(80% 0.09 29)",
+          "oklch(70% 0.13 29)",
+          "oklch(55% 0.15 29)",
+          "oklch(40% 0.16 29)",
+          "oklch(25% 0.14 29)"
+        ]
+      },
+      "facebook": {
+        "role": "social-facebook",
+        "displayName": "Facebook",
+        "canonical": "oklch(52% 0.126 263)",
+        "tonalRamp": [
+          "oklch(97% 0.02 263)",
+          "oklch(90% 0.05 263)",
+          "oklch(80% 0.09 263)",
+          "oklch(70% 0.13 263)",
+          "oklch(55% 0.15 263)",
+          "oklch(40% 0.16 263)",
+          "oklch(25% 0.14 263)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Landing hero headlines, section titles on landing",
+        "fontFamily": "Poppins, Arial, sans-serif",
+        "fontSize": "clamp(2rem, 5vw, 3.5rem)",
+        "fontWeight": "700",
+        "lineHeight": "1.15"
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headers on both landing and app",
+        "fontFamily": "Poppins, Arial, sans-serif",
+        "fontSize": "clamp(1.5rem, 3vw, 2.25rem)",
+        "fontWeight": "600",
+        "letterSpacing": "normal",
+        "textTransform": "none"
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card headings, question text, modal headers",
+        "fontFamily": "Titillium Web, Poppins, Arial, sans-serif",
+        "fontSize": "1.125rem",
+        "fontWeight": "600"
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraph content on landing and within study areas",
+        "fontFamily": "Titillium Web, Poppins, Arial, sans-serif",
+        "fontSize": "1rem",
+        "fontWeight": "400",
+        "lineHeight": "1.6"
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Button text, form labels, badge/counter text, streak/XP labels",
+        "fontFamily": "Titillium Web, Poppins, Arial, sans-serif",
+        "fontSize": "0.75rem",
+        "fontWeight": "600",
+        "letterSpacing": "0.04em"
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "AI-generated transcript blocks, code snippets, token display",
+        "fontFamily": "monospace",
+        "fontSize": "0.875rem"
+      },
+      "landing-headline": {
+        "displayName": "Landing Headline",
+        "purpose": "Navbar logo only — SpaceGrotesk @font-face",
+        "fontFamily": "Poppins, Arial, sans-serif",
+        "fontSize": "28px",
+        "fontWeight": "bold"
+      },
+      "promo": {
+        "fontFamily": "Poppins, Arial, sans-serif",
+        "fontSize": "42px",
+        "fontWeight": "700",
+        "lineHeight": "1.15"
+      }
+    },
+    "shadows": [
+      {
+        "name": "Ambient-low",
+        "value": "0 10px 30px rgba(0,0,0,0.2)",
+        "purpose": "Default card hover on light surfaces"
+      },
+      {
+        "name": "Teal-glow-loud",
+        "value": "0 6px 20px rgba(32,201,151,0.5)",
+        "purpose": "Landing CTA button glow and mastery milestone badge"
+      },
+      {
+        "name": "Purple-glow-loud",
+        "value": "0 10px 20px rgba(127,99,244,0.3)",
+        "purpose": "Secondary accent attractor for purple cards and interactive elements"
+      },
+      {
+        "name": "Ambient-large",
+        "value": "0 30px 60px rgba(0,0,0,0.3)",
+        "purpose": "Wider dark-card hover/active focus spread"
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for state transitions (GSAP/CSS)"
+      },
+      {
+        "name": "ease-out-back",
+        "value": "cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        "purpose": "Overshoot for playful confetti/UI pop"
+      },
+      {
+        "name": "lenis-smooth",
+        "value": "Lenis smooth scroll instance",
+        "purpose": "Global smooth scrolling behavior"
+      },
+      {
+        "name": "gsap-stagger",
+        "value": "GSAP staggered hero text animation",
+        "purpose": "Landing hero text entrance effect"
+      },
+      {
+        "name": "wavy-background",
+        "value": "Animated CSS background via GSAP",
+        "purpose": "Landing page ambient wave motion"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ],
+    "components": [
+      {
+        "name": "Primary Button (In-app)",
+        "kind": "button",
+        "refersTo": "button-primary",
+        "description": "Primary action button used throughout the study app (Dashboard, Home, Classroom, Settings)",
+        "html": "<button class=\"ds-btn-primary\">SAVE CHANGES</button>",
+        "css": ".ds-btn-primary { background: #7F63F4; color: #FFFFFF; border-radius: 50px; padding: 12px 32px; font-weight: 600; font-size: 0.75rem; text-transform: none; border: none; transition: background 0.2s ease; } .ds-btn-primary:hover { background: #8BF0BF; transform: translateY(-2px); }"
+      },
+      {
+        "name": "Landing CTA Button",
+        "kind": "button",
+        "refersTo": "button-primary-landing",
+        "description": "Hero call-to-action on the landing page",
+        "html": "<button class=\"ds-btn-primary-landing\">GET STARTED</button>",
+        "css": ".ds-btn-primary-landing { background: linear-gradient(135deg, #20C997, #7F63F4); color: #FFFFFF; border-radius: 50px; padding: 14px 36px; font-weight: 600; border: none; } .ds-btn-primary-landing:hover { box-shadow: 0 6px 20px rgba(32,201,151,0.5); transform: translateY(-2px); transition: all 0.3s ease; }"
+      },
+      {
+        "name": "Landing Outline Button",
+        "kind": "button",
+        "refersTo": "button-outline-landing",
+        "description": "Secondary outline button on the landing page",
+        "html": "<button class=\"ds-btn-outline-landing\">LEARN MORE</button>",
+        "css": ".ds-btn-outline-landing { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #FFFFFF; border-radius: 50px; padding: 10px 24px; font-weight: 500; } .ds-btn-outline-landing:hover { background: rgba(255,255,255,0.05); color: #20C997; }"
+      },
+      {
+        "name": "Study Card (App)",
+        "kind": "card",
+        "refersTo": "card",
+        "description": "Default card used in Dashboard, Home, CSV Study, Video Study, Classroom views",
+        "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Study Session</h3><p class=\"ds-card-body\">Review your progress and continue learning.</p></div>",
+        "css": ".ds-card { background: #FFFFFF; border-radius: 15px; border: 0.5px solid #E1E5EA; padding: 24px; } .ds-card-title { color: #1A2A3A; font-weight: 600; margin-bottom: 12px; } .ds-card-body { color: #6C7A89; line-height: 1.6; }"
+      },
+      {
+        "name": "Landing Card (Feature/Benefit)",
+        "kind": "card",
+        "refersTo": "card-landing",
+        "description": "Feature/benefit card on the landing page",
+        "html": "<div class=\"ds-card-landing\"><h3 class=\"ds-card-title-landing\">Adaptive Learning</h3><p class=\"ds-card-body-landing\">AI tailors each review to your exact needs.</p></div>",
+        "css": ".ds-card-landing { background: #1A2A3A; border-radius: 20px; padding: 24px; } .ds-card-title-landing { color: #FFFFFF; font-weight: 600; margin-bottom: 12px; } .ds-card-body-landing { color: #E0F5EF; line-height: 1.6; }"
+      },
+      {
+        "name": "Navbar (Landing)",
+        "kind": "nav",
+        "refersTo": "navbar-dark",
+        "description": "Fixed top navigation bar on the landing page with backdrop-blur",
+        "html": "<nav class=\"ds-navbar-landing\"><div class=\"ds-logo-landing\"><i class=\"ri-brain-line\"></i><span>RedLin</span></div><ul class=\"ds-nav-links-landing\"><li><a href=\"#features\">Features</a></li><li><a href=\"#benefits\">Benefits</a></li><li><a href=\"#how-it-works\">How It Works</a></li><li><a href=\"#pricing\">Pricing</a></li></ul></nav>",
+        "css": ".ds-navbar-landing { position: fixed; top: 0; left: 0; width: 100%; height: 80px; display: flex; justify-content: space-between; align-items: center; padding: 0 60px; background: rgba(26,42,58,0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.06); z-index: 1000; } .ds-logo-landing { display: flex; align-items: center; gap: 12px; } .ds-logo-landing i { font-size: 28px; } .ds-nav-links-landing { display: flex; gap: 24px; } .ds-nav-links-landing a { color: #FFFFFF; text-decoration: none; font-weight: 500; } .ds-nav-links-landing a:hover { color: #20C997; }"
+      },
+      {
+        "name": "Sidebar (App MiniDrawer)",
+        "kind": "nav",
+        "refersTo": "sidebar",
+        "description": "Left collapsible navigation drawer in the app (Dashboard, Home, etc.)",
+        "html": "<div class=\"ds-sidebar\"><div class=\"ds-sidebar-header\"><h3>Spaces</h3></div><div class=\"ds-sidebar-item ds-sidebar-item-active\">Physics Notes</div><div class=\"ds-sidebar-item\">Math Problems</div></div>",
+        "css": ".ds-sidebar { position: fixed; top: 80px; left: 0; width: 260px; height: calc(100vh - 80px); background: #1e1e1e; border-right: 1px solid rgba(255,255,255,0.06); overflow-y: auto; z-index: 900; padding: 24px 0; } .ds-sidebar-header { padding: 0 24px 16px 24px; margin-bottom: 16px; } .ds-sidebar-header h3 { color: #FFFFFF; font-weight: 600; } .ds-sidebar-item { display: flex; align-items: center; padding: 12px 24px; color: #E1E5EA; cursor: pointer; border-radius: 8px; } .ds-sidebar-item:hover { background: rgba(255,255,255,0.03); } .ds-sidebar-item-active { background: #20C997; color: #FFFFFF; } .ds-sidebar-item-active:hover { background: #2ADFAA; }"
+      }
+    ],
+    "narrative": {
+      "northStar": "The Neural Lab",
+      "overview": "Redlin's visual system is a learning science laboratory where intelligence is being forged — not a sanitized dashboard that tracks it. It lives in deep, calm surfaces (navy #1A2A3A, near-black #07141f, light gray #F5F7FA) sliced open by the teal-to-purple gradient that is the product's brand signature. Teal (#20C997) is the dominant voice — it signals action, progress, correctness, and mastery. Purple (#7F63F4) joins it as an equal partner in the gradient, and stands alone as a secondary accent in the study interface. The warm coral (#FF7E67) and amber (#FFB400) provide contrast and warmth in a system that would otherwise read as purely tech-forward.\n\nThe system operates across two visual registers that share one palette and one motion identity:\n\n1. **The Landing (Persuade):** a cinematic, motion-driven, semi-dark surface with hero gradient, floating blobs, and GSAP-staggered hero text. Deep navy background, frosted-glass navbar (backdrop-blur), and bold teal-purple accents fill the viewport.\n2. **The App Shell (Operate):** a light-gray ground (#e9e9e9) with a dark-themed sidebar, light study cards, and teal-purple accents. Sharper, quieter, no radial gradients — the intelligence shows its work through clean structure and precise color rather than spectacle.\n\nThe motion identity is a settled fact: GSAP + Lenis smooth scroll, the WavyBackground ribbon, canvas-confetti on success milestones, and audio cues (button click, card flip, drop card, UI pop) give every interaction physical presence.\n\nThis system actively rejects three aesthetics: no clinical flat-minimal science-tool corporate, no childish gamification (bright candy colors and cartoon hue), and no generic dark-mode-default (the same dark floor). The anti-reference is: not an AI tool that looks like all the other AI tools.",
+      "keyCharacteristics": [
+        "Teal-first: #20C997 owns the most surface presence — landing CTA, primary app button, selected state, mastery marker, XP indicator.",
+        "Dark + light hybrid: the landing lives on deep navy; the app shell on light gray. Both pull from the same palette family.",
+        "Gradient as signature: the 135deg teal→purple gradient is the brand symbol — deployed at hero CTA, logo mark, progress bar, mastery milestone, but NEVER as a background wash.",
+        "Colored shadows: shadows are sparse here but they glow — teal glow shadows on landing hero buttons and card groups. Every shadow is deliberate, not ambient elevation.",
+        "Motion is the continuum: Lenis smooth scroll, GSAP text animation, canvas-confetti on mastery — these are qualities of the identity, not decoration.",
+        "Sound presence: four cue mp3s (button click, card flip, drop, pop) + the WavyBackground's canvas wave. Removing sound removes 30% of the system's immediate character."
+      ],
+      "rules": [
+        {
+          "name": "The Teal Reserve Rule",
+          "body": "Every screen in the product must carry at least one teal or purple accent element — a button, a marker, a badge, an icon, a divider. An entirely neutral screen should not exist in the codebase.",
+          "section": "colors|typography|layout"
+        },
+        {
+          "name": "The Gradient Moderation Rule",
+          "body": "The 135deg teal→purple gradient is used in only three places: the landing hero CTA button, the logo mark, and the mastery-accomplishment badge. Its rarity is the point — never used as a background wash.",
+          "section": "colors|layout"
+        },
+        {
+          "name": "The Two-Register Separation Rule",
+          "body": "Landing surfaces use navy, gradient, glow. App (dashboard) surfaces use light gray + solid teal or purple — never the gradient. No app surface should contain a rotational or horizontal teal-to-purple gradient container.",
+          "section": "layout|components"
+        }
+      ],
+      "dos": [
+        "Do use the teal→purple gradient only on the landing and on hero/milestone moments in the app — never as a full-container fill.",
+        "Do carry teal or purple as an enduring accent on every screen in the product — boxes, active states, progress indicators.",
+        "Do keep the two visual registers cleanly separate: the landing uses dark navy + gradient + backdrop-shader; the app uses light gray + solid teal/purple.",
+        "Do animate with attention and precision — GSAP or using CSS transitions for all interactive state changes and appearances.",
+        "Do use the color confetti explosion on success/milestone moments to make the loop feel earned and rewarded."
+      ],
+      "donts": [
+        "Do not ever use a flat zero-shadow, zero-radius 'sanitized lab' look anywhere. This system has, can, and will be actively rejects that.",
+        "Do not insert the gradient into the static in-app pages' solid main content area — the text is not allowed; it is: for hero pom-only.",
+        "Do not mix the two registers inside the product — landing colors do not belong in the app shell, and the app-shell gray is not used on the landing.",
+        "Do not remove the frosted-glass blur effect from the landing navbar; it's a characteristic stroke of dark brand identity.",
+        "Do not ship screens that lack a motion identity — even if the screen is static, its hover/transition/tab/expand should carry the motion signature.",
+        "Do not introduce a fresh high-frequency color to the palette without code-safe review — the teal/purple/slate family is the ceiling."
+      ]
+    },
+    "roundedMeta": {
+      "sm": {
+        "value": "4px"
+      },
+      "md": {
+        "value": "8px"
+      },
+      "lg": {
+        "value": "12px"
+      },
+      "xl": {
+        "value": "15px"
+      },
+      "pill": {
+        "value": "50px"
+      },
+      "circle": {
+        "value": "50%"
+      },
+      "micro": {
+        "value": "2px"
+      },
+      "pill-round": {
+        "value": "999px"
+      }
+    }
+  }
+}

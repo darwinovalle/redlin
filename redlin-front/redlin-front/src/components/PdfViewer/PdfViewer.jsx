@@ -61,9 +61,9 @@ function InnerViewer({ url }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
       <PdfToolbar />
-      <div style={{ flex: 1, overflow: 'auto', background: '#2c2c2c', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ flex: 1, overflow: 'auto', background: 'var(--color-ink-soft)', display: 'flex', justifyContent: 'center' }}>
         <div style={{ padding: 12 }}>
-          <Document file={fileObj} onLoadSuccess={onLoadSuccess} loading={<div style={{ padding: 12, color: '#fff' }}>Loading PDF…</div>}>
+          <Document file={fileObj} onLoadSuccess={onLoadSuccess} loading={<div style={{ padding: 12, color: 'var(--color-white)' }}>Loading PDF…</div>}>
             {state.numPages > 0 && (
               <Page
                 key={state.page + '-' + state.scale}
@@ -77,7 +77,7 @@ function InnerViewer({ url }) {
         </div>
       </div>
       {state.numPages > 0 && (
-        <div style={{ background: 'linear-gradient(90deg,#111,#1e1e1e)', color: '#fff', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', fontSize: 13, borderTop: '1px solid #222' }}>
+        <div style={{ background: 'linear-gradient(90deg,var(--color-text-deep),var(--color-ink-surface))', color: 'var(--color-white)', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', fontSize: 13, borderTop: '1px solid var(--color-text-strong)' }}>
           <PagerBtn ariaLabel="Previous page" disabled={state.page <= 1} onClick={() => dispatch({ type: 'SET_PAGE', page: Math.max(1, state.page - 1) })}>‹</PagerBtn>
           <span style={{ fontSize: 12, opacity: 0.8 }}>Page</span>
           <input
@@ -88,7 +88,7 @@ function InnerViewer({ url }) {
               if (v < 1) v = 1; if (v > state.numPages) v = state.numPages;
               dispatch({ type: 'SET_PAGE', page: v });
             }}
-            style={{ width: 64, background: '#141414', border: '1px solid #2d2d2d', color: '#fff', borderRadius: 6, padding: '4px 6px', fontSize: 13 }}
+            style={{ width: 64, background: 'var(--color-ink-deep)', border: '1px solid var(--color-ink-mid)', color: 'var(--color-white)', borderRadius: 6, padding: '4px 6px', fontSize: 13 }}
           />
           <span style={{ fontSize: 12, opacity: 0.8 }}>of {state.numPages}</span>
           <PagerBtn ariaLabel="Next page" disabled={state.page >= state.numPages} onClick={() => dispatch({ type: 'SET_PAGE', page: Math.min(state.numPages, state.page + 1) })}>›</PagerBtn>
@@ -113,9 +113,9 @@ function PagerBtn({ children, onClick, disabled, ariaLabel }) {
         width: 36,
         height: 32,
         borderRadius: 8,
-        background: disabled ? '#2a2a2a' : '#20C997',
-        border: '1px solid ' + (disabled ? '#2a2a2a' : '#16a57b'),
-        color: '#fff',
+        background: disabled ? 'var(--color-ink)' : 'var(--color-teal)',
+        border: '1px solid ' + (disabled ? 'var(--color-ink)' : 'var(--color-teal-bright)'),
+        color: 'var(--color-white)',
         cursor: disabled ? 'not-allowed' : 'pointer',
         fontSize: 18,
         lineHeight: '1',
@@ -123,7 +123,7 @@ function PagerBtn({ children, onClick, disabled, ariaLabel }) {
         alignItems: 'center',
         justifyContent: 'center',
         fontWeight: 600,
-        boxShadow: disabled ? 'none' : '0 2px 6px rgba(0,0,0,0.4)',
+        boxShadow: disabled ? 'none' : '0 2px 6px color-mix(in srgb, var(--color-black) 40%, transparent)',
         transition: 'background .15s, transform .15s'
       }}
       onMouseDown={(e) => !disabled && (e.currentTarget.style.transform = 'translateY(1px)')}

@@ -23,7 +23,7 @@ const shuffle = (arr) => {
   return next;
 };
 
-const UNANSWERED_SEGMENT_COLOR = 'rgba(255, 255, 255, 0.18)';
+const UNANSWERED_SEGMENT_COLOR = 'color-mix(in srgb, var(--color-white) 18%, transparent)';
 
 const ClassroomQuiz = ({ mcqs }) => {
   const [questions, setQuestions] = useState([]);
@@ -100,10 +100,10 @@ const ClassroomQuiz = ({ mcqs }) => {
     return (
       <Box sx={{ textAlign: 'center', p: 3, maxWidth: 760, mx: 'auto' }}>
         <Stack spacing={2} alignItems="center">
-          <Typography variant="h4" sx={{ mb: 0.5, fontWeight: 700, color: '#fff' }}>
+          <Typography variant="h4" sx={{ mb: 0.5, fontWeight: 700, color: 'var(--color-white)' }}>
             Test Your Knowledge
           </Typography>
-          <Typography variant="body1" sx={{ mb: 1.5, color: 'rgba(255,255,255,0.72)', maxWidth: 520 }}>
+          <Typography variant="body1" sx={{ mb: 1.5, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)', maxWidth: 520 }}>
             {questions.length ? `This quiz has ${questions.length} questions.` : 'No MCQs generated yet.'}
           </Typography>
           <Button
@@ -113,13 +113,13 @@ const ClassroomQuiz = ({ mcqs }) => {
             onClick={() => setActive(true)}
             sx={{
               borderRadius: '999px',
-              backgroundColor: '#6be0a6',
-              color: '#07141f',
+              backgroundColor: 'var(--color-success)',
+              color: 'var(--color-navy-deep)',
               px: 4,
               fontWeight: 700,
-              boxShadow: '0 18px 40px rgba(107, 224, 166, 0.24)',
-              '&:hover': { backgroundColor: '#8bf0bf' },
-              '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.36)' },
+              boxShadow: '0 18px 40px color-mix(in srgb, var(--color-success) 24%, transparent)',
+              '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+              '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 8%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' },
             }}
           >
             Start Quiz
@@ -167,20 +167,20 @@ const ClassroomQuiz = ({ mcqs }) => {
   };
 
   const colorSegment = (segmentIndex) => {
-    if (segmentIndex === idx && !finished) return 'rgba(107, 224, 166, 0.95)';
+    if (segmentIndex === idx && !finished) return 'color-mix(in srgb, var(--color-success) 95%, transparent)';
     if (answers[segmentIndex] === undefined) return UNANSWERED_SEGMENT_COLOR;
     return answers[segmentIndex] === questions[segmentIndex].correct
-      ? 'rgba(107, 224, 166, 0.78)'
-      : 'rgba(255, 116, 116, 0.82)';
+      ? 'color-mix(in srgb, var(--color-success) 78%, transparent)'
+      : 'color-mix(in srgb, var(--color-danger-softer) 82%, transparent)';
   };
 
   if (finished) {
     return (
       <Box sx={{ p: 3, textAlign: 'center', maxWidth: 760, mx: 'auto' }}>
-        <Typography variant="h5" sx={{ mb: 2, fontWeight: 700, color: '#fff' }}>
+        <Typography variant="h5" sx={{ mb: 2, fontWeight: 700, color: 'var(--color-white)' }}>
           Results
         </Typography>
-        <Typography variant="body1" sx={{ mb: 3, color: 'rgba(255,255,255,0.72)' }}>
+        <Typography variant="body1" sx={{ mb: 3, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
           Score: {score} / {questions.length}
         </Typography>
         <Button
@@ -189,11 +189,11 @@ const ClassroomQuiz = ({ mcqs }) => {
           sx={{
             borderRadius: '999px',
             px: 4,
-            backgroundColor: '#6be0a6',
-            color: '#07141f',
+            backgroundColor: 'var(--color-success)',
+            color: 'var(--color-navy-deep)',
             fontWeight: 700,
-            boxShadow: '0 18px 40px rgba(107, 224, 166, 0.24)',
-            '&:hover': { backgroundColor: '#8bf0bf' },
+            boxShadow: '0 18px 40px color-mix(in srgb, var(--color-success) 24%, transparent)',
+            '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
           }}
         >
           Exit
@@ -218,7 +218,7 @@ const ClassroomQuiz = ({ mcqs }) => {
       </audio>
 
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
-        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.74)', fontWeight: 600 }}>
+        <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 74%, transparent)', fontWeight: 600 }}>
           {idx + 1} of {questions.length}
         </Typography>
       </Box>
@@ -233,7 +233,7 @@ const ClassroomQuiz = ({ mcqs }) => {
               borderRadius: 999,
               bgcolor: colorSegment(segmentIndex),
               transition: 'background-color .3s ease, box-shadow .3s ease',
-              boxShadow: segmentIndex === idx && !finished ? '0 0 0 3px rgba(107, 224, 166, 0.12)' : 'none',
+              boxShadow: segmentIndex === idx && !finished ? '0 0 0 3px color-mix(in srgb, var(--color-success) 12%, transparent)' : 'none',
             }}
           />
         ))}
@@ -242,7 +242,7 @@ const ClassroomQuiz = ({ mcqs }) => {
       <Typography
         variant="h5"
         textAlign="center"
-        sx={{ mb: 3, fontWeight: 600, lineHeight: 1.4, color: '#fff' }}
+        sx={{ mb: 3, fontWeight: 600, lineHeight: 1.4, color: 'var(--color-white)' }}
       >
         {current.question}
       </Typography>
@@ -261,9 +261,9 @@ const ClassroomQuiz = ({ mcqs }) => {
               '& .fx': {
                 fontSize: 90,
                 animation: 'pop 0.9s ease forwards',
-                color: feedback === 'correct' ? '#6be0a6' : '#ff7474',
+                color: feedback === 'correct' ? 'var(--color-success)' : 'var(--color-danger-softer)',
                 fontWeight: 700,
-                textShadow: '0 12px 30px rgba(0,0,0,0.32)',
+                textShadow: '0 12px 30px color-mix(in srgb, var(--color-black) 32%, transparent)',
               },
               '@keyframes pop': {
                 '0%': { transform: 'scale(.2)', opacity: 0 },
@@ -287,17 +287,17 @@ const ClassroomQuiz = ({ mcqs }) => {
                 borderColor:
                   answers[idx] === optionIndex
                     ? answers[idx] === current.correct
-                      ? 'rgba(107, 224, 166, 0.9)'
-                      : 'rgba(255, 116, 116, 0.9)'
-                    : 'rgba(255,255,255,0.08)',
+                      ? 'color-mix(in srgb, var(--color-success) 90%, transparent)'
+                      : 'color-mix(in srgb, var(--color-danger-softer) 90%, transparent)'
+                    : 'color-mix(in srgb, var(--color-white) 8%, transparent)',
                 boxShadow: answers[idx] === optionIndex ? 3 : 0,
                 opacity: answers[idx] !== undefined && answers[idx] !== optionIndex ? 0.66 : 1,
                 backgroundColor:
                   answers[idx] === optionIndex
                     ? answers[idx] === current.correct
-                      ? 'rgba(107, 224, 166, 0.1)'
-                      : 'rgba(255, 116, 116, 0.08)'
-                    : 'rgba(255,255,255,0.03)',
+                      ? 'color-mix(in srgb, var(--color-success) 10%, transparent)'
+                      : 'color-mix(in srgb, var(--color-danger-softer) 8%, transparent)'
+                    : 'color-mix(in srgb, var(--color-white) 3%, transparent)',
                 transition: 'all .3s ease',
               }}
             >
@@ -312,12 +312,12 @@ const ClassroomQuiz = ({ mcqs }) => {
                     <Radio
                       sx={{
                         ml: 1,
-                        color: 'rgba(255,255,255,0.5)',
+                        color: 'color-mix(in srgb, var(--color-white) 50%, transparent)',
                         '&.Mui-checked': {
                           color:
                             answers[idx] === optionIndex && answers[idx] === current.correct
-                              ? '#6be0a6'
-                              : '#ff7474',
+                              ? 'var(--color-success)'
+                              : 'var(--color-danger-softer)',
                         },
                       }}
                     />
@@ -328,7 +328,7 @@ const ClassroomQuiz = ({ mcqs }) => {
                     m: 0,
                     p: 1.5,
                     '& .MuiFormControlLabel-label': {
-                      color: '#fff',
+                      color: 'var(--color-white)',
                       fontSize: 15,
                       lineHeight: 1.45,
                     },
@@ -346,10 +346,10 @@ const ClassroomQuiz = ({ mcqs }) => {
             onClick={resetRun}
             sx={{
               borderRadius: '999px',
-              backgroundColor: '#6be0a6',
-              color: '#07141f',
+              backgroundColor: 'var(--color-success)',
+              color: 'var(--color-navy-deep)',
               fontWeight: 700,
-              '&:hover': { backgroundColor: '#8bf0bf' },
+              '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
             }}
           >
             Exit

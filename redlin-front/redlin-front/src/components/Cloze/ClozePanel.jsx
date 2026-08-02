@@ -112,7 +112,7 @@ const ClozePanel = ({ documentId }) => {
           variant="contained"
           size="large"
           onClick={() => { setClozes((prev) => shuffle(prev)); setSessionKey(Date.now()); setStarted(true); }}
-          sx={{ backgroundColor: '#000', borderRadius: '20px' }}
+          sx={{ backgroundColor: 'var(--color-black)', borderRadius: '20px' }}
         >
           Start Cloze Practice
         </Button>
@@ -130,7 +130,7 @@ const ClozePanel = ({ documentId }) => {
       <Box sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', textAlign: 'center' }}>
         <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }} color="black">Results</Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>Score: {correctCount} / {total}</Typography>
-        <Button variant="contained" onClick={() => { setStarted(false); setSessionKey(Date.now()); }} sx={{ backgroundColor: '#6be0a6', borderRadius: '20px' }}>Exit</Button>
+        <Button variant="contained" onClick={() => { setStarted(false); setSessionKey(Date.now()); }} sx={{ backgroundColor: 'var(--color-success)', borderRadius: '20px' }}>Exit</Button>
       </Box>
     );
   }

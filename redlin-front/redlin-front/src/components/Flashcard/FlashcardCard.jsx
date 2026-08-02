@@ -18,7 +18,7 @@ const FlashcardCard = ({
   size = 'md',
   sx = {},
   showHint = false,
-  accentColor = '#00ff81',
+  accentColor = 'var(--color-success-glow)',
   // Optional flip customization
   flipDuration = 600, // ms
   flipPerspective = 1000, // px
@@ -33,7 +33,16 @@ const FlashcardCard = ({
     <Card
       elevation={0}
       square
+      role="button"
+      tabIndex={0}
+      aria-pressed={Boolean(isFlipped)}
       onClick={onToggleFlip}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onToggleFlip?.();
+        }
+      }}
       sx={{
         position: 'relative',
         width: '100%',
@@ -55,6 +64,7 @@ const FlashcardCard = ({
         borderRadius: 0,
   isolation: 'isolate',
         '&:hover': { transform: 'scale(1.02)' },
+        '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 4 },
         ...sx,
       }}
     >
@@ -91,7 +101,7 @@ const FlashcardCard = ({
             height: 16,
             borderRadius: 999,
             backgroundColor: accentColor,
-            boxShadow: '0 0 18px rgba(0,255,129,0.35)',
+            boxShadow: '0 0 18px color-mix(in srgb, var(--color-success-glow) 35%, transparent)',
             pointerEvents: 'none',
             zIndex: 0,
           }}

@@ -36,7 +36,7 @@ export default function RenameDialog({
           borderRadius: 4,
           boxShadow: 20,
           overflow: 'hidden',
-          backgroundColor: '#000000',
+          backgroundColor: 'var(--color-black)',
         },
       }}
     >

@@ -8,7 +8,7 @@ const shuffle = (arr) => {
   return a;
 };
 
-const UNANSWERED_SEGMENT_COLOR = 'grey.500'; // adjust shade as desired (e.g. grey.600 or #bdbdbd)
+const UNANSWERED_SEGMENT_COLOR = 'grey.500'; // adjust shade as desired (e.g. grey.600 or var(--color-border-mid))
 
 const VideoQuiz = ({ mcqs }) => {
   const [questions, setQuestions] = useState([]);
@@ -43,7 +43,7 @@ const VideoQuiz = ({ mcqs }) => {
         <Typography variant="body1" color="black" sx={{ mb:3 }}>
           {questions.length ? `This quiz has ${questions.length} questions.` : 'No MCQs generated yet.'}
         </Typography>
-        <Button variant="contained" size="large" disabled={!questions.length} onClick={()=>setActive(true)} sx={{ borderRadius: '20px', backgroundColor: '#000'}}>Start Quiz</Button>
+        <Button variant="contained" size="large" disabled={!questions.length} onClick={()=>setActive(true)} sx={{ borderRadius: '20px', backgroundColor: 'var(--color-black)'}}>Start Quiz</Button>
 
       </Box>
     );
@@ -96,7 +96,7 @@ const VideoQuiz = ({ mcqs }) => {
             <Box key={i} sx={{ width:14, height:14, borderRadius:'50%', bgcolor: answers[i]===q.correct ? 'success.main':'error.main' }} />
           ))}
         </Stack> */}
-        <Button variant="contained" onClick={()=>{ setActive(false); }} sx={{ borderRadius:'20px', px:4, backgroundColor: '#6be0a6'}}>Exit</Button>
+        <Button variant="contained" onClick={()=>{ setActive(false); }} sx={{ borderRadius:'20px', px:4, backgroundColor: 'var(--color-success)'}}>Exit</Button>
       </Box>
     );
   }
@@ -125,7 +125,7 @@ const VideoQuiz = ({ mcqs }) => {
           <Box sx={{
             position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center',
             zIndex:10, pointerEvents:'none',
-            '& .fx': { fontSize:90, animation:'pop 0.9s ease forwards', color: feedback === 'correct' ? 'inherit' : '#ff0000', fontWeight: 'bold' },
+            '& .fx': { fontSize:90, animation:'pop 0.9s ease forwards', color: feedback === 'correct' ? 'inherit' : 'var(--color-danger-bright)', fontWeight: 'bold' },
             '@keyframes pop': { '0%':{ transform:'scale(.2)', opacity:0 }, '40%':{ transform:'scale(1.05)', opacity:1 }, '100%':{ transform:'scale(1)', opacity:0 } }
           }}>
             <span className="fx">{feedback === 'correct' ? '👏' : '✖'}</span>
@@ -147,7 +147,7 @@ const VideoQuiz = ({ mcqs }) => {
           ))}
         </RadioGroup>
         <Box sx={{ mt:3, textAlign:'center' }}>
-          <Button size="small" variant="contained" color="inherit" onClick={()=>setActive(false)} sx={{ backgroundColor: '#6be0a6' }}>Exit</Button>
+          <Button size="small" variant="contained" color="inherit" onClick={()=>setActive(false)} sx={{ backgroundColor: 'var(--color-success)' }}>Exit</Button>
         </Box>
       </Box>
     </Box>
