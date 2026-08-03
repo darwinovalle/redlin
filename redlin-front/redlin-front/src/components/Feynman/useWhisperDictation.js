@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import TranscriptionWorker from '../../workers/transcription.worker.js?worker';
 
 const VOICED_RMS = 0.01; // below this the input counts as silence
-const SILENCE_MS = 2000; // auto-stop after ~2s with no speech
+// Auto-stop after ~4s with no speech. Generous on purpose: lets the user pause
+// and think mid-answer without the take being cut short.
+const SILENCE_MS = 4000;
 const POLL_MS = 300; // silence check cadence
 
 // Whisper expects 16 kHz mono; the mic may run at the device's native rate.
