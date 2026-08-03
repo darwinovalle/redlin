@@ -12,7 +12,7 @@ const shuffle = (arr) => {
   return next;
 };
 
-const ClassroomClozePanel = ({ clozes }) => {
+const ClassroomClozePanel = ({ clozes, focus = false, autoStart = false, onStart }) => {
   const [practiceClozes, setPracticeClozes] = useState([]);
   const [started, setStarted] = useState(false);
   const [sessionKey, setSessionKey] = useState(Date.now());
@@ -36,6 +36,15 @@ const ClassroomClozePanel = ({ clozes }) => {
     setAnsweredMap({});
     setStarted(true);
   };
+
+  // Focus Mode: when rendered inside the focus popup, begin immediately.
+  useEffect(() => {
+    if (autoStart && Array.isArray(clozes) && clozes.length) {
+      setPracticeClozes((previous) => (previous && previous.length ? previous : shuffle([...clozes])));
+      setSessionKey(Date.now());
+      setStarted(true);
+    }
+  }, [autoStart, clozes]);
 
   const handleRestart = () => {
     setPracticeClozes(Array.isArray(clozes) ? [...clozes] : []);
@@ -74,7 +83,7 @@ const ClassroomClozePanel = ({ clozes }) => {
             variant="contained"
             size="large"
             disabled={!practiceClozes.length}
-            onClick={handleStart}
+            onClick={() => { if (focus) onStart?.(); else handleStart(); }}
             sx={{
               borderRadius: '999px',
               backgroundColor: 'var(--color-success)',
@@ -157,6 +166,9 @@ ClassroomClozePanel.propTypes = {
       difficulty: PropTypes.oneOf(['easy', 'medium', 'hard']),
     })
   ),
+  focus: PropTypes.bool,
+  autoStart: PropTypes.bool,
+  onStart: PropTypes.func,
 };
 
 export default ClassroomClozePanel;

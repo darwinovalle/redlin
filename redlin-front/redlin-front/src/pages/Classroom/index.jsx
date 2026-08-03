@@ -24,6 +24,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   import IconButton from '@mui/material/IconButton';
   import Dialog from '@mui/material/Dialog';
   import DialogContent from '@mui/material/DialogContent';
+  import Switch from '@mui/material/Switch';
+  import LockIcon from '@mui/icons-material/Lock';
+  import LockOpenIcon from '@mui/icons-material/LockOpen';
   import ReactMarkdown from 'react-markdown';
   import remarkGfm from 'remark-gfm';                                                                                                                         
   import { classroomService } from '../../services/api/classroom';                                                                                            
@@ -97,6 +100,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
     const [captureMode, setCaptureMode] = useState(null); // 'tab' | 'mic' | null
     const [tabVisible, setTabVisible] = useState(true);
     const [silenceDialogOpen, setSilenceDialogOpen] = useState(false);
+    // Focus Mode: tests open fullscreen so the student can't peek at the
+    // transcript/summary. Persisted; defaults to ON.
+    const [focusMode, setFocusMode] = useState(() => {
+      try {
+        const stored = localStorage.getItem('classroom:focusMode');
+        return stored === null ? true : stored === '1';
+      } catch {
+        return true;
+      }
+    });
+    const [focusSession, setFocusSession] = useState(null); // 'mcq' | 'cloze' | 'feynman' | null
+    const [focusKey, setFocusKey] = useState(0);
 
     const isCompleted = session?.status === 'completed';
     const storedTranscript = useMemo(() => {
@@ -229,6 +244,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
       document.addEventListener('visibilitychange', update);
       return () => document.removeEventListener('visibilitychange', update);
     }, []);
+
+    // Persist the focus-mode preference across reloads.
+    useEffect(() => {
+      try { localStorage.setItem('classroom:focusMode', focusMode ? '1' : '0'); } catch {}
+    }, [focusMode]);
+
+    const openFocus = (type) => { setFocusKey((k) => k + 1); setFocusSession(type); };
 
     useEffect(() => {
       // Only poll while the server is working on this session AND the tab is in
@@ -722,9 +744,28 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                   />                                                                                                                                          
                 </div>}                                                                                                                                       
                                                                                                                                                               
-                <Box sx={{ mt: 3, borderBottom: 1, borderColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)' }}>                                                                   
-                  <Tabs                                                                                                                                       
-                    value={activeTab}                                                                                                                         
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, mt: 2.5, mb: 0.5 }}>
+                  {focusMode
+                    ? <LockIcon sx={{ fontSize: 15, color: 'var(--color-teal)' }} />
+                    : <LockOpenIcon sx={{ fontSize: 15, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }} />}
+                  <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', fontWeight: 600, letterSpacing: 0.3 }}>
+                    Focus Mode
+                  </Typography>
+                  <Switch
+                    checked={focusMode}
+                    onChange={(e) => setFocusMode(e.target.checked)}
+                    size="small"
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': { color: 'var(--color-teal)' },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: 'var(--color-teal)' },
+                      '& .MuiSwitch-switchBase.Mui-checked:hover': { backgroundColor: 'color-mix(in srgb, var(--color-teal) 12%, transparent)' },
+                    }}
+                  />
+                </Box>
+
+                <Box sx={{ mt: 1, borderBottom: 1, borderColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)' }}>
+                  <Tabs
+                    value={activeTab}
                     onChange={(e, newVal) => setActiveTab(newVal)}                                                                                            
                     textColor="var(--color-white)"                                                                                                                          
                     indicatorColor="primary"                                                                                                                  
@@ -740,17 +781,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                       {activeTab === 0 && (
                         <div className="classroom-output-block">
                           <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>MCQs ({results.mcqs?.length || 0})</Typography>
-                          <ClassroomQuiz mcqs={results.mcqs} />
+                          <ClassroomQuiz mcqs={results.mcqs} focus={focusMode} onStart={() => openFocus('mcq')} />
                         </div>
                       )}
                       {activeTab === 1 && (
                         <div className="classroom-output-block">
-                          <ClassroomClozePanel clozes={results.clozes} />
+                          <ClassroomClozePanel clozes={results.clozes} focus={focusMode} onStart={() => openFocus('cloze')} />
                         </div>
                       )}
                       {activeTab === 2 && (
                         <div className="classroom-output-block">
-                          <ClassroomFeynmanPanel sessionId={session.id} prompts={results.feynmans} language={session.language || 'en'} />
+                          <ClassroomFeynmanPanel sessionId={session.id} prompts={results.feynmans} language={session.language || 'en'} focus={focusMode} onStart={() => openFocus('feynman')} />
                         </div>
                       )}
                     </>                                                                                                                                       
@@ -795,6 +836,49 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               <Typography variant="body1" sx={{ color: 'var(--color-white)', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
                 {storedTranscript || 'No transcript available.'}
               </Typography>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={Boolean(focusSession)}
+            onClose={() => setFocusSession(null)}
+            fullWidth
+            maxWidth="md"
+            PaperProps={{
+              style: { backgroundColor: '#1A2A3A' },
+              sx: {
+                borderRadius: '20px',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+                maxHeight: '92vh',
+                overflow: 'hidden',
+              },
+            }}
+            slotProps={{
+              backdrop: {
+                sx: {
+                  backgroundColor: 'color-mix(in srgb, var(--color-navy-deep) 74%, transparent)',
+                  backdropFilter: 'blur(10px)',
+                },
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <LockIcon sx={{ color: 'var(--color-teal)', fontSize: 18 }} />
+                <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.01em' }}>
+                  Focus Mode · {focusSession === 'mcq' ? 'MCQs' : focusSession === 'cloze' ? 'Clozes' : 'Feynman'}
+                </Typography>
+              </Stack>
+              <IconButton onClick={() => setFocusSession(null)} size="small" sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <DialogContent sx={{ p: { xs: 1.5, sm: 3 }, overflowY: 'auto' }}>
+              {focusSession === 'mcq' && <ClassroomQuiz key={focusKey} mcqs={results?.mcqs} autoStart onExit={() => setFocusSession(null)} />}
+              {focusSession === 'cloze' && <ClassroomClozePanel key={focusKey} clozes={results?.clozes} autoStart />}
+              {focusSession === 'feynman' && (
+                <ClassroomFeynmanPanel key={focusKey} sessionId={session.id} prompts={results?.feynmans} language={session.language || 'en'} autoStart />
+              )}
             </DialogContent>
           </Dialog>
 

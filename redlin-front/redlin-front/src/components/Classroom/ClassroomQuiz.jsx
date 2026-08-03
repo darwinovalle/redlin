@@ -25,7 +25,7 @@ const shuffle = (arr) => {
 
 const UNANSWERED_SEGMENT_COLOR = 'color-mix(in srgb, var(--color-white) 18%, transparent)';
 
-const ClassroomQuiz = ({ mcqs }) => {
+const ClassroomQuiz = ({ mcqs, focus = false, autoStart = false, onStart, onExit }) => {
   const [questions, setQuestions] = useState([]);
   const [active, setActive] = useState(false);
   const [idx, setIdx] = useState(0);
@@ -88,6 +88,11 @@ const ClassroomQuiz = ({ mcqs }) => {
     };
   }, [mcqs]);
 
+  // Focus Mode: when rendered inside the focus popup, begin immediately.
+  useEffect(() => {
+    if (autoStart && questions.length) setActive(true);
+  }, [autoStart, questions]);
+
   if (!mcqs) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -110,7 +115,7 @@ const ClassroomQuiz = ({ mcqs }) => {
             variant="contained"
             size="large"
             disabled={!questions.length}
-            onClick={() => setActive(true)}
+            onClick={() => { if (focus) onStart?.(); else setActive(true); }}
             sx={{
               borderRadius: '999px',
               backgroundColor: 'var(--color-success)',
@@ -185,7 +190,7 @@ const ClassroomQuiz = ({ mcqs }) => {
         </Typography>
         <Button
           variant="contained"
-          onClick={resetRun}
+          onClick={() => { resetRun(); onExit?.(); }}
           sx={{
             borderRadius: '999px',
             px: 4,
@@ -343,7 +348,7 @@ const ClassroomQuiz = ({ mcqs }) => {
           <Button
             size="small"
             variant="contained"
-            onClick={resetRun}
+            onClick={() => { resetRun(); onExit?.(); }}
             sx={{
               borderRadius: '999px',
               backgroundColor: 'var(--color-success)',
@@ -371,6 +376,10 @@ ClassroomQuiz.propTypes = {
       option_3: PropTypes.string,
     })
   ),
+  focus: PropTypes.bool,
+  autoStart: PropTypes.bool,
+  onStart: PropTypes.func,
+  onExit: PropTypes.func,
 };
 
 export default ClassroomQuiz;

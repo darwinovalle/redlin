@@ -27,7 +27,7 @@ const Metric = ({ label, value, color }) => (
   </Box>
 );
 
-const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 'en' }) => {
+const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 'en', focus = false, autoStart = false, onStart }) => {
   const [prompts, setPrompts] = useState(Array.isArray(initialPrompts) ? initialPrompts : []);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -220,6 +220,11 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
     setQuestionDone(false);
   };
 
+  // Focus Mode: when rendered inside the focus popup, begin immediately.
+  useEffect(() => {
+    if (autoStart && prompts.length) startSession();
+  }, [autoStart, prompts]);
+
   if (!sessionId) {
     return (
       <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
@@ -261,7 +266,7 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
             variant="contained"
             size="large"
             disabled={!prompts.length}
-            onClick={startSession}
+            onClick={() => { if (focus) onStart?.(); else startSession(); }}
             sx={{
               borderRadius: '999px',
               backgroundColor: 'var(--color-success)',
@@ -581,6 +586,9 @@ const formatPct = (value, isPenalty = false) => {
 ClassroomFeynmanPanel.propTypes = {
   sessionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   prompts: PropTypes.array,
+  focus: PropTypes.bool,
+  autoStart: PropTypes.bool,
+  onStart: PropTypes.func,
 };
 
 Metric.propTypes = {
