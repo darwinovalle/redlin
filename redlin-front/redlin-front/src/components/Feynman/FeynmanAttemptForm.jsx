@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { IconButton, Box, Button, Stack, TextField, Typography } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
+import useWhisperDictation from './useWhisperDictation';
+import ListeningIndicator from './ListeningIndicator';
 
 const getSpeechRecognition = () => {
   if (typeof window === 'undefined') return null;
@@ -13,10 +15,23 @@ const getSpeechRecognition = () => {
 // Supports dictation via the mic (interim streaming + accumulated buffer).
 const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeconds, totalSeconds, language = 'en' }) => {
   const [recording, setRecording] = useState(false);
+  const [micError, setMicError] = useState('');
   const recognitionRef = useRef(null);
   const accumulatedRef = useRef('');
   const interimRef = useRef('');
   const stopRequestedRef = useRef(false);
+
+  // Firefox fallback: when the Web Speech API is unavailable, record the mic
+  // and transcribe the whole utterance with whisper-base.
+  const whisper = useWhisperDictation({
+    language,
+    onTranscript: useCallback((text) => {
+      const next = ((value || '') + ' ' + text).replace(/\s+/g, ' ').trim();
+      onChange(next);
+    }, [value, onChange]),
+  });
+
+  const micActive = recording || whisper.listening || whisper.processing;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -25,15 +40,19 @@ const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeco
   };
 
   const handleMic = () => {
-    if (recording) {
-      stopRecording();
+    if (micActive) {
+      if (recording) stopRecording();
+      else if (whisper.listening) whisper.stop();
       return;
     }
-    const recognition = getSpeechRecognition();
-    if (!recognition) {
-      console.warn('Speech recognition not supported in this browser');
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      whisper.start();
       return;
     }
+    // A fresh instance every time: Firefox fails to start if the previous
+    // session is still tearing down when a new start() is issued.
+    const recognition = new SR();
     recognitionRef.current = recognition;
     stopRequestedRef.current = false;
     accumulatedRef.current = ` ${value || ''}`;
@@ -57,10 +76,25 @@ const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeco
       onChange(shown);
     };
     recognition.onend = () => {
-      setRecording(false);
+      // Only the active instance may clear the recording flag, so a stale
+      // instance's late onend can't switch the mic off mid-recording.
+      if (recognitionRef.current === recognition) setRecording(false);
     };
-    recognition.start();
+    recognition.onerror = (event) => {
+      if (recognitionRef.current === recognition) {
+        setRecording(false);
+        if (event?.error && event.error !== 'no-speech') {
+          setMicError(`Voice dictation error: ${event.error}. Try again or type your answer.`);
+        }
+      }
+    };
+    try {
+      recognition.start();
+    } catch (err) {
+      if (recognitionRef.current === recognition) setRecording(false);
+    }
     setRecording(true);
+    setMicError('');
   };
 
   const stopRecording = () => {
@@ -82,26 +116,38 @@ const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeco
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <TextField
-        label={timeInfo ? `Explain in your own words (${timeInfo})` : 'Explain in your own words (Markdown supported)'}
-        multiline
-        minRows={6}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        fullWidth
-        InputLabelProps={{ sx: { color: 'color-mix(in srgb, var(--color-white) 60%, transparent)' } }}
-        InputProps={{
-          sx: {
-            color: 'var(--color-white)',
-            bgcolor: 'color-mix(in srgb, var(--color-white) 3%, transparent)',
-            borderRadius: 2,
-            '& fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
-            '&:hover fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 22%, transparent)' },
-            '&.Mui-focused fieldset': { borderColor: 'color-mix(in srgb, var(--color-success) 65%, transparent)' },
-          },
-        }}
-      />
+      <Box sx={{ position: 'relative' }}>
+        <TextField
+          label={timeInfo ? `Explain in your own words (${timeInfo})` : 'Explain in your own words (Markdown supported)'}
+          multiline
+          minRows={6}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          fullWidth
+          InputLabelProps={{ sx: { color: 'color-mix(in srgb, var(--color-white) 60%, transparent)' } }}
+          InputProps={{
+            sx: {
+              color: 'var(--color-white)',
+              bgcolor: 'color-mix(in srgb, var(--color-white) 3%, transparent)',
+              borderRadius: 2,
+              '& fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
+              '&:hover fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 22%, transparent)' },
+              '&.Mui-focused fieldset': { borderColor: 'color-mix(in srgb, var(--color-success) 65%, transparent)' },
+            },
+          }}
+        />
+        {whisper.listening && (
+          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, pointerEvents: 'none' }}>
+            <ListeningIndicator label="Listening" />
+          </Box>
+        )}
+        {whisper.processing && (
+          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, pointerEvents: 'none' }}>
+            <ListeningIndicator label="Processing" />
+          </Box>
+        )}
+      </Box>
 
       {recording && (
         <Typography
@@ -136,18 +182,18 @@ const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeco
 
       <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={1}>
         <IconButton
-          aria-label={recording ? 'Stop recording' : 'Record answer by voice'}
+          aria-label={micActive ? 'Stop recording' : 'Record answer by voice'}
           onClick={handleMic}
           disabled={disabled}
           sx={{
-            color: recording ? 'var(--color-danger-soft)' : 'var(--color-white)',
-            backgroundColor: recording ? 'color-mix(in srgb, var(--color-danger-softer) 16%, transparent)' : 'color-mix(in srgb, var(--color-white) 6%, transparent)',
+            color: micActive ? 'var(--color-danger-soft)' : 'var(--color-white)',
+            backgroundColor: micActive ? 'color-mix(in srgb, var(--color-danger-softer) 16%, transparent)' : 'color-mix(in srgb, var(--color-white) 6%, transparent)',
             border: '1px solid color-mix(in srgb, var(--color-white) 14%, transparent)',
-            '&:hover': { backgroundColor: recording ? 'color-mix(in srgb, var(--color-danger-softer) 24%, transparent)' : 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
+            '&:hover': { backgroundColor: micActive ? 'color-mix(in srgb, var(--color-danger-softer) 24%, transparent)' : 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
             '&.Mui-disabled': { color: 'color-mix(in srgb, var(--color-white) 30%, transparent)', backgroundColor: 'transparent' },
           }}
         >
-          {recording ? <StopIcon /> : <MicIcon />}
+          {micActive ? <StopIcon /> : <MicIcon />}
         </IconButton>
         <Button
           type="submit"
@@ -166,6 +212,12 @@ const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeco
           Submit Explanation
         </Button>
       </Stack>
+
+      {(micError || whisper.micError) && (
+        <Typography variant="caption" sx={{ color: 'var(--color-danger-soft)', textAlign: 'right' }}>
+          {micError || whisper.micError}
+        </Typography>
+      )}
     </Box>
   );
 };
