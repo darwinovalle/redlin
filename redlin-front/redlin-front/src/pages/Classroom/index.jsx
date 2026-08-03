@@ -629,7 +629,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                       )}
                       {activeTab === 2 && (
                         <div className="classroom-output-block">
-                          <ClassroomFeynmanPanel sessionId={session.id} prompts={results.feynmans} />
+                          <ClassroomFeynmanPanel sessionId={session.id} prompts={results.feynmans} language={session.language || 'en'} />
                         </div>
                       )}
                     </>                                                                                                                                       
