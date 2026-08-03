@@ -210,7 +210,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const openRenameClass=(s)=> setRenameClassState({open:true,session:s,saving:false});
   const closeRenameClass=()=> setRenameClassState({open:false,session:null,saving:false});
   const submitRenameClass=async(newTitle)=>{ if(!renameClassState.session) return; try{ setRenameClassState(s=>({...s,saving:true})); await classroomService.renameSession(renameClassState.session.id,newTitle); setClassroomSessions(d=>d.map(x=>x.id===renameClassState.session.id?{...x,title:newTitle}:x)); closeRenameClass(); }catch(e){ setError(e?.error||'Rename failed'); setRenameClassState(s=>({...s,saving:false})); } };
-  const handleDeleteClass=(s)=> openConfirm({ title:'Delete classroom space?', message:`Are you sure you want to delete "${s.title}"? This cannot be undone.`, onConfirm:async()=>{ await classroomService.deleteSession(s.id); setClassroomSessions(d=>d.filter(x=>x.id!==s.id)); } });
+  const handleDeleteClass=(s)=> openConfirm({ title:'Delete classroom space?', message:`Are you sure you want to delete "${s.title}"? This cannot be undone.`, onConfirm:async()=>{ await classroomService.deleteSession(s.id); setClassroomSessions(d=>d.filter(x=>x.id!==s.id)); if(currentClassroomSessionId && String(s.id)===currentClassroomSessionId) navigate('/home'); } });
   useEffect(() => {
     sidebarStateHydratedRef.current = false;
 
