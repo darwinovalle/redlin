@@ -32,6 +32,50 @@ def _compute_target_mcq_count(full_text: str) -> int:
     target = max(5, min(25, len(words)//120 or 5))
     return target
 
+
+def _split_text(text: str, chunk_chars: int = 3500) -> list[str]:
+    """Split long transcripts into sentence-aware chunks so each LLM call stays small."""
+    if len(text) <= chunk_chars:
+        return [text]
+    parts = re.split(r"(?<=[.!?])\s+", text)
+    chunks: list[str] = []
+    current = ""
+    for part in parts:
+        if current and len(current) + len(part) + 1 > chunk_chars:
+            chunks.append(current)
+            current = part
+        else:
+            current = (current + " " + part).strip() if current else part
+    if current:
+        chunks.append(current)
+    return chunks
+
+
+def _parse_mcq_blocks(raw: str) -> list[dict]:
+    """Parse Q:/A:/B:/C:/D: blocks from a video MCQ response (lenient — skips malformed)."""
+    items = []
+    for block in re.split(r"\n\s*\n", raw or ""):
+        lines = [line.strip() for line in block.splitlines() if line.strip()]
+        if len(lines) != 5:
+            continue
+        labels = [line.split(":", 1) for line in lines]
+        if not all(len(part) == 2 and part[0].strip() in ("Q", "A", "B", "C", "D") for part in labels):
+            continue
+        question = labels[0][1].strip()
+        correct = labels[1][1].strip()
+        o1 = labels[2][1].strip()
+        o2 = labels[3][1].strip()
+        o3 = labels[4][1].strip()
+        if question and correct and o1 and o2 and o3:
+            items.append({
+                "question": question,
+                "correct_answer": correct,
+                "option_1": o1,
+                "option_2": o2,
+                "option_3": o3,
+            })
+    return items
+
 # ---------------------------------------------------------------------------
 # Video Feynman generation & evaluation
 # ---------------------------------------------------------------------------
@@ -495,26 +539,23 @@ SOURCE TEXT (for analysis; paraphrase in output)
             print(f"[Video Error] Summary: {e}")
 
         # ---------------- MCQs ----------------
-        mcq_prompt = f"""
+        # Bounded + chunked: large transcripts used to produce an exhaustive
+        # Q:/A:/B:/C:/D: dump that got truncated -> blocks lost -> few/no MCQs.
+        mcq_prompt_template = """
 You are an expert assessment designer specializing in educational content analysis.
 
-TASK: Extract and convert ALL testable knowledge from the provided video/cc information into multiple-choice questions.
-
+TASK: Create up to {limit} multiple-choice questions based ONLY on the provided text.
 Language: {lang_label}
 
 CRITICAL REQUIREMENTS:
 
-1. **EXHAUSTIVE COVERAGE** (MANDATORY):
-   - Create questions for EVERY significant concept, fact, relationship, or principle in the text
-   - If a concept can be tested, it MUST have a question
-   - Scan systematically: definitions → processes → relationships → applications → implications
-
+1. Focus on the MOST IMPORTANT concepts, facts, relationships, or principles in the text — quality over exhaustiveness.
 2. **ACCURACY GUARANTEE**:
    - Double-check each correct answer against the source text
    - The correct answer must be 100% verifiable from the text
    - If uncertain about factual accuracy, skip that question
 
-3. **QUESTION TYPES** (use all that apply):
+3. **QUESTION TYPES** (use a mix):
    - Definitional: "What is X?"
    - Causal: "Why does X lead to Y?"
    - Comparative: "How does X differ from Y?"
@@ -524,13 +565,12 @@ CRITICAL REQUIREMENTS:
 4. **DISTRACTOR RULES**:
    - Each incorrect option must be plausible but definitively wrong
    - Use common misconceptions, partial truths, or related-but-different concepts
-   - Never use nonsensical or obviously wrong distractors
 
 5. **FORBIDDEN CONTENT**:
    - NO questions about: publication dates, ISBN, publisher, author bio, dedications, acknowledgments
    - NO "All/None of the above" or combination options
    - NO negatively-phrased questions ("Which is NOT...")
-   - NO questions that begings like "According to the text", or "In the text", because this information is related to a video.
+   - NO questions that begin like "According to the text", or "In the text".
 
 6. **EXACT FORMAT** (no deviations):
    Q: <Question text>
@@ -541,39 +581,34 @@ CRITICAL REQUIREMENTS:
 
    [blank line between each question block]
 
-7. **QUALITY CHECKS**:
-   - Before outputting, verify: Is the correct answer unambiguously right?
-   - Are all distractors clearly wrong but believable?
-   - Have I covered ALL major concepts from the text?
-
 DOCUMENT TEXT:
-{full_text}
+{chunk}
 """
         try:
-            mcq_resp = generate_with_retry(mcq_prompt, user_id=video.user_id)
-            raw = mcq_resp.text.strip()
-            blocks = raw.split("\n\n")
+            mcq_chunks = _split_text(full_text)
+            per_chunk_limit = 8
+            target_mcq_count = max(5, min(target_mcq_count, 25))
             new_mcqs = []
-            for block in blocks:
-                lines = [l for l in block.strip().split("\n") if l.strip()]
-                if len(lines) == 5 and all(l.split(":", 1)[0] in ("Q", "A", "B", "C", "D") for l in lines):
-                    q_line, a_line, b_line, c_line, d_line = lines
-                    q = q_line[2:].strip()
-                    ca = a_line[2:].strip()
-                    o1 = b_line[2:].strip()
-                    o2 = c_line[2:].strip()
-                    o3 = d_line[2:].strip()
-                    if all([q, ca, o1, o2, o3]):
-                        new_mcqs.append(
-                            VideoMCQ(
-                                video=video,
-                                question=q,
-                                correct_answer=ca,
-                                option_1=o1,
-                                option_2=o2,
-                                option_3=o3,
-                            )
-                        )
+            seen_questions = set()
+            for chunk_index, chunk in enumerate(mcq_chunks):
+                prompt = mcq_prompt_template.format(
+                    limit=per_chunk_limit,
+                    lang_label=lang_label,
+                    chunk=chunk,
+                )
+                try:
+                    mcq_resp = generate_with_retry(prompt, user_id=video.user_id)
+                except Exception as chunk_err:
+                    print(f"[Video] MCQ chunk {chunk_index + 1}/{len(mcq_chunks)} failed: {chunk_err}")
+                    continue
+                for item in _parse_mcq_blocks(mcq_resp.text):
+                    key = item["question"].casefold()
+                    if key in seen_questions:
+                        continue
+                    seen_questions.add(key)
+                    new_mcqs.append(VideoMCQ(video=video, **item))
+            if len(new_mcqs) > target_mcq_count:
+                new_mcqs = new_mcqs[:target_mcq_count]
             if new_mcqs:
                 with transaction.atomic():
                     VideoMCQ.objects.filter(video=video).delete()

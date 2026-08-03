@@ -5,6 +5,8 @@ import StopIcon from '@mui/icons-material/Stop';
 import PropTypes from 'prop-types';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 import { classroomService } from '../../services/api/classroom';
+import useWhisperDictation from '../Feynman/useWhisperDictation';
+import ListeningIndicator from '../Feynman/ListeningIndicator';
 
 const COUNTDOWN = 210; // 3:30
 
@@ -27,7 +29,7 @@ const Metric = ({ label, value, color }) => (
   </Box>
 );
 
-const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 'en' }) => {
+const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 'en', focus = false, autoStart = false, onStart }) => {
   const [prompts, setPrompts] = useState(Array.isArray(initialPrompts) ? initialPrompts : []);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -41,9 +43,26 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
   const [sessionFinished, setSessionFinished] = useState(false);
   const [sessionKey, setSessionKey] = useState(Date.now());
   const [recording, setRecording] = useState(false);
+  const [micError, setMicError] = useState('');
   const recognitionRef = useRef(null);
   const autoSubmittingRef = useRef(false);
   const evalIndexRef = useRef(null);
+
+  // Firefox fallback: when the Web Speech API is unavailable, record the mic
+  // and transcribe the whole utterance with whisper-base.
+  const whisper = useWhisperDictation({
+    language,
+    onTranscript: useCallback((text) => {
+      const id = prompts[currentIndex]?.id;
+      if (id == null) return;
+      setAnswers((previous) => ({
+        ...previous,
+        [id]: ((previous[id] || '') + ' ' + text).replace(/\s+/g, ' ').trim(),
+      }));
+    }, [prompts, currentIndex]),
+  });
+
+  const micActive = recording || whisper.listening || whisper.processing;
 
   const loadAll = useCallback(async () => {
     if (!sessionId) {
@@ -145,17 +164,21 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
   const stopRequestedRef = useRef(false);
 
   const toggleRecording = () => {
-    if (recording) {
-      stopRecording();
+    if (micActive) {
+      if (recording) stopRecording();
+      else if (whisper.listening) whisper.stop();
       return;
     }
     const current = prompts[currentIndex];
     if (!current || questionDone) return;
-    const recognition = getSpeechRecognition();
-    if (!recognition) {
-      console.warn('Speech recognition not supported in this browser');
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      whisper.start();
       return;
     }
+    // A fresh instance every time: Firefox fails to start if the previous
+    // session is still tearing down when a new start() is issued.
+    const recognition = new SR();
     recognitionRef.current = recognition;
     stopRequestedRef.current = false;
     // seed from the current draft and keep every new segment appended, so a
@@ -185,12 +208,25 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
       setAnswers((previous) => ({ ...previous, [id]: shown }));
     };
     recognition.onend = () => {
-      // A natural silence or browser end drops out of recording mode but
-      // NEVER clears the accumulated text; pressing the mic again continues.
-      setRecording(false);
+      // Only the active instance may clear the recording flag, so a stale
+      // instance's late onend can't switch the mic off mid-recording.
+      if (recognitionRef.current === recognition) setRecording(false);
     };
-    recognition.start();
+    recognition.onerror = (event) => {
+      if (recognitionRef.current === recognition) {
+        setRecording(false);
+        if (event?.error && event.error !== 'no-speech') {
+          setMicError(`Voice dictation error: ${event.error}. Try again or type your answer.`);
+        }
+      }
+    };
+    try {
+      recognition.start();
+    } catch (err) {
+      if (recognitionRef.current === recognition) setRecording(false);
+    }
     setRecording(true);
+    setMicError('');
   };
 
   const stopRecording = () => {
@@ -219,6 +255,11 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
     setCountdownRemaining(COUNTDOWN);
     setQuestionDone(false);
   };
+
+  // Focus Mode: when rendered inside the focus popup, begin immediately.
+  useEffect(() => {
+    if (autoStart && prompts.length) startSession();
+  }, [autoStart, prompts]);
 
   if (!sessionId) {
     return (
@@ -261,7 +302,7 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
             variant="contained"
             size="large"
             disabled={!prompts.length}
-            onClick={startSession}
+            onClick={() => { if (focus) onStart?.(); else startSession(); }}
             sx={{
               borderRadius: '999px',
               backgroundColor: 'var(--color-success)',
@@ -423,41 +464,53 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
       </Box>
 
       <Box component="form" onSubmit={(event) => { event.preventDefault(); handleManualSubmit(answers[current.id] || ''); }}>
-        <TextField
-          key={sessionKey}
-          label={`Explain in your own words (${formatTime(countdownRemaining)} left)`}
-          multiline
-          minRows={6}
-          value={answers[current.id] || ''}
-          onChange={(event) => handleChangeDraft(event.target.value)}
-          disabled={submitting || questionDone}
-          fullWidth
-          InputLabelProps={{ sx: { color: 'color-mix(in srgb, var(--color-white) 60%, transparent)' } }}
-          InputProps={{
-            sx: {
-              color: 'var(--color-white)',
-              bgcolor: 'color-mix(in srgb, var(--color-white) 3%, transparent)',
-              borderRadius: 2,
-              '& fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
-              '&:hover fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 22%, transparent)' },
-              '&.Mui-focused fieldset': { borderColor: 'color-mix(in srgb, var(--color-success) 65%, transparent)' },
-            },
-          }}
-        />
+        <Box sx={{ position: 'relative' }}>
+          <TextField
+            key={sessionKey}
+            label={`Explain in your own words (${formatTime(countdownRemaining)} left)`}
+            multiline
+            minRows={6}
+            value={answers[current.id] || ''}
+            onChange={(event) => handleChangeDraft(event.target.value)}
+            disabled={submitting || questionDone}
+            fullWidth
+            InputLabelProps={{ sx: { color: 'color-mix(in srgb, var(--color-white) 60%, transparent)' } }}
+            InputProps={{
+              sx: {
+                color: 'var(--color-white)',
+                bgcolor: 'color-mix(in srgb, var(--color-white) 3%, transparent)',
+                borderRadius: 2,
+                '& fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
+                '&:hover fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 22%, transparent)' },
+                '&.Mui-focused fieldset': { borderColor: 'color-mix(in srgb, var(--color-success) 65%, transparent)' },
+              },
+            }}
+          />
+          {whisper.listening && (
+            <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, pointerEvents: 'none' }}>
+              <ListeningIndicator label="Listening" />
+            </Box>
+          )}
+          {whisper.processing && (
+            <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, pointerEvents: 'none' }}>
+              <ListeningIndicator label="Processing" />
+            </Box>
+          )}
+        </Box>
         <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={1} sx={{ mt: 2 }}>
           <IconButton
-            aria-label={recording ? 'Stop recording' : 'Record answer by voice'}
+            aria-label={micActive ? 'Stop recording' : 'Record answer by voice'}
             onClick={toggleRecording}
             disabled={submitting || questionDone}
             sx={{
-              color: recording ? 'var(--color-danger-soft)' : 'var(--color-white)',
-              backgroundColor: recording ? 'color-mix(in srgb, var(--color-danger-softer) 16%, transparent)' : 'color-mix(in srgb, var(--color-white) 6%, transparent)',
+              color: micActive ? 'var(--color-danger-soft)' : 'var(--color-white)',
+              backgroundColor: micActive ? 'color-mix(in srgb, var(--color-danger-softer) 16%, transparent)' : 'color-mix(in srgb, var(--color-white) 6%, transparent)',
               border: '1px solid color-mix(in srgb, var(--color-white) 14%, transparent)',
-              '&:hover': { backgroundColor: recording ? 'color-mix(in srgb, var(--color-danger-softer) 24%, transparent)' : 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
+              '&:hover': { backgroundColor: micActive ? 'color-mix(in srgb, var(--color-danger-softer) 24%, transparent)' : 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
               '&.Mui-disabled': { color: 'color-mix(in srgb, var(--color-white) 30%, transparent)', backgroundColor: 'transparent' },
             }}
           >
-            {recording ? <StopIcon /> : <MicIcon />}
+            {micActive ? <StopIcon /> : <MicIcon />}
           </IconButton>
           <Button
             type="submit"
@@ -476,6 +529,11 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
             Submit Explanation
           </Button>
         </Stack>
+        {(micError || whisper.micError) && (
+          <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'var(--color-danger-soft)' }}>
+            {micError || whisper.micError}
+          </Typography>
+        )}
       </Box>
 
       {!questionDone && recording && (
@@ -581,6 +639,9 @@ const formatPct = (value, isPenalty = false) => {
 ClassroomFeynmanPanel.propTypes = {
   sessionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   prompts: PropTypes.array,
+  focus: PropTypes.bool,
+  autoStart: PropTypes.bool,
+  onStart: PropTypes.func,
 };
 
 Metric.propTypes = {

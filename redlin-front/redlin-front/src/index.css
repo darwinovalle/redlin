@@ -468,3 +468,8 @@ body{
 *::-webkit-scrollbar-corner {
   background: transparent;
 }
+/* Three-dot "listening" pulse used by the Firefox whisper dictation fallback. */
+@keyframes listenDotPulse {
+  0%, 100% { opacity: 0.25; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}

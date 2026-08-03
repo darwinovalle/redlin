@@ -9,13 +9,14 @@
   let transcriber = null;                                                       
                                                                                 
   self.onmessage = async (event) => {                                           
-    const { type, audio, language } = event.data;
+    const { type, audio, language, model } = event.data;
                                                                                 
     if (type === 'init') {                                                      
       try {                                                                     
         // Using whisper-tiny to avoid system crashes (RAM issues)              
+        const modelId = model || 'Xenova/whisper-tiny';
         transcriber = await pipeline('automatic-speech-recognition',            
-  'Xenova/whisper-tiny', {                                                      
+  modelId, {                                                      
           device: 'wasm',                                                       
         });                                                                     
         self.postMessage({ type: 'ready' });                                    
