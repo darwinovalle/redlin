@@ -27,6 +27,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   import Switch from '@mui/material/Switch';
   import LockIcon from '@mui/icons-material/Lock';
   import LockOpenIcon from '@mui/icons-material/LockOpen';
+  import OpenInFullIcon from '@mui/icons-material/OpenInFull';
   import ReactMarkdown from 'react-markdown';
   import remarkGfm from 'remark-gfm';                                                                                                                         
   import { classroomService } from '../../services/api/classroom';                                                                                            
@@ -131,6 +132,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
     const [activeTab, setActiveTab] = useState(0);
     const [transcriptOpen, setTranscriptOpen] = useState(false);
+    const [summaryOpen, setSummaryOpen] = useState(false);
     const tabs = ['MCQs', 'Clozes', 'Feynman'];
 
     const mediaRecorderRef = useRef(null);                                                                                                                    
@@ -662,11 +664,23 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                     <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)' }}>Summary</Typography>
                     <IconButton
                       size="small"
+                      aria-label="Show summary fullscreen"
+                      onClick={() => setSummaryOpen(true)}
+                      title="Open summary fullscreen"
+                      sx={{
+                        ml: 'auto',
+                        color: 'color-mix(in srgb, var(--color-white) 70%, transparent)',
+                        '&:hover': { color: 'var(--color-white)', backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)' },
+                      }}
+                    >
+                      <OpenInFullIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
                       aria-label="Show transcript"
                       onClick={() => setTranscriptOpen(true)}
                       title="Show transcription"
                       sx={{
-                        ml: 'auto',
                         color: 'color-mix(in srgb, var(--color-white) 70%, transparent)',
                         '&:hover': { color: 'var(--color-white)', backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)' },
                       }}
@@ -836,6 +850,47 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               <Typography variant="body1" sx={{ color: 'var(--color-white)', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
                 {storedTranscript || 'No transcript available.'}
               </Typography>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={summaryOpen}
+            onClose={() => setSummaryOpen(false)}
+            fullWidth
+            maxWidth="md"
+            PaperProps={{
+              style: { backgroundColor: '#1A2A3A' },
+              sx: {
+                borderRadius: '20px',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+                maxHeight: '92vh',
+                overflow: 'hidden',
+              },
+            }}
+            slotProps={{
+              backdrop: {
+                sx: {
+                  backgroundColor: 'color-mix(in srgb, var(--color-navy-deep) 74%, transparent)',
+                  backdropFilter: 'blur(10px)',
+                },
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <OpenInFullIcon sx={{ color: 'var(--color-teal)', fontSize: 18 }} />
+                <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.01em' }}>
+                  Summary
+                </Typography>
+              </Stack>
+              <IconButton onClick={() => setSummaryOpen(false)} size="small" sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <DialogContent sx={{ p: { xs: 2, sm: 3 }, overflowY: 'auto' }}>
+              <Box className="classroom-markdown">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{results?.summary?.content || 'No summary available.'}</ReactMarkdown>
+              </Box>
             </DialogContent>
           </Dialog>
 
