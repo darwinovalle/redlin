@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import IconButton from '@mui/material/IconButton';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -32,6 +35,7 @@ function InnerViewer({ url }) {
   const pdfRef = useRef(null);
   const searchJobRef = useRef(null);
   const scrollRef = useRef(null);
+  const viewerRootRef = useRef(null);
   const navStateRef = useRef({ page: state.page, numPages: state.numPages });
   navStateRef.current = { page: state.page, numPages: state.numPages };
 
@@ -43,6 +47,7 @@ function InnerViewer({ url }) {
   const [selectionPage, setSelectionPage] = useState(1);
   // Search-match boxes for the current page (derived from the text layer).
   const [searchBoxes, setSearchBoxes] = useState([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const fileObj = React.useMemo(() => {
     if (!url) return null;
@@ -97,6 +102,25 @@ function InnerViewer({ url }) {
     const containerRect = el.getBoundingClientRect();
     const pageRect = pageEl.getBoundingClientRect();
     el.scrollTop += (pageRect.top - containerRect.top) - 8;
+  }, []);
+
+  // Keep the fullscreen icon in sync with the browser fullscreen state.
+  useEffect(() => {
+    const onFullscreenChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    const el = viewerRootRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) req.call(el).catch(() => {});
+    } else {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) exit.call(document).catch(() => {});
+    }
   }, []);
 
   // Hide the palette while scrolling and keep the page indicator in sync.
@@ -277,7 +301,7 @@ function InnerViewer({ url }) {
   const pageNumbers = state.numPages > 0 ? Array.from({ length: state.numPages }, (_, i) => i + 1) : [];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+    <div ref={viewerRootRef} style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
       <PdfToolbar />
       <div
         ref={scrollRef}
@@ -352,6 +376,19 @@ function InnerViewer({ url }) {
               {state.searchResults.length ? `${state.searchResults.length} page(s) contain \"${state.searchTerm}\"` : state.searchScanningPage ? `Scanning p.${state.searchScanningPage}/${state.numPages || '?'}` : 'No matches'}
             </span>
           )}
+          <IconButton
+            size="small"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? 'Exit fullscreen' : 'Open fullscreen'}
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Open fullscreen'}
+            sx={{
+              marginLeft: 'auto',
+              color: 'var(--color-white)',
+              '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
+            }}
+          >
+            {isFullscreen ? <FullscreenExitIcon fontSize="small" /> : <FullscreenIcon fontSize="small" />}
+          </IconButton>
         </div>
       )}
 
