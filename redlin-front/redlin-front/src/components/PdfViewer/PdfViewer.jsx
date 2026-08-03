@@ -38,6 +38,8 @@ function InnerViewer({ url }) {
   const [selectionRects, setSelectionRects] = useState([]);
   const [selectionText, setSelectionText] = useState('');
   const [pageSize, setPageSize] = useState({ w: 0, h: 0 });
+  // Search-match boxes for the current page (derived from the text layer).
+  const [searchBoxes, setSearchBoxes] = useState([]);
 
   const fileObj = React.useMemo(() => {
     if (!url) return null;
@@ -88,6 +90,69 @@ function InnerViewer({ url }) {
     el.addEventListener('scroll', onScroll);
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Precise search-match boxes for the current page. Recomputes whenever the
+  // text layer DOM changes (react-pdf renders it asynchronously), so matches
+  // appear on every page you navigate to — not just the first one.
+  const computeSearchBoxes = useCallback(() => {
+    const term = state.searchTerm.trim().toLowerCase();
+    const pageEl = pageWrapRef.current?.querySelector('.react-pdf__Page');
+    const textLayer = pageWrapRef.current?.querySelector('.react-pdf__Page .textLayer');
+    if (!term || !pageEl || !textLayer) { setSearchBoxes([]); return; }
+    const pageRect = pageEl.getBoundingClientRect();
+    if (!pageRect.width || !pageRect.height) { setSearchBoxes([]); return; }
+    const boxes = [];
+    const pushRect = (rect) => {
+      if (!rect || rect.width <= 0 || rect.height <= 0) return;
+      const x = clamp01((rect.left - pageRect.left) / pageRect.width);
+      const y = clamp01((rect.top - pageRect.top) / pageRect.height);
+      const w = clamp01((rect.right - pageRect.left) / pageRect.width) - x;
+      const h = clamp01((rect.bottom - pageRect.top) / pageRect.height) - y;
+      boxes.push({ x, y, w, h });
+    };
+    Array.from(textLayer.querySelectorAll('span')).forEach((span) => {
+      const node = span.firstChild;
+      if (node && node.nodeType === Node.TEXT_NODE) {
+        const fullText = node.textContent || '';
+        const lower = fullText.toLowerCase();
+        let idx = lower.indexOf(term);
+        while (idx !== -1) {
+          // Highlight only the matched substring, not the whole span/line.
+          const range = document.createRange();
+          range.setStart(node, idx);
+          range.setEnd(node, idx + term.length);
+          Array.from(range.getClientRects()).forEach(pushRect);
+          idx = lower.indexOf(term, idx + term.length);
+        }
+      } else if ((span.textContent || '').toLowerCase().includes(term)) {
+        // Fallback: highlight the whole span when we can't locate a text node.
+        pushRect(span.getBoundingClientRect());
+      }
+    });
+    setSearchBoxes(boxes);
+  }, [state.searchTerm]);
+
+  useEffect(() => {
+    setSearchBoxes([]);
+    if (!state.searchTerm.trim()) return undefined;
+    const el = pageWrapRef.current;
+    if (!el) return undefined;
+    let rafId = null;
+    const schedule = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        computeSearchBoxes();
+      });
+    };
+    schedule();
+    const mo = new MutationObserver(schedule);
+    mo.observe(el, { childList: true, subtree: true });
+    return () => {
+      mo.disconnect();
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [state.searchTerm, state.page, state.scale, computeSearchBoxes]);
 
   const handleMouseUp = useCallback(() => {
     const sel = window.getSelection();
@@ -227,6 +292,23 @@ function InnerViewer({ url }) {
                 }}
               />
             )))}
+            {/* Search match overlay (temporary, distinct from saved highlights) */}
+            {pageSize.w > 0 && searchBoxes.map((r, idx) => (
+              <div
+                key={`search-${idx}`}
+                style={{
+                  position: 'absolute',
+                  left: r.x * pageSize.w,
+                  top: r.y * pageSize.h,
+                  width: r.w * pageSize.w,
+                  height: r.h * pageSize.h,
+                  backgroundColor: 'rgba(251,191,36,0.5)',
+                  borderRadius: 2,
+                  zIndex: 4,
+                  pointerEvents: 'none',
+                }}
+              />
+            ))}
           </div>
         </div>
       </div>
