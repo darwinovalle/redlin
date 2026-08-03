@@ -88,41 +88,33 @@ const ClozePanel = ({ documentId }) => {
   // Intro gate (similar to Review / Quiz start screen)
   if (!started) {
     return (
-      <Box
-        sx={{
-          p: 4,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          textAlign: 'center',
-          width: '100%',
-          maxWidth: 640,
-          mx: 'auto'
-        }}
-      >
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: 'var(--color-white)' }}>
-          Cloze Practice
-        </Typography>
-        <Typography variant="body1" sx={{ mb: 3, maxWidth: 520, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
-          Ready? This set contains {clozes.length} cloze {clozes.length === 1 ? 'item' : 'items'}. Fill in the blanks accurately. Click start when you're ready.
-        </Typography>
-        <Button
-          variant="contained"
-          size="large"
-          onClick={() => { setClozes((prev) => shuffle(prev)); setSessionKey(Date.now()); setStarted(true); }}
-          sx={{
-            backgroundColor: 'var(--color-success)',
-            borderRadius: '999px',
-            px: 4,
-            color: 'var(--color-navy-deep)',
-            fontWeight: 800,
-            '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
-          }}
-        >
-          Start Cloze Practice
-        </Button>
+      <Box sx={{ textAlign: 'center', p: 3, maxWidth: 760, mx: 'auto' }}>
+        <Stack spacing={2} alignItems="center">
+          <Typography variant="h4" sx={{ mb: 0.5, fontWeight: 700, color: 'var(--color-white)' }}>
+            Cloze Practice
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 1.5, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)', maxWidth: 520 }}>
+            Ready? This set contains {clozes.length} cloze {clozes.length === 1 ? 'item' : 'items'}. Fill in the blanks accurately.
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            disabled={!clozes.length}
+            onClick={() => { setClozes((prev) => shuffle(prev)); setSessionKey(Date.now()); setStarted(true); }}
+            sx={{
+              borderRadius: '999px',
+              backgroundColor: 'var(--color-success)',
+              color: 'var(--color-navy-deep)',
+              px: 4,
+              fontWeight: 700,
+              boxShadow: '0 18px 40px color-mix(in srgb, var(--color-success) 24%, transparent)',
+              '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+              '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 8%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' },
+            }}
+          >
+            Start Cloze Practice
+          </Button>
+        </Stack>
       </Box>
     );
   }

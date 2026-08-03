@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react';                                                                                               
-  import { useNavigate, useParams } from 'react-router-dom';                                                                                                  
+import { useEffect, useMemo, useRef, useState } from 'react';
+  import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+  import CaptureAudioModal from '../../components/Classroom/CaptureAudioModal';                                                                                                  
   import Box from '@mui/material/Box';                                                                                                                        
   import Button from '@mui/material/Button';                                                                                                                  
   import Chip from '@mui/material/Chip';                                                                                                                      
   import CircularProgress from '@mui/material/CircularProgress';                                                                                              
   import Divider from '@mui/material/Divider';                                                                                                                
   import Paper from '@mui/material/Paper';                                                                                                                    
-  import Stack from '@mui/material/Stack';                                                                                                                    
+  import Stack from '@mui/material/Stack';
+  import LinearProgress from '@mui/material/LinearProgress';
   import TextField from '@mui/material/TextField';                                                                                                            
   import Typography from '@mui/material/Typography';
   import Tab from '@mui/material/Tab'; // You might need to import Tabs and Tab
@@ -15,9 +17,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   import MicIcon from '@mui/icons-material/Mic';                                                                                                              
   import PauseCircleIcon from '@mui/icons-material/PauseCircle';                                                                                              
   import PlayArrowIcon from '@mui/icons-material/PlayArrow';                                                                                                  
-  import RefreshIcon from '@mui/icons-material/Refresh';                                                                                                      
-  import UploadFileIcon from '@mui/icons-material/UploadFile';                                                                                                
-  import ReactMarkdown from 'react-markdown';                                                                                                                 
+  import RefreshIcon from '@mui/icons-material/Refresh';
+  import UploadFileIcon from '@mui/icons-material/UploadFile';
+  import DescriptionIcon from '@mui/icons-material/Description';
+  import CloseIcon from '@mui/icons-material/Close';
+  import IconButton from '@mui/material/IconButton';
+  import Dialog from '@mui/material/Dialog';
+  import DialogContent from '@mui/material/DialogContent';
+  import ReactMarkdown from 'react-markdown';
   import remarkGfm from 'remark-gfm';                                                                                                                         
   import { classroomService } from '../../services/api/classroom';                                                                                            
   import ClassroomQuiz from '../../components/Classroom/ClassroomQuiz';
@@ -26,7 +33,32 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   import './Classroom.css';
   import TranscriptionWorker from '../../workers/transcription.worker.js?worker';
                                                                                                                                                               
-  const POLL_STATUSES = new Set(['recording', 'stopped', 'transcribing', 'ready', 'processing', 'failed']);                                                                        
+  // Poll only while the server is actively working (async transcription or
+  // content generation) so we can surface results when they're ready. Idle
+  // states (new / recording / stopped / failed / completed) do NOT poll — a
+  // space that's simply open, or where capture never actually started, costs
+  // zero requests. This was the source of the constant GET /status/ flood.
+  const POLL_STATUSES = new Set(['transcribing', 'ready', 'processing']);
+
+  // Firefox does not support audio in screen/tab share capture, so it must
+  // fall back to the microphone. Chrome/Edge offer tab audio via the picker.
+  const isFirefox = typeof navigator !== 'undefined' && /Firefox\//i.test(navigator.userAgent);
+
+  // Whisper expects 16 kHz. The mic/display stream may run at the device's
+  // native rate, so resample before handing audio to the worker.
+  const resampleAudio = (input, fromRate, toRate = 16000) => {
+    if (fromRate === toRate || !input || input.length === 0) return input;
+    const ratio = toRate / fromRate;
+    const output = new Float32Array(Math.max(1, Math.floor(input.length * ratio)));
+    for (let i = 0; i < output.length; i += 1) {
+      const pos = i / ratio;
+      const i0 = Math.floor(pos);
+      const i1 = Math.min(i0 + 1, input.length - 1);
+      const frac = pos - i0;
+      output[i] = input[i0] * (1 - frac) + input[i1] * frac;
+    }
+    return output;
+  };                                                                        
                                                                                                                                                               
   const statusTone = (status) => {                                                                                                                            
     switch (status) {                                                                                                                                         
@@ -49,8 +81,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   const Classroom = () => {                                                                                                                                   
     const { sessionId } = useParams();                                                                                                                        
     const navigate = useNavigate();                                                                                                                           
-    const [session, setSession] = useState(null);                                                                                                           
-    const [results, setResults] = useState(null);                                                                                                             
+    const [session, setSession] = useState(null);
+    const [results, setResults] = useState(null);
+    const [captureInfoOpen, setCaptureInfoOpen] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
     const [loading, setLoading] = useState(true);                                                                                                             
     const [error, setError] = useState(null);                                                                                                                 
     const [recording, setRecording] = useState(false);                                                                                                        
@@ -58,8 +92,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
     const [audioReady, setAudioReady] = useState(false);                                                                                                      
     const [uploading, setUploading] = useState(false);                                                                                                        
     const [processing, setProcessing] = useState(false);                                                                                                      
-    const [manualTranscript, setManualTranscript] = useState('');                                                                                             
+    const [manualTranscript, setManualTranscript] = useState('');
     const [mediaError, setMediaError] = useState('');
+    const [captureMode, setCaptureMode] = useState(null); // 'tab' | 'mic' | null
+    const [tabVisible, setTabVisible] = useState(true);
+    const [silenceDialogOpen, setSilenceDialogOpen] = useState(false);
 
     const isCompleted = session?.status === 'completed';
     const storedTranscript = useMemo(() => {
@@ -77,8 +114,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
       },
     };
 
-    const [activeTab, setActiveTab] = useState(0);                                                                                                            
-    const tabs = ['Summary', 'MCQs', 'Clozes', 'Feynman'];
+    const [activeTab, setActiveTab] = useState(0);
+    const [transcriptOpen, setTranscriptOpen] = useState(false);
+    const tabs = ['MCQs', 'Clozes', 'Feynman'];
 
     const mediaRecorderRef = useRef(null);                                                                                                                    
     const streamRef = useRef(null);                                                                                                                           
@@ -90,14 +128,38 @@ import { useEffect, useMemo, useRef, useState } from 'react';
     const currentWorkerIndexRef = useRef(0)
     const isModelReadyRef = useRef(false);
     const audioBufferRef = useRef([]);
+    const lastVoicedAtRef = useRef(Date.now());
+    const silenceTimerRef = useRef(null);
+    const recordingRef = useRef(false);
                                                                                                                                                               
     const canProcess = useMemo(() => Boolean(sessionId && audioReady && !recording && !uploading), [sessionId, audioReady, recording, uploading]);            
                                                                                                                                                               
-    const stopStreamTracks = () => {                                                                                                                          
-      if (streamRef.current) {                                                                                                                                
-        streamRef.current.getTracks().forEach((track) => track.stop());                                                                                       
-        streamRef.current = null;                                                                                                                           
-      }                                                                                                                                                       
+    const stopStreamTracks = () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+    };
+
+    const SILENCE_TIMEOUT_MS = 60000; // 1 minute with no audio stops capture
+    const VOICED_RMS = 0.01; // same threshold as the VAD gate below
+
+    const stopSilenceWatch = () => {
+      if (silenceTimerRef.current) { clearInterval(silenceTimerRef.current); silenceTimerRef.current = null; }
+    };
+
+    // Watchdog: if no voice is detected for SILENCE_TIMEOUT_MS, auto-stop so an
+    // accidentally-left-on recording doesn't run forever or upload noise.
+    const startSilenceWatch = () => {
+      stopSilenceWatch();
+      silenceTimerRef.current = window.setInterval(() => {
+        if (!recordingRef.current) { stopSilenceWatch(); return; }
+        if (Date.now() - lastVoicedAtRef.current >= SILENCE_TIMEOUT_MS) {
+          // clear first so a single silence can't double-fire the stop
+          stopSilenceWatch();
+          stopCapture({ auto: true });
+        }
+      }, 2000);
     };                                                                                                                                                        
                                                                                                                                                               
       const loadSession = async (id) => {           
@@ -111,27 +173,31 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             const full = await classroomService.getResults(id);                                                                                               
             setResults(full);                                                                                                                                 
           }                                                                                                                                                   
-          if (typeof data?.transcript_text === 'string') {                                                                                                    
-            setManualTranscript(data.transcript_text);                                                                                                        
-          }                                                                                                                                                   
-        } catch (err) {                                                                                                                                       
-          setError(err?.response?.data?.detail || err?.message || 'Failed to load classroom session');                                                        
-        } finally {                                                                                                                                           
-          setLoading(false);                                                                                                                                  
-        }                                                                                                                                                     
-      };                                                                                                                                                    
-                                                                                                                                                              
-    useEffect(() => {                                                                                                                                         
-      if (!sessionId) return undefined;                                                                                                                       
-      let ignore = false;                                                                                                                                     
-                                                                                                                                                              
-      (async () => {                                                                                                                                          
-        try {                                                                                                                                                 
-          const data = await classroomService.getSessionStatus(sessionId);                                                                                    
-          if (ignore) return;                                                                                                                                 
-          setSession(data);                                                                                                                                   
-          if (typeof data?.transcript_text === 'string') {                                                                                                    
-            setManualTranscript(data.transcript_text);                                                                                                        
+          if (typeof data?.transcript_text === 'string' && data.transcript_text.length > 0) {
+            setManualTranscript(data.transcript_text);
+          }
+        } catch (err) {
+          setError(err?.response?.data?.detail || err?.message || 'Failed to load classroom session');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+    useEffect(() => {
+      if (!sessionId) return undefined;
+      let ignore = false;
+
+      (async () => {
+        try {
+          // Fresh space: never carry over a previous space's transcript or study results.
+          setManualTranscript('');
+          setResults(null);
+          setActiveTab(0);
+          const data = await classroomService.getSessionStatus(sessionId);
+          if (ignore) return;
+          setSession(data);
+          if (typeof data?.transcript_text === 'string' && data.transcript_text.length > 0) {
+            setManualTranscript(data.transcript_text);
           }                                                                                                                                                   
           if (data?.status === 'completed') {                                                                                                                 
             const full = await classroomService.getResults(sessionId);                                                                                        
@@ -149,58 +215,92 @@ import { useEffect, useMemo, useRef, useState } from 'react';
       };                                                                                                                                                      
     }, [sessionId]);                                                                                                                                          
                                                                                                                                                               
-    useEffect(() => {                                                                                                                                         
-      if (!session?.status || !POLL_STATUSES.has(session.status)) {                                                                                           
-        if (pollRef.current) {                                                                                                                                
-          clearInterval(pollRef.current);                                                                                                                     
-          pollRef.current = null;                                                                                                                             
-        }                                                                                                                                                     
-        return undefined;                                                                                                                                     
-      }                                                                                                                                                       
+    // Show the capture-audio help the first time a user creates a space.
+    useEffect(() => {
+      if (searchParams.get('captureHelp') === '1') {
+        setCaptureInfoOpen(true);
+        setSearchParams({}, { replace: true });
+      }
+    }, [searchParams, setSearchParams]);
+
+    // Track whether the tab is visible so background tabs don't keep polling.
+    useEffect(() => {
+      const update = () => setTabVisible(document.visibilityState === 'visible');
+      document.addEventListener('visibilitychange', update);
+      return () => document.removeEventListener('visibilitychange', update);
+    }, []);
+
+    useEffect(() => {
+      // Only poll while the server is working on this session AND the tab is in
+      // view. If the tab is hidden or the session is idle, tear down the poll so
+      // we send zero requests on background/idle views.
+      const serverWorking = Boolean(session?.status) && POLL_STATUSES.has(session.status);
+      if (!serverWorking || !tabVisible) {
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
+        return undefined;
+      }
+
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = window.setInterval(async () => {
+        try {
+          const latest = await classroomService.getSessionStatus(sessionId);
+          setSession(latest);
+          if (latest?.status === 'completed') {
+            const full = await classroomService.getResults(sessionId);
+            setResults(full);
+            if (pollRef.current) {
+              clearInterval(pollRef.current);
+              pollRef.current = null;
+            }
+            // Reload so the sidebar (and everything else) reflects the fresh
+            // "completed" status without a manual refresh.
+            window.setTimeout(() => window.location.reload(), 400);
+          }
+        } catch {
+          // silent poll retry
+        }
+      }, 3500);
+
+      return () => {
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
+      };
+    }, [session?.status, sessionId, tabVisible]);                                                                                                                         
                                                                                                                                                               
-      if (pollRef.current) clearInterval(pollRef.current);                                                                                                    
-      pollRef.current = window.setInterval(async () => {                                                                                                      
-        try {                                                                                                                                                 
-          const latest = await classroomService.getSessionStatus(sessionId);                                                                                  
-          setSession(latest);                                                                                                                                 
-          if (latest?.status === 'completed') {                                                                                                               
-            const full = await classroomService.getResults(sessionId);                                                                                        
-            setResults(full);                                                                                                                                 
-            if (pollRef.current) {                                                                                                                            
-              clearInterval(pollRef.current);                                                                                                                 
-              pollRef.current = null;                                                                                                                         
-            }                                                                                                                                                 
-          }                                                                                                                                                   
-        } catch {                                                                                                                                             
-          // silent poll retry                                                                                                                                
-        }                                                                                                                                                     
-      }, 3500);                                                                                                                                               
-                                                                                                                                                              
-      return () => {                                                                                                                                          
-        if (pollRef.current) {                                                                                                                                
-          clearInterval(pollRef.current);                                                                                                                     
-          pollRef.current = null;                                                                                                                             
-        }                                                                                                                                                     
-      };                                                                                                                                                      
-    }, [session?.status, sessionId]);                                                                                                                         
-                                                                                                                                                              
-    useEffect(() => () => {                                                                                                                                   
-      if (pollRef.current) clearInterval(pollRef.current);                                                                                                    
-      stopStreamTracks();                                                                                                                                     
+    useEffect(() => () => {
+      stopSilenceWatch();
+      if (pollRef.current) clearInterval(pollRef.current);
+      stopStreamTracks();
+      recordingRef.current = false;
     }, []);                                                                                                                                                   
                                                                                                                                                               
     // 1. Add a ref for the worker at the top of the component                                                                                              
                                                                                                                                                               
       const startListening = async () => {                                      
-        setMediaError('');                                                      
-        setError(null);                                                         
-        setLiveTranscript('');                                                  
-        setIsModelReady(false);                                                 
-        isModelReadyRef.current = false;                                        
+        setMediaError('');
+        setError(null);
+        setLiveTranscript('');
+        setIsModelReady(false);
+        isModelReadyRef.current = false;
+        setSilenceDialogOpen(false);
+        lastVoicedAtRef.current = Date.now();                                        
                                                                                 
-        try {                                                                   
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true
-   });                                                                          
+        try {
+          // Firefox cannot capture tab/screen audio, so it records via the
+          // microphone instead. Chrome/Edge share a tab/window/screen and keep
+          // only the audio (video is discarded).
+          const stream = isFirefox
+            ? await navigator.mediaDevices.getUserMedia({ audio: true })
+            : await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+          if (!isFirefox) {
+            stream.getVideoTracks().forEach((track) => { try { track.stop(); } catch {} });
+          }
+          setCaptureMode(isFirefox ? 'mic' : 'tab');
           streamRef.current = stream;
           chunksRef.current = [];                                               
                                                                                 
@@ -242,56 +342,66 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
           workersRef.current = workers;                                         
                                                                                 
-          // 2. Use AudioContext for LIVE transcription                         
-          const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });                            
+          // 2. Use AudioContext for LIVE transcription. Let the context use its
+          // native sample rate (Firefox rejects forcing a rate that differs
+          // from the captured stream) and resample to 16k for the worker.
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
           const source = audioCtx.createMediaStreamSource(stream);
           const processor = audioCtx.createScriptProcessor(4096, 1, 1);         
                                                                                 
           audioBufferRef.current = [];                                          
                                                                                 
-          processor.onaudioprocess = (e) => {                                   
-            if (!isModelReadyRef.current || workersRef.current.length === 0)
-  return;                                                                       
-                  
-            const inputData = e.inputBuffer.getChannelData(0);                  
-                  
-            // Volume Check (VAD)                                               
+          processor.onaudioprocess = (e) => {
+            const inputData = e.inputBuffer.getChannelData(0);
+
+            // Volume check (VAD) + silence tracking. Run this before the
+            // model-ready gate so the silence watchdog keeps counting even
+            // while the whisper model is still loading.
             let sum = 0;
-            for (let i = 0; i < inputData.length; i++) {                        
-              sum += inputData[i] * inputData[i];                               
-            }                                                                   
-            const rms = Math.sqrt(sum / inputData.length);                      
-            if (rms < 0.01) return;                                             
-                                                                                
-            if (!audioBufferRef.current) audioBufferRef.current = [];           
-            audioBufferRef.current.push(new Float32Array(inputData));           
-                                                                                
-            // Buffer window: 6 chunks (~1.5s)                                  
-            if (audioBufferRef.current.length >= 6) {                           
-              const totalLength = audioBufferRef.current.reduce((acc, chunk) => acc + chunk.length, 0);                                                       
-              const finalAudio = new Float32Array(totalLength);                 
-              let offset = 0;                                                   
-              for (const chunk of audioBufferRef.current) {                     
-                finalAudio.set(chunk, offset);                                  
-                offset += chunk.length;                                         
-              }                                                                 
-                                                                                
-              // --- PARALLEL ROTATION ---                                      
-              // Pick the next worker in the pool                               
-              const workerIdx = currentWorkerIndexRef.current;                  
-              const worker = workersRef.current[workerIdx];                     
-                                                                                
-              worker.postMessage({                                              
-                type: 'transcribe',                                             
-                audio: finalAudio,                                              
-                language: session?.language || 'en'                             
-              });                                                               
-                                                                                
-              // Move to next worker for the next segment                       
-              currentWorkerIndexRef.current = (workerIdx + 1) % POOL_SIZE;      
-                                                                                
-              audioBufferRef.current = [];                                      
-            }                                                                   
+            for (let i = 0; i < inputData.length; i++) {
+              sum += inputData[i] * inputData[i];
+            }
+            const rms = Math.sqrt(sum / inputData.length);
+            const voiced = rms >= VOICED_RMS;
+            if (voiced) lastVoicedAtRef.current = Date.now();
+
+            if (!isModelReadyRef.current || workersRef.current.length === 0) return;
+            if (!voiced) return;
+
+            if (!audioBufferRef.current) audioBufferRef.current = [];
+            audioBufferRef.current.push(new Float32Array(inputData));
+
+            // Buffer by duration (~1.5s of audio at the actual stream rate),
+            // then resample to 16 kHz for whisper. Fixed chunk counts break
+            // once the AudioContext runs at the device's native rate.
+            const targetSamples = Math.round(audioCtx.sampleRate * 1.5);
+            const bufferedSamples = audioBufferRef.current.reduce((acc, chunk) => acc + chunk.length, 0);
+            if (bufferedSamples >= targetSamples) {
+              const finalAudio = new Float32Array(bufferedSamples);
+              let offset = 0;
+              for (const chunk of audioBufferRef.current) {
+                finalAudio.set(chunk, offset);
+                offset += chunk.length;
+              }
+
+              // --- PARALLEL ROTATION ---
+              // Pick the next worker in the pool
+              const workerIdx = currentWorkerIndexRef.current;
+              const worker = workersRef.current[workerIdx];
+              // whisper needs 16 kHz regardless of the captured stream rate
+              const modelAudio = resampleAudio(finalAudio, audioCtx.sampleRate, 16000);
+
+              worker.postMessage({
+                type: 'transcribe',
+                audio: modelAudio,
+                language: session?.language || 'en'
+              });
+
+              // Move to next worker for the next segment
+              currentWorkerIndexRef.current = (workerIdx + 1) % POOL_SIZE;
+
+              audioBufferRef.current = [];
+            }
           };                                                                    
                                                                                 
           source.connect(processor);                                            
@@ -327,10 +437,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             }                                                                   
           };                                                                    
                                                                                 
-          recorder.start();                                                     
-          setRecording(true);                                                   
-          setAudioReady(false);                                                 
-          setResults(null);                                                     
+          recorder.start();
+          setRecording(true);
+          recordingRef.current = true;
+          setAudioReady(false);
+          setResults(null);
+          startSilenceWatch();                                                     
                                                                                 
         } catch (err) {                                                         
           console.error("Microphone access error:", err);                       
@@ -338,44 +450,49 @@ import { useEffect, useMemo, useRef, useState } from 'react';
         }                                                                       
       }; 
       
-      const stopListening = async () => {                                                                                                                     
-        console.log("Stop listening clicked. SessionID:", sessionId); // DEBUG LOG                                                                            
-        const recorder = mediaRecorderRef.current;                                                                                                            
-        if (!recorder || recorder.state === 'inactive') {                                                                                                     
-          console.warn("No active recorder found to stop");                                                                                                   
-        } else {                                                                                                                                              
-          recorder.stop();                                                                                                                                    
-        }                                                                                                                                                     
-        
-        if (workersRef.current && workersRef.current.length > 0) {            
-            workersRef.current.forEach(worker => worker.terminate());           
-            workersRef.current = [];                                            
-          }                                                                                                                                                    
-        setRecording(false);                                                                                                                                  
-                                                                                                                                                              
-        try {                                                                                                                                                 
-          if (sessionId) {                                                                                                                                    
-            console.log("Calling stopSession API...");                                                                                                        
-            await classroomService.stopSession(sessionId);                                                                                                    
-            console.log("Session stopped successfully on server");                                                                                            
-            // Refresh session data immediately after stopping                     
-            await loadSession(sessionId);                                                                                                                     
-          } else {                                                                 
-            console.error("Cannot stop session: sessionId is missing");                                                                                       
-          }                                                                                                                                                   
-        } catch (err) {                                                                                                                                       
-          console.error('Failed to stop session on server:', err);                                                                                            
-        }                                                                                                                                                     
-                                                                                                                                                              
-        if (pollRef.current) {                                                                                                                                
-          clearInterval(pollRef.current);                                                                                                                     
-          pollRef.current = null;                                                                                                                             
-        }                                                                                                                                                     
-        if (recognitionRef.current) {                                                                                                                         
-          recognitionRef.current.stop();                                                                                                                      
-          recognitionRef.current = null;                                                                                                                      
-        }                                                                                                                                                     
-      };                                                                                                                                                
+      const stopCapture = async ({ auto = false } = {}) => {
+        stopSilenceWatch();
+        recordingRef.current = false;
+        const recorder = mediaRecorderRef.current;
+        if (!recorder || recorder.state === 'inactive') {
+          console.warn("No active recorder found to stop");
+        } else {
+          recorder.stop();
+        }
+
+        if (workersRef.current && workersRef.current.length > 0) {
+          workersRef.current.forEach(worker => worker.terminate());
+          workersRef.current = [];
+        }
+        setRecording(false);
+        setCaptureMode(null);
+
+        try {
+          if (sessionId) {
+            await classroomService.stopSession(sessionId);
+            // Refresh session data immediately after stopping
+            await loadSession(sessionId);
+          } else {
+            console.error("Cannot stop session: sessionId is missing");
+          }
+        } catch (err) {
+          console.error('Failed to stop session on server:', err);
+        }
+
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+          recognitionRef.current = null;
+        }
+
+        // Let the user decide what to do with whatever was captured.
+        if (auto) setSilenceDialogOpen(true);
+      };
+
+      const stopListening = () => stopCapture({ auto: false });                                                                                                                                                
                                                                                                                                                               
     const processTranscript = async () => {                                                                                                                   
       if (!sessionId) return;                                                                                                                                 
@@ -427,61 +544,121 @@ import { useEffect, useMemo, useRef, useState } from 'react';
       <div className="classroom-root">                                                                                                                        
         <div className="classroom-mesh classroom-mesh-top" />                                                                                                 
         <div className="classroom-mesh classroom-mesh-bottom" />                                                                                              
-        <div className="classroom-shell">                                                                                                                     
-          <div className="classroom-hero">                                                                                                                    
-            <div>                                                                                                                                             
-              {/* <Chip label={`Session ${session?.id || sessionId}`} color={statusTone(session?.status)} sx={{ mb: 2 }} />                                        */}
-              <Typography variant="h3" className="classroom-title">{session?.title || 'Classroom space'}</Typography>                                         
-              <Typography variant="body1" className="classroom-subtitle">                                                                                     
-                Record the lecture audio, stop when the class ends, then queue the transcription pipeline.                                                    
-              </Typography>                                                                                                                                   
+        <div className="classroom-shell">
+          <div className="classroom-grid">
+            <div className="classroom-column">
+              <div className="classroom-hero">
+            <div>
+              <Typography variant="h3" className="classroom-title">{session?.title || 'Classroom space'}</Typography>
+              <Typography variant="body1" className="classroom-subtitle">
+                Share the meeting tab, window or screen to capture the speaker's voice; stop when the class ends, then queue the transcription pipeline.
+              </Typography>
             </div>                                                                                                                                            
               {!isCompleted && (
-              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">                                                                           
-              {/* <Button variant="outlined" onClick={() => navigate('/home')} sx={{ borderRadius: 999 }}>Exit</Button>                                            */}
-              <Button                                                                                                                                         
-                variant="contained"                                                                                                                           
-                startIcon={recording ? <PauseCircleIcon /> : <MicIcon />}                                                                                     
-                onClick={recording ? stopListening : startListening}                                                                                          
-                sx={{ borderRadius: 999 }}                                                                                                                    
-              >                                                                                                                                               
-                {recording ? 'Stop listening' : 'Start listening'}                                                                                            
-              </Button>                                                                                                                                       
-              <Button                                                                                                                                         
-                variant="contained"                                                                                                                           
-                color="secondary"                                                                                                                             
-                startIcon={<PlayArrowIcon />}                                                                                                                 
-                onClick={processTranscript}                                                                                                                   
-                disabled={!canProcess || processing}                                                                                                          
-                sx={{ borderRadius: 999 }}                                                                                                                    
-              >                                                                                                                                               
-                {processing ? 'Processing...' : 'Process transcription'}                                                                                      
-              </Button>                                                                                                                                       
+              <Stack
+                direction="row"
+                spacing={3}
+                alignItems="center"
+                flexWrap="nowrap"
+                sx={{ width: '100%', justifyContent: 'center' }}
+              >
+              <Button
+                variant="contained"
+                startIcon={recording ? <PauseCircleIcon /> : <MicIcon />}
+                onClick={recording ? stopListening : startListening}
+                sx={{
+                  flex: '1 1 0',
+                  minWidth: 0,
+                  maxWidth: 230,
+                  px: 3,
+                  py: 1.4,
+                  borderRadius: '999px',
+                  backgroundColor: 'var(--color-teal)',
+                  color: 'var(--color-navy-deep)',
+                  fontWeight: 700,
+                  fontSize: 15,
+                  letterSpacing: '0.01em',
+                  textTransform: 'none',
+                  boxShadow: '0 10px 28px color-mix(in srgb, var(--color-teal) 30%, transparent)',
+                  '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+                }}
+              >
+                {recording ? 'Stop capturing' : 'Capture audio'}
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<PlayArrowIcon />}
+                onClick={processTranscript}
+                disabled={!canProcess || processing}
+                sx={{
+                  flex: '1 1 0',
+                  minWidth: 0,
+                  maxWidth: 230,
+                  px: 3,
+                  py: 1.4,
+                  borderRadius: '999px',
+                  borderColor: 'color-mix(in srgb, var(--color-white) 22%, transparent)',
+                  color: 'var(--color-white)',
+                  fontWeight: 700,
+                  fontSize: 15,
+                  letterSpacing: '0.01em',
+                  textTransform: 'none',
+                  '&:hover': { borderColor: 'var(--color-teal)', backgroundColor: 'color-mix(in srgb, var(--color-teal) 10%, transparent)', color: 'var(--color-white)' },
+                  '&.Mui-disabled': { borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)', color: 'color-mix(in srgb, var(--color-white) 40%, transparent)' },
+                }}
+              >
+                {processing ? 'Processing…' : 'Process'}
+              </Button>
               </Stack>
               )}
-          </div>                                                                                                                                              
-                                                                                                                                                              
-          <div className="classroom-grid">                                                                                                                    
-            <Paper className={`classroom-card classroom-card-console ${isCompleted ? 'classroom-card-console-completed' : ''}`} elevation={0}>           
-              <div className="classroom-card-header">                                                                                                         
-                <div>                                                                                                                                         
+          </div>
+
+            <Paper className={`classroom-card classroom-card-console ${isCompleted ? 'classroom-card-console-completed' : ''}`} elevation={0}>
+              <div className="classroom-card-header">
+                <div>
                   <Typography variant="overline" sx={{ letterSpacing: 3, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>{isCompleted ? 'Completed session' : 'Recording console'}</Typography>
-                  <Typography variant="h5" sx={{ color: 'var(--color-white)', mt: 0.5 }}>{isCompleted ? 'Stored transcript' : 'Capture lecture audio'}</Typography>
-                </div>                                                                                                                                        
+                  <Typography variant="h5" sx={{ color: 'var(--color-white)', mt: 0.5 }}>{isCompleted ? 'Summary' : 'Capture audio'}</Typography>
+                </div>
                 {isCompleted ? (
                 <Chip label="Completed" color={statusTone(session?.status)} size="small" sx={statusChipSx} />
                 ) : (
-                <Chip icon={recording ? <FiberManualRecordIcon /> : undefined} label={recording ? 'Live' : session?.status || 'Idle'}
-  color={statusTone(session?.status)} size="small" sx={statusChipSx} />
-                )}                                                                                                                      
-              </div>                                                                                                                                          
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  {/* Thin bar that signals the server is still transcribing/generating */}
+                  {POLL_STATUSES.has(session?.status) && (
+                    <Box sx={{ width: 90 }}>
+                      <LinearProgress color="primary" sx={{ height: 3, borderRadius: 999, '& .MuiLinearProgress-bar': { borderRadius: 999 } }} />
+                    </Box>
+                  )}
+                  <Chip icon={recording ? <FiberManualRecordIcon /> : undefined} label={recording ? 'Live' : session?.status || 'Idle'}
+  color={recording ? 'error' : statusTone(session?.status)} size="small" sx={statusChipSx} />
+                </Stack>
+                )}
+              </div>
               {isCompleted ? (
-                <Box sx={{ mt: 2, p: 2.5, borderRadius: 2, bgcolor: 'color-mix(in srgb, var(--color-white) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                  <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>Transcription</Typography>
-                  <Typography variant="body1" sx={{ color: 'var(--color-white)', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
-                    {storedTranscript || 'No transcript available.'}
-                  </Typography>
-                </Box>
+                <>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)' }}>Summary</Typography>
+                    <IconButton
+                      size="small"
+                      aria-label="Show transcript"
+                      onClick={() => setTranscriptOpen(true)}
+                      title="Show transcription"
+                      sx={{
+                        ml: 'auto',
+                        color: 'color-mix(in srgb, var(--color-white) 70%, transparent)',
+                        '&:hover': { color: 'var(--color-white)', backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)' },
+                      }}
+                    >
+                      <DescriptionIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                  <Box
+                    className="classroom-markdown"
+                    sx={{ mt: 1.5, flex: 1, minHeight: 0, overflowY: 'auto', pr: 1 }}
+                  >
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{results?.summary?.content || 'No summary available.'}</ReactMarkdown>
+                  </Box>
+                </>
               ) : (
                 <>
               <div className="classroom-wave" data-active={recording ? 'true' : 'false'}>                                                                     
@@ -495,7 +672,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               )}                                                                                                                                              
               <Stack spacing={1.5} sx={{ mt: 3 }}>                                                                                                            
                 <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>                                                                         
-                  {recording ? 'Your browser is listening now. Stop when the professor finishes speaking.' : audioReady ? 'Audio uploaded. Press Process transcription to start STT and content generation.' : 'Press Start listening to begin capturing the class audio.'}                                          
+                  {recording
+                  ? (captureMode === 'mic' ? 'Recording your microphone now. Stop when the speaker finishes.' : 'Capturing the shared tab audio now. Stop when the speaker finishes.')
+                  : audioReady
+                    ? 'Audio uploaded. Press Process transcription to start STT and content generation.'
+                    : (isFirefox
+                      ? 'Firefox: press Capture audio, then allow the microphone. Firefox cannot capture the tab/meeting sound directly, so it records your microphone instead.'
+                      : 'Press Capture audio and pick the tab, window or screen that is playing the meeting.')}                                          
                 </Typography>                                                                                                                                 
                 {mediaError && <Typography variant="body2" color="error.main">{mediaError}</Typography>}                                                      
                 {session?.status === 'failed' && <Typography variant="body2" color="error.main" sx={{ fontWeight: 'bold' }}>Error: {session.error_message ||  
@@ -515,9 +698,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               </Stack>                                                                                                                                         
                 </>
               )}
-            </Paper>                                                                                                                                          
-                                                                                                                                                              
-            <Paper className="classroom-card classroom-card-output" elevation={0}>                                                                           
+            </Paper>
+            </div>
+
+            <Paper className="classroom-card classroom-card-output" elevation={0}>
               <div className="classroom-card-header">                                                                                                         
                 <div>                                                                                                                                         
                   <Typography variant="overline" sx={{ letterSpacing: 3, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>Generated study space</Typography>                
@@ -551,32 +735,24 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                 </Box>                                                                                                                                        
                                                                                                                                                               
                 <div className="classroom-tab-content" style={{ mt: 2 }}>                                                                                     
-                  {results ? (                                                                                                                                
-                    <>                                                                                                                                        
-                      {activeTab === 0 && (                                                                                                                   
-                        <div className="classroom-output-block">                                                                                              
-                          <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>Summary</Typography>                                 
-                          <div className="classroom-markdown">                                                                                                
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{results.summary?.content || 'No summary available.'}</ReactMarkdown>                  
-                          </div>                                                                                                                              
-                        </div>                 
-                      )}                                                                                                                                      
-                      {activeTab === 1 && (                                                                                                                   
-                        <div className="classroom-output-block">                                                                                              
-                          <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>MCQs ({results.mcqs?.length || 0})</Typography>      
+                  {results ? (
+                    <>
+                      {activeTab === 0 && (
+                        <div className="classroom-output-block">
+                          <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>MCQs ({results.mcqs?.length || 0})</Typography>
                           <ClassroomQuiz mcqs={results.mcqs} />
-                        </div>                                                                                                                                
-                      )}                                                                                                                                      
-                      {activeTab === 2 && (                                                                                                                   
-                        <div className="classroom-output-block">                                                                                              
+                        </div>
+                      )}
+                      {activeTab === 1 && (
+                        <div className="classroom-output-block">
                           <ClassroomClozePanel clozes={results.clozes} />
-                        </div>                                                                                                                                
-                      )}                                                                                                                                      
-                      {activeTab === 3 && (                                                                                                                   
-                        <div className="classroom-output-block">                                                                                              
-                          <ClassroomFeynmanPanel sessionId={session.id} prompts={results.feynmans} />
-                        </div>                                                                                                                                
-                      )}                                                                                                                                      
+                        </div>
+                      )}
+                      {activeTab === 2 && (
+                        <div className="classroom-output-block">
+                          <ClassroomFeynmanPanel sessionId={session.id} prompts={results.feynmans} language={session.language || 'en'} />
+                        </div>
+                      )}
                     </>                                                                                                                                       
                   ) : (                                                                                                                                       
                     <div className="classroom-empty-state">                                                                                                   
@@ -588,10 +764,147 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                 </div>                                                                                                                                        
               </div>                                                                                                                                          
             </Paper>                                                                                                                                          
-          </div>                                                                                                                                              
-        </div>                                                                                                                                                
-      </div>                                                                                                                                                  
-    );                                                                                                                                                        
-  };                                                                                                                                                          
-                                                                                                                                                              
+          </div>
+
+          <Dialog
+            open={transcriptOpen}
+            onClose={() => setTranscriptOpen(false)}
+            fullWidth
+            maxWidth="md"
+            PaperProps={{
+              style: { backgroundColor: '#1A2A3A' },
+              sx: {
+                borderRadius: '20px',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+                overflow: 'hidden',
+              },
+            }}
+            slotProps={{
+              backdrop: { sx: { backgroundColor: 'color-mix(in srgb, var(--color-black) 60%, transparent)' } },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2.25, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <Typography sx={{ color: 'white', fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>
+                Transcription
+              </Typography>
+              <IconButton onClick={() => setTranscriptOpen(false)} size="small" sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <DialogContent sx={{ p: 3, maxHeight: '70vh' }}>
+              <Typography variant="body1" sx={{ color: 'var(--color-white)', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
+                {storedTranscript || 'No transcript available.'}
+              </Typography>
+            </DialogContent>
+          </Dialog>
+
+          <CaptureAudioModal
+            open={captureInfoOpen}
+            onClose={() => setCaptureInfoOpen(false)}
+          />
+
+          <Dialog
+            open={silenceDialogOpen}
+            onClose={() => setSilenceDialogOpen(false)}
+            fullWidth
+            maxWidth="sm"
+            aria-labelledby="silence-session-title"
+            PaperProps={{
+              style: {
+                background: 'linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%)',
+              },
+              sx: {
+                width: { xs: '92vw', sm: 560 },
+                maxWidth: '92vw',
+                borderRadius: '20px',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+                overflow: 'hidden',
+                position: 'relative',
+              },
+            }}
+            slotProps={{
+              backdrop: { sx: { backgroundColor: 'color-mix(in srgb, var(--color-black) 60%, transparent)' } },
+            }}
+          >
+            {/* Teal / blue glow accents over the navy gradient (matches CaptureAudioModal) */}
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                pointerEvents: 'none',
+                background:
+                  'radial-gradient(circle at top left, color-mix(in srgb, var(--color-teal) 20%, transparent), transparent 45%), ' +
+                  'radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-blue) 22%, transparent), transparent 48%)',
+              }}
+            />
+
+            <Box sx={{ position: 'relative', p: 3 }}>
+              {/* Header */}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography id="silence-session-title" variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 800, letterSpacing: '-0.01em' }}>
+                  Recording stopped (silence)
+                </Typography>
+                <IconButton onClick={() => setSilenceDialogOpen(false)} size="small" sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+
+              <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 78%, transparent)', mb: 2 }}>
+                No audio was detected for 1 minute, so the capture stopped automatically. Choose what to do with the recording.
+              </Typography>
+
+              {!audioReady && (
+                <Box sx={{ p: 2, borderRadius: 3, background: 'color-mix(in srgb, var(--color-white) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', mb: 2 }}>
+                  <Typography variant="body2" sx={{ color: 'var(--color-amber)' }}>
+                    No usable audio was captured — you may want to recapture.
+                  </Typography>
+                </Box>
+              )}
+
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1.5 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<RefreshIcon />}
+                  onClick={() => { setSilenceDialogOpen(false); startListening(); }}
+                  sx={{
+                    px: 3,
+                    py: 1.15,
+                    borderRadius: '999px',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    textTransform: 'none',
+                    color: 'var(--color-white)',
+                    borderColor: 'color-mix(in srgb, var(--color-white) 22%, transparent)',
+                    '&:hover': { borderColor: 'var(--color-teal)', backgroundColor: 'color-mix(in srgb, var(--color-teal) 10%, transparent)' },
+                  }}
+                >
+                  Recapture
+                </Button>
+                <Button
+                  variant="contained"
+                  disabled={!audioReady || processing}
+                  onClick={async () => { setSilenceDialogOpen(false); await processTranscript(); }}
+                  sx={{
+                    px: 4,
+                    py: 1.15,
+                    borderRadius: '999px',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    textTransform: 'none',
+                    backgroundColor: 'var(--color-success)',
+                    color: 'var(--color-navy-deep)',
+                    '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+                    '&.Mui-disabled': { color: 'color-mix(in srgb, var(--color-navy-deep) 45%, transparent)' },
+                  }}
+                >
+                  {processing ? 'Processing…' : 'Process audio'}
+                </Button>
+              </Box>
+            </Box>
+          </Dialog>
+        </div>
+      </div>
+    );
+  };
+
 export default Classroom;      

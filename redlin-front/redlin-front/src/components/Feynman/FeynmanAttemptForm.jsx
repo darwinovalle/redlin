@@ -1,16 +1,85 @@
-import React from 'react';
-import { Box, Button, TextField } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+import { IconButton, Box, Button, Stack, TextField, Typography } from '@mui/material';
+import MicIcon from '@mui/icons-material/Mic';
+import StopIcon from '@mui/icons-material/Stop';
+
+const getSpeechRecognition = () => {
+  if (typeof window === 'undefined') return null;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  return SR ? new SR() : null;
+};
 
 // Controlled form: parent mantiene value y onChange.
-const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeconds, totalSeconds }) => {
+// Supports dictation via the mic (interim streaming + accumulated buffer).
+const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeconds, totalSeconds, language = 'en' }) => {
+  const [recording, setRecording] = useState(false);
+  const recognitionRef = useRef(null);
+  const accumulatedRef = useRef('');
+  const interimRef = useRef('');
+  const stopRequestedRef = useRef(false);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!value.trim()) return;
+    if (!value.trim() || disabled) return;
     onSubmit(value);
   };
+
+  const handleMic = () => {
+    if (recording) {
+      stopRecording();
+      return;
+    }
+    const recognition = getSpeechRecognition();
+    if (!recognition) {
+      console.warn('Speech recognition not supported in this browser');
+      return;
+    }
+    recognitionRef.current = recognition;
+    stopRequestedRef.current = false;
+    accumulatedRef.current = ` ${value || ''}`;
+    interimRef.current = '';
+    recognition.lang = language === 'es' ? 'es-ES' : 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const seg = event.results[i][0].transcript.trim();
+        if (event.results[i].isFinal) {
+          if (seg) accumulatedRef.current = `${accumulatedRef.current} ${seg}`.replace(/\s+/g, ' ').trim();
+          interimRef.current = '';
+        } else if (seg) {
+          interimRef.current = seg;
+        }
+      }
+      const shown = interimRef.current
+        ? `${accumulatedRef.current} ${interimRef.current}`.trim()
+        : accumulatedRef.current;
+      onChange(shown);
+    };
+    recognition.onend = () => {
+      setRecording(false);
+    };
+    recognition.start();
+    setRecording(true);
+  };
+
+  const stopRecording = () => {
+    stopRequestedRef.current = true;
+    try { recognitionRef.current?.stop(); } catch {}
+    interimRef.current = '';
+    setRecording(false);
+  };
+
+  // clean up recognition on unmount
+  useEffect(() => () => {
+    stopRequestedRef.current = true;
+    try { recognitionRef.current?.stop(); } catch {}
+  }, []);
+
   const timeInfo = (countdownSeconds != null && totalSeconds != null)
     ? `${countdownSeconds}s left`
     : null;
+
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
       <TextField
@@ -33,23 +102,70 @@ const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeco
           },
         }}
       />
-      <Button
-        type="submit"
-        variant="contained"
-        disabled={disabled || !value.trim()}
-        sx={{
-          alignSelf: 'flex-end',
-          backgroundColor: 'var(--color-success)',
-          color: 'var(--color-navy-deep)',
-          borderRadius: '999px',
-          px: 4,
-          fontWeight: 800,
-          '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
-          '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' },
-        }}
-      >
-        Submit Explanation
-      </Button>
+
+      {recording && (
+        <Typography
+          variant="caption"
+          sx={{
+            mt: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            color: 'var(--color-danger-soft)',
+            fontWeight: 600,
+            fontStyle: 'italic',
+            '&::before': {
+              content: '""',
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: 'var(--color-danger-soft)',
+              boxShadow: '0 0 0 0 color-mix(in srgb, var(--color-danger-soft) 60%, transparent)',
+              animation: 'feynmanRecPulse 1.6s infinite',
+            },
+            '@keyframes feynmanRecPulse': {
+              '0%': { boxShadow: '0 0 0 0 color-mix(in srgb, var(--color-danger-soft) 60%, transparent)' },
+              '70%': { boxShadow: '0 0 0 8px transparent' },
+              '100%': { boxShadow: '0 0 0 0 transparent' },
+            },
+          }}
+        >
+          Listening live…
+        </Typography>
+      )}
+
+      <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={1}>
+        <IconButton
+          aria-label={recording ? 'Stop recording' : 'Record answer by voice'}
+          onClick={handleMic}
+          disabled={disabled}
+          sx={{
+            color: recording ? 'var(--color-danger-soft)' : 'var(--color-white)',
+            backgroundColor: recording ? 'color-mix(in srgb, var(--color-danger-softer) 16%, transparent)' : 'color-mix(in srgb, var(--color-white) 6%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--color-white) 14%, transparent)',
+            '&:hover': { backgroundColor: recording ? 'color-mix(in srgb, var(--color-danger-softer) 24%, transparent)' : 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
+            '&.Mui-disabled': { color: 'color-mix(in srgb, var(--color-white) 30%, transparent)', backgroundColor: 'transparent' },
+          }}
+        >
+          {recording ? <StopIcon /> : <MicIcon />}
+        </IconButton>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={disabled || !value.trim()}
+          sx={{
+            backgroundColor: 'var(--color-success)',
+            color: 'var(--color-navy-deep)',
+            borderRadius: '999px',
+            px: 4,
+            fontWeight: 800,
+            '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+            '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' },
+          }}
+        >
+          Submit Explanation
+        </Button>
+      </Stack>
     </Box>
   );
 };

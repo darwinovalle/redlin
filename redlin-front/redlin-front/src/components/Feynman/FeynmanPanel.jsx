@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Box, Typography, Button, Divider } from '@mui/material';
+import { Box, Typography, Button, Divider, Stack } from '@mui/material';
 import { feynmanService } from '../../services/api/feynman.jsx';
 import FeynmanAttemptForm from './FeynmanAttemptForm';
 import AIFeedback from './AIFeedback';
@@ -20,7 +20,7 @@ const FeynmanPanel = ({ documentId }) => {
   const [questionDone, setQuestionDone] = useState(false); // submitted & evaluated
   const [sessionFinished, setSessionFinished] = useState(false);
   const [sessionKey, setSessionKey] = useState(Date.now());
-  const COUNTDOWN = 60; // seconds per question
+  const COUNTDOWN = 210; // 3:30 per question
   const autoSubmittingRef = useRef(false);
   const justAdvancedRef = useRef(false); // evita onExpire inmediato tras Next
   const evalIndexRef = useRef(null); // evita aplicar resultado a la pregunta incorrecta
@@ -118,25 +118,35 @@ const FeynmanPanel = ({ documentId }) => {
   // Start screen
   if (!sessionActive && !sessionFinished) {
     return (
-      <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 2, color: 'var(--color-white)' }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, color: 'var(--color-white)' }}>Feynman Session</Typography>
-        <Typography variant="body2" sx={{ maxWidth: 640, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
-          You will have 60 seconds per question to write your explanation. When time ends, your answer (even if incomplete) is auto-submitted and the next question begins. At the end you'll see scores &amp; AI feedback.
-        </Typography>
-        <Button
-          variant="contained"
-          onClick={startSession}
-          sx={{
-            backgroundColor: 'var(--color-success)',
-            color: 'var(--color-navy-deep)',
-            borderRadius: '999px',
-            px: 4,
-            fontWeight: 800,
-            '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
-          }}
-        >
-          Start Session ({prompts.length} questions)
-        </Button>
+      <Box sx={{ textAlign: 'center', p: 3, maxWidth: 760, mx: 'auto' }}>
+        <Stack spacing={2} alignItems="center">
+          <Typography variant="h4" sx={{ mb: 0.5, fontWeight: 700, color: 'var(--color-white)' }}>
+            Feynman Session
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 1.5, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)', maxWidth: 520 }}>
+            {prompts.length
+              ? `You will have 3 minutes and 30 seconds per question to write or dictate your explanation via the mic. When time ends, your answer (even if incomplete) is auto-submitted. At the end you'll see scores &amp; AI feedback.`
+              : 'No Feynman prompts generated yet.'}
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            disabled={!prompts.length}
+            onClick={startSession}
+            sx={{
+              borderRadius: '999px',
+              backgroundColor: 'var(--color-success)',
+              color: 'var(--color-navy-deep)',
+              px: 4,
+              fontWeight: 700,
+              boxShadow: '0 18px 40px color-mix(in srgb, var(--color-success) 24%, transparent)',
+              '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+              '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 8%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' },
+            }}
+          >
+            Start Session ({prompts.length} questions)
+          </Button>
+        </Stack>
       </Box>
     );
   }

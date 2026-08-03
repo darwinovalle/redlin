@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Button, Chip, Divider, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Chip, Divider, IconButton, Paper, Stack, TextField, Typography } from '@mui/material';
+import MicIcon from '@mui/icons-material/Mic';
+import StopIcon from '@mui/icons-material/Stop';
 import PropTypes from 'prop-types';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 import { classroomService } from '../../services/api/classroom';
 
-const COUNTDOWN = 60;
+const COUNTDOWN = 210; // 3:30
+
+const getSpeechRecognition = () => {
+  if (typeof window === 'undefined') return null;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  return SR ? new SR() : null;
+};
 
 const formatTime = (seconds) => {
   const minutes = Math.floor(seconds / 60);
@@ -19,7 +27,7 @@ const Metric = ({ label, value, color }) => (
   </Box>
 );
 
-const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts }) => {
+const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 'en' }) => {
   const [prompts, setPrompts] = useState(Array.isArray(initialPrompts) ? initialPrompts : []);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -32,6 +40,8 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts }) => {
   const [questionDone, setQuestionDone] = useState(false);
   const [sessionFinished, setSessionFinished] = useState(false);
   const [sessionKey, setSessionKey] = useState(Date.now());
+  const [recording, setRecording] = useState(false);
+  const recognitionRef = useRef(null);
   const autoSubmittingRef = useRef(false);
   const evalIndexRef = useRef(null);
 
@@ -130,6 +140,74 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts }) => {
     setAnswers((previousAnswers) => ({ ...previousAnswers, [current.id]: value }));
   };
 
+  const accumulatedRef = useRef('');
+  const interimRef = useRef('');
+  const stopRequestedRef = useRef(false);
+
+  const toggleRecording = () => {
+    if (recording) {
+      stopRecording();
+      return;
+    }
+    const current = prompts[currentIndex];
+    if (!current || questionDone) return;
+    const recognition = getSpeechRecognition();
+    if (!recognition) {
+      console.warn('Speech recognition not supported in this browser');
+      return;
+    }
+    recognitionRef.current = recognition;
+    stopRequestedRef.current = false;
+    // seed from the current draft and keep every new segment appended, so a
+    // pause or silence can never clear the words already captured.
+    interimRef.current = '';
+    accumulatedRef.current = ` ${answers[current.id] || ''}`;
+    recognition.lang = language === 'es' ? 'es-ES' : 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.onresult = (event) => {
+      // Accumulate finalized words into a permanent buffer (never reset),
+      // and show the still-being-spoken interim segment as a live tail.
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const seg = event.results[i][0].transcript.trim();
+        if (event.results[i].isFinal) {
+          if (seg) accumulatedRef.current = `${accumulatedRef.current} ${seg}`.replace(/\s+/g, ' ').trim();
+          interimRef.current = '';
+        } else if (seg) {
+          interimRef.current = seg;
+        }
+      }
+      const id = prompts[currentIndex]?.id;
+      if (id == null) return;
+      const shown = interimRef.current
+        ? `${accumulatedRef.current} ${interimRef.current}`.trim()
+        : accumulatedRef.current;
+      setAnswers((previous) => ({ ...previous, [id]: shown }));
+    };
+    recognition.onend = () => {
+      // A natural silence or browser end drops out of recording mode but
+      // NEVER clears the accumulated text; pressing the mic again continues.
+      setRecording(false);
+    };
+    recognition.start();
+    setRecording(true);
+  };
+
+  const stopRecording = () => {
+    stopRequestedRef.current = true;
+    try { recognitionRef.current?.stop(); } catch {}
+    setRecording(false);
+    interimRef.current = '';
+  };
+
+  // stop any in-flight recognition and reset accumulation when the question changes
+  useEffect(() => () => {
+    stopRequestedRef.current = true;
+    try { recognitionRef.current?.stop(); } catch {}
+    accumulatedRef.current = '';
+    interimRef.current = '';
+  }, [currentIndex]);
+
   const startSession = () => {
     setSessionActive(true);
     setSessionFinished(false);
@@ -169,26 +247,35 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts }) => {
 
   if (!sessionActive && !sessionFinished) {
     return (
-      <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 2, color: 'var(--color-white)' }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, color: 'var(--color-white)' }}>Feynman Session</Typography>
-        <Typography variant="body2" sx={{ maxWidth: 640, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
-          You will have 60 seconds per question to write your explanation. When time ends, your answer is auto-submitted.
-          After evaluation, click Next to continue. You&apos;ll see a summary at the end.
-        </Typography>
-        <Button
-          variant="contained"
-          onClick={startSession}
-          sx={{
-            backgroundColor: 'var(--color-success)',
-            color: 'var(--color-navy-deep)',
-            borderRadius: '999px',
-            px: 4,
-            fontWeight: 800,
-            '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
-          }}
-        >
-          Start Session ({prompts.length} questions)
-        </Button>
+      <Box sx={{ textAlign: 'center', p: 3, maxWidth: 760, mx: 'auto' }}>
+        <Stack spacing={2} alignItems="center">
+          <Typography variant="h4" sx={{ mb: 0.5, fontWeight: 700, color: 'var(--color-white)' }}>
+            Feynman Session
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 1.5, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)', maxWidth: 520 }}>
+            {prompts.length
+              ? `You will have 3 minutes and 30 seconds per question to write or dictate your explanation. When time ends, your answer is auto-submitted.`
+              : 'No Feynman prompts generated yet.'}
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            disabled={!prompts.length}
+            onClick={startSession}
+            sx={{
+              borderRadius: '999px',
+              backgroundColor: 'var(--color-success)',
+              color: 'var(--color-navy-deep)',
+              px: 4,
+              fontWeight: 700,
+              boxShadow: '0 18px 40px color-mix(in srgb, var(--color-success) 24%, transparent)',
+              '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+              '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 8%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' },
+            }}
+          >
+            Start Session ({prompts.length} questions)
+          </Button>
+        </Stack>
       </Box>
     );
   }
@@ -357,7 +444,21 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts }) => {
             },
           }}
         />
-        <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={1} sx={{ mt: 2 }}>
+          <IconButton
+            aria-label={recording ? 'Stop recording' : 'Record answer by voice'}
+            onClick={toggleRecording}
+            disabled={submitting || questionDone}
+            sx={{
+              color: recording ? 'var(--color-danger-soft)' : 'var(--color-white)',
+              backgroundColor: recording ? 'color-mix(in srgb, var(--color-danger-softer) 16%, transparent)' : 'color-mix(in srgb, var(--color-white) 6%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--color-white) 14%, transparent)',
+              '&:hover': { backgroundColor: recording ? 'color-mix(in srgb, var(--color-danger-softer) 24%, transparent)' : 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
+              '&.Mui-disabled': { color: 'color-mix(in srgb, var(--color-white) 30%, transparent)', backgroundColor: 'transparent' },
+            }}
+          >
+            {recording ? <StopIcon /> : <MicIcon />}
+          </IconButton>
           <Button
             type="submit"
             variant="contained"
@@ -377,9 +478,40 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts }) => {
         </Stack>
       </Box>
 
+      {!questionDone && recording && (
+        <Typography
+          variant="caption"
+          sx={{
+            mt: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            color: 'var(--color-danger-soft)',
+            fontWeight: 600,
+            fontStyle: 'italic',
+            '&::before': {
+              content: '""',
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: 'var(--color-danger-soft)',
+              boxShadow: '0 0 0 0 color-mix(in srgb, var(--color-danger-soft) 60%, transparent)',
+              animation: 'classroomRecPulse 1.6s infinite',
+            },
+            '@keyframes classroomRecPulse': {
+              '0%': { boxShadow: '0 0 0 0 color-mix(in srgb, var(--color-danger-soft) 60%, transparent)' },
+              '70%': { boxShadow: '0 0 0 8px transparent' },
+              '100%': { boxShadow: '0 0 0 0 transparent' },
+            },
+          }}
+        >
+          Listening live…
+        </Typography>
+      )}
+
       {!questionDone && (
         <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
-          Time ends → auto-submit.
+          Time ends → auto-submit. Use the mic to dictate your answer.
         </Typography>
       )}
 
