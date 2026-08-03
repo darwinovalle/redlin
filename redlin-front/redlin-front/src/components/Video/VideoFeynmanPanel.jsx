@@ -20,7 +20,7 @@ const VideoFeynmanPanel = ({ videoId }) => {
   const [questionDone, setQuestionDone] = useState(false); // submitted & evaluated
   const [sessionFinished, setSessionFinished] = useState(false);
   const [sessionKey, setSessionKey] = useState(Date.now());
-  const COUNTDOWN = 60; // seconds per question
+  const COUNTDOWN = 210; // 3:30 per question
   const autoSubmittingRef = useRef(false);
   const justAdvancedRef = useRef(false); // guard against immediate onExpire after Next
   const evalIndexRef = useRef(null); // ensure applying result to right question
@@ -121,7 +121,7 @@ const VideoFeynmanPanel = ({ videoId }) => {
       <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 2, color: 'var(--color-white)' }}>
         <Typography variant="h5" sx={{ fontWeight: 800, color: 'var(--color-white)' }}>Feynman Session</Typography>
         <Typography variant="body2" sx={{ maxWidth: 640, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
-          You will have 60 seconds per question to write your explanation. When time ends, your answer (even if incomplete) is auto-submitted. After evaluation, click Next to continue. You'll see a summary at the end.
+          You will have 3 minutes and 30 seconds per question to write or dictate your explanation via the mic. When time ends, your answer (even if incomplete) is auto-submitted. After evaluation, click Next to continue. You'll see a summary at the end.
         </Typography>
         <Button
           variant="contained"
