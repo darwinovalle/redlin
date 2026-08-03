@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
 from django.utils import timezone
 
 from .services.llm_encryption import decrypt_api_key, encrypt_api_key
@@ -46,6 +48,29 @@ class Document(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class DocumentHighlight(models.Model):
+    """User text highlights over a document's PDF pages (stored as overlay data)."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='document_highlights')
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='highlights')
+    page = models.PositiveIntegerField(default=1)
+    text = models.TextField(blank=True, default='')
+    color = models.CharField(max_length=32, default='#FDE047')
+    # Normalized rects (x, y, w, h as 0..1 fractions of the page box) so the
+    # overlay re-renders correctly at any zoom level.
+    rects = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['page', 'created_at']
+        indexes = [
+            models.Index(fields=['document', 'page']),
+        ]
+
+    def __str__(self):
+        return f"Highlight on doc {self.document_id} p.{self.page}"
+
 
 class Summary(models.Model):
     document = models.OneToOneField(Document, on_delete=models.CASCADE, related_name='summary')

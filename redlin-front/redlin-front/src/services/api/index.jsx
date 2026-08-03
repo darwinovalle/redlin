@@ -240,6 +240,9 @@ export const authService = {
 
 export const documentService = {
   getPdfUrl: (documentId) => `${API_URL}/documents/${documentId}/file/`,
+  getHighlights: (documentId) => api.get(`/documents/${documentId}/highlights/`).then((r) => r.data),
+  createHighlight: (documentId, data) => api.post(`/documents/${documentId}/highlights/`, data).then((r) => r.data),
+  deleteHighlight: (documentId, highlightId) => api.delete(`/documents/${documentId}/highlights/${highlightId}/`).then(() => {}),
   uploadDocument: async (file, userId) => {
     const formData = new FormData();
     formData.append('pdf_file', file);

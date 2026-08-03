@@ -2,6 +2,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.http import FileResponse, Http404, HttpResponseForbidden
+from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
@@ -10,9 +11,10 @@ from rest_framework.response import Response
 
 from .errors import ApiError, ErrorCode, error_response
 from .jwt_auth import JWTAuthentication
-from .models import Document, FeynmanAttempt, User
+from .models import Document, DocumentHighlight, FeynmanAttempt, User
 from .serializers import (
     ClozeSerializer,
+    DocumentHighlightSerializer,
     DocumentSerializer,
     FeynmanAttemptSerializer,
     FeynmanSerializer,
@@ -72,6 +74,31 @@ class DocumentViewSet(viewsets.ModelViewSet):
         response = FileResponse(file_handle, content_type="application/pdf")
         response["Content-Disposition"] = f"inline; filename=\"{document.title or 'document'}.pdf\""
         return response
+
+    @extend_schema(responses={200: OpenApiResponse(description="Document highlights")})
+    @action(detail=True, methods=["get", "post"], url_path="highlights")
+    def highlights(self, request, pk=None):
+        """List or create text highlights for a document (owner only)."""
+        document = self.get_object()
+
+        if request.method == "GET":
+            qs = document.highlights.filter(user=request.user)
+            return Response(DocumentHighlightSerializer(qs, many=True).data)
+
+        serializer = DocumentHighlightSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user, document=document)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(responses={204: OpenApiResponse(description="Highlight deleted")})
+    @action(detail=True, methods=["delete"], url_path=r"highlights/(?P<highlight_pk>[^/.]+)")
+    def delete_highlight(self, request, pk=None, highlight_pk=None):
+        document = self.get_object()
+        highlight = get_object_or_404(
+            DocumentHighlight, pk=highlight_pk, document=document, user=request.user
+        )
+        highlight.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["post"])
     def process(self, request, pk=None):
