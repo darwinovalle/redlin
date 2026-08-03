@@ -7,7 +7,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   import CircularProgress from '@mui/material/CircularProgress';                                                                                              
   import Divider from '@mui/material/Divider';                                                                                                                
   import Paper from '@mui/material/Paper';                                                                                                                    
-  import Stack from '@mui/material/Stack';                                                                                                                    
+  import Stack from '@mui/material/Stack';
+  import LinearProgress from '@mui/material/LinearProgress';
   import TextField from '@mui/material/TextField';                                                                                                            
   import Typography from '@mui/material/Typography';
   import Tab from '@mui/material/Tab'; // You might need to import Tabs and Tab
@@ -32,7 +33,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   import './Classroom.css';
   import TranscriptionWorker from '../../workers/transcription.worker.js?worker';
                                                                                                                                                               
-  const POLL_STATUSES = new Set(['recording', 'stopped', 'transcribing', 'ready', 'processing', 'failed']);
+  // Poll only while the server is actively working (async transcription or
+  // content generation) so we can surface results when they're ready. Idle
+  // states (new / recording / stopped / failed / completed) do NOT poll — a
+  // space that's simply open, or where capture never actually started, costs
+  // zero requests. This was the source of the constant GET /status/ flood.
+  const POLL_STATUSES = new Set(['transcribing', 'ready', 'processing']);
 
   // Firefox does not support audio in screen/tab share capture, so it must
   // fall back to the microphone. Chrome/Edge offer tab audio via the picker.
@@ -89,6 +95,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
     const [manualTranscript, setManualTranscript] = useState('');
     const [mediaError, setMediaError] = useState('');
     const [captureMode, setCaptureMode] = useState(null); // 'tab' | 'mic' | null
+    const [tabVisible, setTabVisible] = useState(true);
+    const [silenceDialogOpen, setSilenceDialogOpen] = useState(false);
 
     const isCompleted = session?.status === 'completed';
     const storedTranscript = useMemo(() => {
@@ -120,14 +128,38 @@ import { useEffect, useMemo, useRef, useState } from 'react';
     const currentWorkerIndexRef = useRef(0)
     const isModelReadyRef = useRef(false);
     const audioBufferRef = useRef([]);
+    const lastVoicedAtRef = useRef(Date.now());
+    const silenceTimerRef = useRef(null);
+    const recordingRef = useRef(false);
                                                                                                                                                               
     const canProcess = useMemo(() => Boolean(sessionId && audioReady && !recording && !uploading), [sessionId, audioReady, recording, uploading]);            
                                                                                                                                                               
-    const stopStreamTracks = () => {                                                                                                                          
-      if (streamRef.current) {                                                                                                                                
-        streamRef.current.getTracks().forEach((track) => track.stop());                                                                                       
-        streamRef.current = null;                                                                                                                           
-      }                                                                                                                                                       
+    const stopStreamTracks = () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+    };
+
+    const SILENCE_TIMEOUT_MS = 60000; // 1 minute with no audio stops capture
+    const VOICED_RMS = 0.01; // same threshold as the VAD gate below
+
+    const stopSilenceWatch = () => {
+      if (silenceTimerRef.current) { clearInterval(silenceTimerRef.current); silenceTimerRef.current = null; }
+    };
+
+    // Watchdog: if no voice is detected for SILENCE_TIMEOUT_MS, auto-stop so an
+    // accidentally-left-on recording doesn't run forever or upload noise.
+    const startSilenceWatch = () => {
+      stopSilenceWatch();
+      silenceTimerRef.current = window.setInterval(() => {
+        if (!recordingRef.current) { stopSilenceWatch(); return; }
+        if (Date.now() - lastVoicedAtRef.current >= SILENCE_TIMEOUT_MS) {
+          // clear first so a single silence can't double-fire the stop
+          stopSilenceWatch();
+          stopCapture({ auto: true });
+        }
+      }, 2000);
     };                                                                                                                                                        
                                                                                                                                                               
       const loadSession = async (id) => {           
@@ -191,54 +223,72 @@ import { useEffect, useMemo, useRef, useState } from 'react';
       }
     }, [searchParams, setSearchParams]);
 
+    // Track whether the tab is visible so background tabs don't keep polling.
     useEffect(() => {
-      if (!session?.status || !POLL_STATUSES.has(session.status)) {
+      const update = () => setTabVisible(document.visibilityState === 'visible');
+      document.addEventListener('visibilitychange', update);
+      return () => document.removeEventListener('visibilitychange', update);
+    }, []);
+
+    useEffect(() => {
+      // Only poll while the server is working on this session AND the tab is in
+      // view. If the tab is hidden or the session is idle, tear down the poll so
+      // we send zero requests on background/idle views.
+      const serverWorking = Boolean(session?.status) && POLL_STATUSES.has(session.status);
+      if (!serverWorking || !tabVisible) {
         if (pollRef.current) {
           clearInterval(pollRef.current);
-          pollRef.current = null;                                                                                                                             
-        }                                                                                                                                                     
-        return undefined;                                                                                                                                     
-      }                                                                                                                                                       
+          pollRef.current = null;
+        }
+        return undefined;
+      }
+
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = window.setInterval(async () => {
+        try {
+          const latest = await classroomService.getSessionStatus(sessionId);
+          setSession(latest);
+          if (latest?.status === 'completed') {
+            const full = await classroomService.getResults(sessionId);
+            setResults(full);
+            if (pollRef.current) {
+              clearInterval(pollRef.current);
+              pollRef.current = null;
+            }
+            // Reload so the sidebar (and everything else) reflects the fresh
+            // "completed" status without a manual refresh.
+            window.setTimeout(() => window.location.reload(), 400);
+          }
+        } catch {
+          // silent poll retry
+        }
+      }, 3500);
+
+      return () => {
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
+      };
+    }, [session?.status, sessionId, tabVisible]);                                                                                                                         
                                                                                                                                                               
-      if (pollRef.current) clearInterval(pollRef.current);                                                                                                    
-      pollRef.current = window.setInterval(async () => {                                                                                                      
-        try {                                                                                                                                                 
-          const latest = await classroomService.getSessionStatus(sessionId);                                                                                  
-          setSession(latest);                                                                                                                                 
-          if (latest?.status === 'completed') {                                                                                                               
-            const full = await classroomService.getResults(sessionId);                                                                                        
-            setResults(full);                                                                                                                                 
-            if (pollRef.current) {                                                                                                                            
-              clearInterval(pollRef.current);                                                                                                                 
-              pollRef.current = null;                                                                                                                         
-            }                                                                                                                                                 
-          }                                                                                                                                                   
-        } catch {                                                                                                                                             
-          // silent poll retry                                                                                                                                
-        }                                                                                                                                                     
-      }, 3500);                                                                                                                                               
-                                                                                                                                                              
-      return () => {                                                                                                                                          
-        if (pollRef.current) {                                                                                                                                
-          clearInterval(pollRef.current);                                                                                                                     
-          pollRef.current = null;                                                                                                                             
-        }                                                                                                                                                     
-      };                                                                                                                                                      
-    }, [session?.status, sessionId]);                                                                                                                         
-                                                                                                                                                              
-    useEffect(() => () => {                                                                                                                                   
-      if (pollRef.current) clearInterval(pollRef.current);                                                                                                    
-      stopStreamTracks();                                                                                                                                     
+    useEffect(() => () => {
+      stopSilenceWatch();
+      if (pollRef.current) clearInterval(pollRef.current);
+      stopStreamTracks();
+      recordingRef.current = false;
     }, []);                                                                                                                                                   
                                                                                                                                                               
     // 1. Add a ref for the worker at the top of the component                                                                                              
                                                                                                                                                               
       const startListening = async () => {                                      
-        setMediaError('');                                                      
-        setError(null);                                                         
-        setLiveTranscript('');                                                  
-        setIsModelReady(false);                                                 
-        isModelReadyRef.current = false;                                        
+        setMediaError('');
+        setError(null);
+        setLiveTranscript('');
+        setIsModelReady(false);
+        isModelReadyRef.current = false;
+        setSilenceDialogOpen(false);
+        lastVoicedAtRef.current = Date.now();                                        
                                                                                 
         try {
           // Firefox cannot capture tab/screen audio, so it records via the
@@ -301,20 +351,23 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                                                                                 
           audioBufferRef.current = [];                                          
                                                                                 
-          processor.onaudioprocess = (e) => {                                   
-            if (!isModelReadyRef.current || workersRef.current.length === 0)
-  return;                                                                       
-                  
-            const inputData = e.inputBuffer.getChannelData(0);                  
-                  
-            // Volume Check (VAD)                                               
+          processor.onaudioprocess = (e) => {
+            const inputData = e.inputBuffer.getChannelData(0);
+
+            // Volume check (VAD) + silence tracking. Run this before the
+            // model-ready gate so the silence watchdog keeps counting even
+            // while the whisper model is still loading.
             let sum = 0;
-            for (let i = 0; i < inputData.length; i++) {                        
-              sum += inputData[i] * inputData[i];                               
-            }                                                                   
-            const rms = Math.sqrt(sum / inputData.length);                      
-            if (rms < 0.01) return;                                             
-                                                                                
+            for (let i = 0; i < inputData.length; i++) {
+              sum += inputData[i] * inputData[i];
+            }
+            const rms = Math.sqrt(sum / inputData.length);
+            const voiced = rms >= VOICED_RMS;
+            if (voiced) lastVoicedAtRef.current = Date.now();
+
+            if (!isModelReadyRef.current || workersRef.current.length === 0) return;
+            if (!voiced) return;
+
             if (!audioBufferRef.current) audioBufferRef.current = [];
             audioBufferRef.current.push(new Float32Array(inputData));
 
@@ -384,10 +437,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             }                                                                   
           };                                                                    
                                                                                 
-          recorder.start();                                                     
-          setRecording(true);                                                   
-          setAudioReady(false);                                                 
-          setResults(null);                                                     
+          recorder.start();
+          setRecording(true);
+          recordingRef.current = true;
+          setAudioReady(false);
+          setResults(null);
+          startSilenceWatch();                                                     
                                                                                 
         } catch (err) {                                                         
           console.error("Microphone access error:", err);                       
@@ -395,45 +450,49 @@ import { useEffect, useMemo, useRef, useState } from 'react';
         }                                                                       
       }; 
       
-      const stopListening = async () => {                                                                                                                     
-        console.log("Stop listening clicked. SessionID:", sessionId); // DEBUG LOG                                                                            
-        const recorder = mediaRecorderRef.current;                                                                                                            
-        if (!recorder || recorder.state === 'inactive') {                                                                                                     
-          console.warn("No active recorder found to stop");                                                                                                   
-        } else {                                                                                                                                              
-          recorder.stop();                                                                                                                                    
-        }                                                                                                                                                     
-        
-        if (workersRef.current && workersRef.current.length > 0) {            
-            workersRef.current.forEach(worker => worker.terminate());           
-            workersRef.current = [];                                            
-          }                                                                                                                                                    
+      const stopCapture = async ({ auto = false } = {}) => {
+        stopSilenceWatch();
+        recordingRef.current = false;
+        const recorder = mediaRecorderRef.current;
+        if (!recorder || recorder.state === 'inactive') {
+          console.warn("No active recorder found to stop");
+        } else {
+          recorder.stop();
+        }
+
+        if (workersRef.current && workersRef.current.length > 0) {
+          workersRef.current.forEach(worker => worker.terminate());
+          workersRef.current = [];
+        }
         setRecording(false);
         setCaptureMode(null);
 
         try {
-          if (sessionId) {                                                                                                                                    
-            console.log("Calling stopSession API...");                                                                                                        
-            await classroomService.stopSession(sessionId);                                                                                                    
-            console.log("Session stopped successfully on server");                                                                                            
-            // Refresh session data immediately after stopping                     
-            await loadSession(sessionId);                                                                                                                     
-          } else {                                                                 
-            console.error("Cannot stop session: sessionId is missing");                                                                                       
-          }                                                                                                                                                   
-        } catch (err) {                                                                                                                                       
-          console.error('Failed to stop session on server:', err);                                                                                            
-        }                                                                                                                                                     
-                                                                                                                                                              
-        if (pollRef.current) {                                                                                                                                
-          clearInterval(pollRef.current);                                                                                                                     
-          pollRef.current = null;                                                                                                                             
-        }                                                                                                                                                     
-        if (recognitionRef.current) {                                                                                                                         
-          recognitionRef.current.stop();                                                                                                                      
-          recognitionRef.current = null;                                                                                                                      
-        }                                                                                                                                                     
-      };                                                                                                                                                
+          if (sessionId) {
+            await classroomService.stopSession(sessionId);
+            // Refresh session data immediately after stopping
+            await loadSession(sessionId);
+          } else {
+            console.error("Cannot stop session: sessionId is missing");
+          }
+        } catch (err) {
+          console.error('Failed to stop session on server:', err);
+        }
+
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+          recognitionRef.current = null;
+        }
+
+        // Let the user decide what to do with whatever was captured.
+        if (auto) setSilenceDialogOpen(true);
+      };
+
+      const stopListening = () => stopCapture({ auto: false });                                                                                                                                                
                                                                                                                                                               
     const processTranscript = async () => {                                                                                                                   
       if (!sessionId) return;                                                                                                                                 
@@ -563,8 +622,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                 {isCompleted ? (
                 <Chip label="Completed" color={statusTone(session?.status)} size="small" sx={statusChipSx} />
                 ) : (
-                <Chip icon={recording ? <FiberManualRecordIcon /> : undefined} label={recording ? 'Live' : session?.status || 'Idle'}
-  color={statusTone(session?.status)} size="small" sx={statusChipSx} />
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  {/* Thin bar that signals the server is still transcribing/generating */}
+                  {POLL_STATUSES.has(session?.status) && (
+                    <Box sx={{ width: 90 }}>
+                      <LinearProgress color="primary" sx={{ height: 3, borderRadius: 999, '& .MuiLinearProgress-bar': { borderRadius: 999 } }} />
+                    </Box>
+                  )}
+                  <Chip icon={recording ? <FiberManualRecordIcon /> : undefined} label={recording ? 'Live' : session?.status || 'Idle'}
+  color={recording ? 'error' : statusTone(session?.status)} size="small" sx={statusChipSx} />
+                </Stack>
                 )}
               </div>
               {isCompleted ? (
@@ -735,6 +802,106 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             open={captureInfoOpen}
             onClose={() => setCaptureInfoOpen(false)}
           />
+
+          <Dialog
+            open={silenceDialogOpen}
+            onClose={() => setSilenceDialogOpen(false)}
+            fullWidth
+            maxWidth="sm"
+            aria-labelledby="silence-session-title"
+            PaperProps={{
+              style: {
+                background: 'linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%)',
+              },
+              sx: {
+                width: { xs: '92vw', sm: 560 },
+                maxWidth: '92vw',
+                borderRadius: '20px',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+                overflow: 'hidden',
+                position: 'relative',
+              },
+            }}
+            slotProps={{
+              backdrop: { sx: { backgroundColor: 'color-mix(in srgb, var(--color-black) 60%, transparent)' } },
+            }}
+          >
+            {/* Teal / blue glow accents over the navy gradient (matches CaptureAudioModal) */}
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                pointerEvents: 'none',
+                background:
+                  'radial-gradient(circle at top left, color-mix(in srgb, var(--color-teal) 20%, transparent), transparent 45%), ' +
+                  'radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-blue) 22%, transparent), transparent 48%)',
+              }}
+            />
+
+            <Box sx={{ position: 'relative', p: 3 }}>
+              {/* Header */}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography id="silence-session-title" variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 800, letterSpacing: '-0.01em' }}>
+                  Recording stopped (silence)
+                </Typography>
+                <IconButton onClick={() => setSilenceDialogOpen(false)} size="small" sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+
+              <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 78%, transparent)', mb: 2 }}>
+                No audio was detected for 1 minute, so the capture stopped automatically. Choose what to do with the recording.
+              </Typography>
+
+              {!audioReady && (
+                <Box sx={{ p: 2, borderRadius: 3, background: 'color-mix(in srgb, var(--color-white) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', mb: 2 }}>
+                  <Typography variant="body2" sx={{ color: 'var(--color-amber)' }}>
+                    No usable audio was captured — you may want to recapture.
+                  </Typography>
+                </Box>
+              )}
+
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1.5 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<RefreshIcon />}
+                  onClick={() => { setSilenceDialogOpen(false); startListening(); }}
+                  sx={{
+                    px: 3,
+                    py: 1.15,
+                    borderRadius: '999px',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    textTransform: 'none',
+                    color: 'var(--color-white)',
+                    borderColor: 'color-mix(in srgb, var(--color-white) 22%, transparent)',
+                    '&:hover': { borderColor: 'var(--color-teal)', backgroundColor: 'color-mix(in srgb, var(--color-teal) 10%, transparent)' },
+                  }}
+                >
+                  Recapture
+                </Button>
+                <Button
+                  variant="contained"
+                  disabled={!audioReady || processing}
+                  onClick={async () => { setSilenceDialogOpen(false); await processTranscript(); }}
+                  sx={{
+                    px: 4,
+                    py: 1.15,
+                    borderRadius: '999px',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    textTransform: 'none',
+                    backgroundColor: 'var(--color-success)',
+                    color: 'var(--color-navy-deep)',
+                    '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+                    '&.Mui-disabled': { color: 'color-mix(in srgb, var(--color-navy-deep) 45%, transparent)' },
+                  }}
+                >
+                  {processing ? 'Processing…' : 'Process audio'}
+                </Button>
+              </Box>
+            </Box>
+          </Dialog>
         </div>
       </div>
     );

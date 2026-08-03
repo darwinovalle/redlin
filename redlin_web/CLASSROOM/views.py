@@ -70,14 +70,23 @@ class ClassSessionViewSet(viewsets.ModelViewSet):
             user=request.user,
             title=title,
             language=serializer.validated_data.get("language", "es") or "es",
-            status=ClassSession.STATUS_RECORDING,
+            # Start neutral: the session exists but is not "recording" until the
+            # client actually starts capture and delivers audio.
+            status=ClassSession.STATUS_NEW,
         )
         return Response(ClassSessionSerializer(session).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"], url_path="stop")
     def stop(self, request, pk=None):
         session = self.get_object()
-        if session.status != ClassSession.STATUS_RECORDING:
+        # A session can be stopped when it was never captured (new) or while a
+        # capture was active (recording). Stopping an already-stopped/idle/finished
+        # session is harmless and treated as a no-op for idempotency.
+        if session.status not in (
+            ClassSession.STATUS_NEW,
+            ClassSession.STATUS_RECORDING,
+            ClassSession.STATUS_STOPPED,
+        ):
             return Response({"detail": f"Cannot stop session in status {session.status}"}, status=status.HTTP_400_BAD_REQUEST)
 
         session.status = ClassSession.STATUS_STOPPED

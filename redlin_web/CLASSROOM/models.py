@@ -5,6 +5,10 @@ from API.models import Document, User
 
 
 class ClassSession(models.Model):
+    # A fresh session starts "new" (created, nothing captured yet). It is only
+    # ever considered "recording" once the client has actually started capture,
+    # so an idle, never-opened space doesn't sit in a live-recording state.
+    STATUS_NEW = "new"
     STATUS_RECORDING = "recording"
     STATUS_STOPPED = "stopped"
     STATUS_TRANSCRIBING = "transcribing"
@@ -14,6 +18,7 @@ class ClassSession(models.Model):
     STATUS_FAILED = "failed"
 
     STATUS_CHOICES = [
+        (STATUS_NEW, "New"),
         (STATUS_RECORDING, "Recording"),
         (STATUS_STOPPED, "Stopped"),
         (STATUS_TRANSCRIBING, "Transcribing"),
