@@ -117,27 +117,31 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             const full = await classroomService.getResults(id);                                                                                               
             setResults(full);                                                                                                                                 
           }                                                                                                                                                   
-          if (typeof data?.transcript_text === 'string') {                                                                                                    
-            setManualTranscript(data.transcript_text);                                                                                                        
-          }                                                                                                                                                   
-        } catch (err) {                                                                                                                                       
-          setError(err?.response?.data?.detail || err?.message || 'Failed to load classroom session');                                                        
-        } finally {                                                                                                                                           
-          setLoading(false);                                                                                                                                  
-        }                                                                                                                                                     
-      };                                                                                                                                                    
-                                                                                                                                                              
-    useEffect(() => {                                                                                                                                         
-      if (!sessionId) return undefined;                                                                                                                       
-      let ignore = false;                                                                                                                                     
-                                                                                                                                                              
-      (async () => {                                                                                                                                          
-        try {                                                                                                                                                 
-          const data = await classroomService.getSessionStatus(sessionId);                                                                                    
-          if (ignore) return;                                                                                                                                 
-          setSession(data);                                                                                                                                   
-          if (typeof data?.transcript_text === 'string') {                                                                                                    
-            setManualTranscript(data.transcript_text);                                                                                                        
+          if (typeof data?.transcript_text === 'string' && data.transcript_text.length > 0) {
+            setManualTranscript(data.transcript_text);
+          }
+        } catch (err) {
+          setError(err?.response?.data?.detail || err?.message || 'Failed to load classroom session');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+    useEffect(() => {
+      if (!sessionId) return undefined;
+      let ignore = false;
+
+      (async () => {
+        try {
+          // Fresh space: never carry over a previous space's transcript or study results.
+          setManualTranscript('');
+          setResults(null);
+          setActiveTab(0);
+          const data = await classroomService.getSessionStatus(sessionId);
+          if (ignore) return;
+          setSession(data);
+          if (typeof data?.transcript_text === 'string' && data.transcript_text.length > 0) {
+            setManualTranscript(data.transcript_text);
           }                                                                                                                                                   
           if (data?.status === 'completed') {                                                                                                                 
             const full = await classroomService.getResults(sessionId);                                                                                        
@@ -444,26 +448,60 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               </Typography>
             </div>                                                                                                                                            
               {!isCompleted && (
-              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">                                                                           
-              {/* <Button variant="outlined" onClick={() => navigate('/home')} sx={{ borderRadius: 999 }}>Exit</Button>                                            */}
-              <Button                                                                                                                                         
-                variant="contained"                                                                                                                           
-                startIcon={recording ? <PauseCircleIcon /> : <MicIcon />}                                                                                     
-                onClick={recording ? stopListening : startListening}                                                                                          
-                sx={{ borderRadius: 999 }}                                                                                                                    
-              >                                                                                                                                               
-                {recording ? 'Stop listening' : 'Start listening'}                                                                                            
-              </Button>                                                                                                                                       
-              <Button                                                                                                                                         
-                variant="contained"                                                                                                                           
-                color="secondary"                                                                                                                             
-                startIcon={<PlayArrowIcon />}                                                                                                                 
-                onClick={processTranscript}                                                                                                                   
-                disabled={!canProcess || processing}                                                                                                          
-                sx={{ borderRadius: 999 }}                                                                                                                    
-              >                                                                                                                                               
-                {processing ? 'Processing...' : 'Process transcription'}                                                                                      
-              </Button>                                                                                                                                       
+              <Stack
+                direction="row"
+                spacing={3}
+                alignItems="center"
+                flexWrap="nowrap"
+                sx={{ width: '100%', justifyContent: 'center' }}
+              >
+              <Button
+                variant="contained"
+                startIcon={recording ? <PauseCircleIcon /> : <MicIcon />}
+                onClick={recording ? stopListening : startListening}
+                sx={{
+                  flex: '1 1 0',
+                  minWidth: 0,
+                  maxWidth: 230,
+                  px: 3,
+                  py: 1.4,
+                  borderRadius: '999px',
+                  backgroundColor: 'var(--color-teal)',
+                  color: 'var(--color-navy-deep)',
+                  fontWeight: 700,
+                  fontSize: 15,
+                  letterSpacing: '0.01em',
+                  textTransform: 'none',
+                  boxShadow: '0 10px 28px color-mix(in srgb, var(--color-teal) 30%, transparent)',
+                  '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+                }}
+              >
+                {recording ? 'Stop listening' : 'Start listening'}
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<PlayArrowIcon />}
+                onClick={processTranscript}
+                disabled={!canProcess || processing}
+                sx={{
+                  flex: '1 1 0',
+                  minWidth: 0,
+                  maxWidth: 230,
+                  px: 3,
+                  py: 1.4,
+                  borderRadius: '999px',
+                  borderColor: 'color-mix(in srgb, var(--color-white) 22%, transparent)',
+                  color: 'var(--color-white)',
+                  fontWeight: 700,
+                  fontSize: 15,
+                  letterSpacing: '0.01em',
+                  textTransform: 'none',
+                  '&:hover': { borderColor: 'var(--color-teal)', backgroundColor: 'color-mix(in srgb, var(--color-teal) 10%, transparent)', color: 'var(--color-white)' },
+                  '&.Mui-disabled': { borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)', color: 'color-mix(in srgb, var(--color-white) 40%, transparent)' },
+                }}
+              >
+                {processing ? 'Processing…' : 'Process'}
+              </Button>
               </Stack>
               )}
           </div>
