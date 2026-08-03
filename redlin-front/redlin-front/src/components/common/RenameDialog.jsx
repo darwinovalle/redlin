@@ -11,6 +11,8 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 
+// Navy-gradient glass shell matching the CaptureAudioModal (the popup shown
+// when a new classroom space is created).
 export default function RenameDialog({
   open,
   initialValue = '',
@@ -37,51 +39,58 @@ export default function RenameDialog({
       open={open}
       onClose={submitting ? undefined : onClose}
       fullWidth
-      maxWidth="xs"
+      maxWidth="sm"
+      aria-labelledby="rename-dialog-title"
       PaperProps={{
-        style: { backgroundColor: '#1A2A3A' },
+        style: {
+          background: 'linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%)',
+        },
         sx: {
-          width: { xs: '92vw', sm: 420 },
+          width: { xs: '92vw', sm: 560 },
           maxWidth: '92vw',
           borderRadius: '20px',
           boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
           overflow: 'hidden',
+          position: 'relative',
         },
       }}
       slotProps={{
         backdrop: { sx: { backgroundColor: 'color-mix(in srgb, var(--color-black) 60%, transparent)' } },
       }}
     >
-      <form onSubmit={handleSubmit}>
-        {/* ── Header bar ── */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            px: 3,
-            py: 2.25,
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <EditIcon sx={{ color: '#20C997', fontSize: 22 }} />
-            <Typography sx={{ color: 'white', fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>
-              {title}
-            </Typography>
-          </Box>
-          <IconButton
-            onClick={onClose}
-            size="small"
-            disabled={submitting}
-            sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
+      {/* Teal / blue glow accents over the navy gradient */}
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          background:
+            'radial-gradient(circle at top left, color-mix(in srgb, var(--color-teal) 20%, transparent), transparent 45%), ' +
+            'radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-blue) 22%, transparent), transparent 48%)',
+        }}
+      />
 
-        {/* ── Body ── */}
-        <Box sx={{ px: 3, pt: 3, pb: 2 }}>
+      <form onSubmit={handleSubmit}>
+        <Box sx={{ position: 'relative', p: 3 }}>
+          {/* Header */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <EditIcon sx={{ color: 'var(--color-teal)', fontSize: 22 }} />
+              <Typography id="rename-dialog-title" variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 800, letterSpacing: '-0.01em' }}>
+                {title}
+              </Typography>
+            </Box>
+            <IconButton
+              onClick={onClose}
+              size="small"
+              disabled={submitting}
+              sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          {/* Body */}
           <TextField
             autoFocus
             fullWidth
@@ -89,72 +98,61 @@ export default function RenameDialog({
             value={value}
             onChange={(e) => setValue(e.target.value)}
             disabled={submitting}
-            InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.65)' } }}
+            InputLabelProps={{ sx: { color: 'color-mix(in srgb, var(--color-white) 65%, transparent)' } }}
             sx={{
               '& .MuiOutlinedInput-root': {
-                color: '#E0E0E0',
-                backgroundColor: 'rgba(255,255,255,0.04)',
-                borderRadius: '10px',
-                '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
-                '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.22)' },
-                '&.Mui-focused fieldset': { borderColor: 'rgba(32,201,151,0.55)' },
+                color: 'var(--color-white)',
+                backgroundColor: 'color-mix(in srgb, var(--color-white) 4%, transparent)',
+                borderRadius: '12px',
+                '& fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
+                '&:hover fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 22%, transparent)' },
+                '&.Mui-focused fieldset': { borderColor: 'color-mix(in srgb, var(--color-teal) 60%, transparent)' },
               },
-              '& .MuiInputBase-input::placeholder': { color: 'rgba(255,255,255,0.3)' },
             }}
           />
-        </Box>
 
-        {/* ── Footer ── */}
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            gap: 1.5,
-            px: 3,
-            py: 2.5,
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
-          <Button
-            onClick={onClose}
-            disabled={submitting}
-            sx={{
-              px: 2,
-              py: 1.15,
-              borderRadius: '12px',
-              background: 'rgba(255,255,255,0.06)',
-              color: '#E0E0E0',
-              fontWeight: 600,
-              fontSize: 14,
-              textTransform: 'none',
-              '&:hover': { background: 'rgba(255,255,255,0.1)' },
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={!value.trim() || value.trim() === (initialValue || '').trim() || submitting}
-            sx={{
-              px: 3,
-              py: 1.15,
-              borderRadius: '12px',
-              background: '#20C997',
-              color: '#0A1628',
-              fontWeight: 700,
-              fontSize: 14,
-              letterSpacing: '0.02em',
-              textTransform: 'none',
-              boxShadow: '0 6px 20px rgba(32,201,151,0.25)',
-              '&:hover': { background: 'var(--color-teal-hover)', boxShadow: '0 6px 24px rgba(32,201,151,0.4)' },
-              '&.Mui-disabled': { background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.36)' },
-            }}
-          >
-            {submitting ? <CircularProgress size={16} sx={{ mr: 1, color: '#0A1628' }} /> : null}
-            {submitting ? 'Saving…' : 'Save'}
-          </Button>
+          {/* Footer */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1.5, mt: 2.5 }}>
+            <Button
+              onClick={onClose}
+              disabled={submitting}
+              sx={{
+                px: 3,
+                py: 1.15,
+                borderRadius: '999px',
+                fontWeight: 700,
+                fontSize: 14,
+                textTransform: 'none',
+                color: 'var(--color-white)',
+                border: '1px solid color-mix(in srgb, var(--color-white) 22%, transparent)',
+                '&:hover': { borderColor: 'var(--color-teal)', backgroundColor: 'color-mix(in srgb, var(--color-teal) 10%, transparent)' },
+                '&.Mui-disabled': { borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)', color: 'color-mix(in srgb, var(--color-white) 40%, transparent)' },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={!value.trim() || value.trim() === (initialValue || '').trim() || submitting}
+              sx={{
+                px: 4,
+                py: 1.15,
+                borderRadius: '999px',
+                fontWeight: 700,
+                fontSize: 14,
+                textTransform: 'none',
+                backgroundColor: 'var(--color-success)',
+                color: 'var(--color-navy-deep)',
+                boxShadow: '0 10px 28px color-mix(in srgb, var(--color-success) 30%, transparent)',
+                '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
+                '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 8%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' },
+              }}
+            >
+              {submitting ? <CircularProgress size={16} sx={{ mr: 1, color: 'var(--color-navy-deep)' }} /> : null}
+              {submitting ? 'Saving…' : 'Save'}
+            </Button>
+          </Box>
         </Box>
       </form>
     </Dialog>
