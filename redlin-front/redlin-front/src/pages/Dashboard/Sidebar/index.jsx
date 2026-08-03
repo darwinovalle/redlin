@@ -65,6 +65,25 @@ const NavItem = styled('button')(() => ({
 const SectionTitle = styled('div')(() => ({ padding: '0 24px', margin: '16px 0 8px', fontSize: 12, textTransform: 'uppercase', color: 'color-mix(in srgb, var(--color-white) 50%, transparent)', letterSpacing: 1 }));
 const AddSpaceButton = styled('button')(() => ({ width: '82%', margin: '8px 24px', padding: '10px 16px', backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', border: '1px dashed color-mix(in srgb, var(--color-white) 30%, transparent)', borderRadius: 6, color: 'var(--color-white)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, cursor: 'pointer', transition: 'background .25s', fontFamily: 'inherit', '&:hover': { backgroundColor: 'color-mix(in srgb, var(--color-white) 15%, transparent)' }, '&:focus-visible': { outline: '2px solid var(--color-teal)', outlineOffset: '-2px' } }));
 const ItemIcon = styled('span')(() => ({ display: 'inline-flex', marginRight: 16, fontSize: 20, alignItems: 'center', justifyContent: 'center' }));
+// Small status dot shown at the left of each sidebar item, next to its icon.
+// Green = completed; any other/unknown status shows as red.
+const StatusDot = ({ complete }) => (
+  <span
+    aria-hidden="true"
+    style={{
+      width: 8,
+      height: 8,
+      borderRadius: '50%',
+      flexShrink: 0,
+      marginRight: 10,
+      display: 'inline-block',
+      boxShadow: complete
+        ? '0 0 0 3px color-mix(in srgb, var(--color-success) 14%, transparent)'
+        : '0 0 0 3px color-mix(in srgb, var(--color-danger-soft) 12%, transparent)',
+      backgroundColor: complete ? 'var(--color-success)' : 'var(--color-danger-soft)',
+    }}
+  />
+);
 const NestedList = styled('div')(() => ({ paddingLeft: 8 }));
 const UserProfile = styled('div')(() => ({ padding: '16px 24px', borderTop: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', display: 'flex', alignItems: 'center' }));
 const Avatar = styled('div')(() => ({ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--color-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 12, fontWeight: 500, fontSize: 14 }));
@@ -312,10 +331,10 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 {classroomError && <Typography sx={{ px:3, py:1, color:'var(--color-danger-soft)' }}>{classroomError}</Typography>}
                 {!loadingClassroomSessions && !classroomError && classroomSessions.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No classroom spaces yet.</Typography>}
                 {classroomSessions.map((session)=> { const active = currentClassroomSessionId && String(session.id)===currentClassroomSessionId; return (
-                  <NavItem type="button" key={session.id} className={active?'active':''} style={{ paddingLeft:40 }} onClick={()=>navigate(`/classroom/${session.id}`)}>
+                  <NavItem type="button" key={session.id} onClick={()=>navigate(`/classroom/${session.id}`)} style={{ paddingLeft:40 }}>
+                    <StatusDot complete={session.status === 'completed'} />
                     <ItemIcon><MicIcon sx={{ fontSize:18 }} /></ItemIcon>
                     <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{session.title}</span>
-                    <span style={{ fontSize:11, opacity:0.6 }}>{session.status}</span>
                     <ItemMenu onRename={()=>openRenameClass(session)} onDelete={()=>handleDeleteClass(session)} />
                   </NavItem>
                 );})}
@@ -335,6 +354,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                   <NavItem type="button" key={doc.id} className={active?'active':''} style={{ paddingLeft:40 }}
                     onClick={()=>{ const slug=slugify(doc.title||String(doc.id)); try{ localStorage.setItem('lastDocSlug', slug);}catch{} navigate(`/documents/${slug}`); onDocumentSelect?.(doc.id); }}
                   >
+                    <StatusDot complete={doc.processing_status === 'completed'} />
                     <ItemIcon><InsertDriveFileIcon sx={{ fontSize:18 }} /></ItemIcon>
                     <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{doc.title}</span>
                     <ItemMenu onRename={()=>openRename(doc)} onDelete={()=>handleDeleteDocument(doc)} />
@@ -354,9 +374,9 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 {!loadingVideos && !videoError && videos.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No videos yet.</Typography>}
                 {videos.map(v=> { const active = currentVideoId && String(v.id)===currentVideoId; return (
                   <NavItem type="button" key={v.id} className={active?'active':''} style={{ paddingLeft:40 }} onClick={()=>navigate(`/videos/${v.id}`)}>
+                    <StatusDot complete={v.processing_status === 'completed'} />
                     <ItemIcon><OndemandVideoIcon sx={{ fontSize:18 }} /></ItemIcon>
                     <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{v.title||v.video_id||'Video '+v.id}</span>
-                    <span style={{ fontSize:11, opacity:0.6 }}>{v.processing_status}</span>
                     <ItemMenu onRename={()=>openRenameVideo(v)} onDelete={()=>handleDeleteVideo(v)} />
                   </NavItem>
                 );})}
