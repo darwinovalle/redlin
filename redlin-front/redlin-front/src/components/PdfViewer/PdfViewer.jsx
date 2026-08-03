@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -25,19 +25,22 @@ const getDocId = (u) => {
   return m ? m[1] : null;
 };
 
+// Continuous scroll: every page is rendered stacked so scrolling flows
+// naturally from one page to the next (no page remount / blink).
 function InnerViewer({ url }) {
   const { state, dispatch } = useViewer();
   const pdfRef = useRef(null);
   const searchJobRef = useRef(null);
-  const pageWrapRef = useRef(null);
   const scrollRef = useRef(null);
+  const navStateRef = useRef({ page: state.page, numPages: state.numPages });
+  navStateRef.current = { page: state.page, numPages: state.numPages };
 
   // Text highlights (persisted to the backend per user + document).
   const [highlights, setHighlights] = useState([]);
   const [palettePos, setPalettePos] = useState(null);
   const [selectionRects, setSelectionRects] = useState([]);
   const [selectionText, setSelectionText] = useState('');
-  const [pageSize, setPageSize] = useState({ w: 0, h: 0 });
+  const [selectionPage, setSelectionPage] = useState(1);
   // Search-match boxes for the current page (derived from the text layer).
   const [searchBoxes, setSearchBoxes] = useState([]);
 
@@ -71,33 +74,57 @@ function InnerViewer({ url }) {
     return () => { cancelled = true; };
   }, [url]);
 
-  // Track the rendered page box so highlight overlays position correctly at any zoom.
-  useLayoutEffect(() => {
-    const el = pageWrapRef.current;
-    if (!el) return undefined;
-    const update = () => setPageSize({ w: el.clientWidth, h: el.clientHeight });
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [state.page, state.scale]);
+  // Which page is most in view, based on the scroll position.
+  const updateCurrentPageFromScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const pages = el.querySelectorAll('.react-pdf__Page');
+    if (!pages.length) return;
+    const containerTop = el.getBoundingClientRect().top;
+    const threshold = el.clientHeight * 0.35;
+    let current = 1;
+    for (let i = 0; i < pages.length; i++) {
+      if (pages[i].getBoundingClientRect().top - containerTop < threshold) current = i + 1;
+      else break;
+    }
+    if (current !== navStateRef.current.page) dispatch({ type: 'SET_PAGE', page: current });
+  }, [dispatch]);
 
-  // Hide the floating palette while the page scrolls.
+  const scrollToPage = useCallback((p) => {
+    const el = scrollRef.current;
+    const pageEl = el?.querySelector(`.react-pdf__Page[data-page-number="${p}"]`);
+    if (!el || !pageEl) return;
+    const containerRect = el.getBoundingClientRect();
+    const pageRect = pageEl.getBoundingClientRect();
+    el.scrollTop += (pageRect.top - containerRect.top) - 8;
+  }, []);
+
+  // Hide the palette while scrolling and keep the page indicator in sync.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return undefined;
-    const onScroll = () => setPalettePos(null);
+    const onScroll = () => {
+      setPalettePos(null);
+      updateCurrentPageFromScroll();
+    };
     el.addEventListener('scroll', onScroll);
     return () => el.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [updateCurrentPageFromScroll]);
+
+  // Move to the selected search result page (scrolls the continuous view).
+  useEffect(() => {
+    if (state.searchResults.length) {
+      const target = state.searchResults[state.currentSearchIndex];
+      if (target && target !== navStateRef.current.page) scrollToPage(target);
+    }
+  }, [state.searchResults, state.currentSearchIndex, scrollToPage]);
 
   // Precise search-match boxes for the current page. Recomputes whenever the
-  // text layer DOM changes (react-pdf renders it asynchronously), so matches
-  // appear on every page you navigate to — not just the first one.
+  // text layer DOM changes (react-pdf renders it asynchronously).
   const computeSearchBoxes = useCallback(() => {
     const term = state.searchTerm.trim().toLowerCase();
-    const pageEl = pageWrapRef.current?.querySelector('.react-pdf__Page');
-    const textLayer = pageWrapRef.current?.querySelector('.react-pdf__Page .textLayer');
+    const pageEl = scrollRef.current?.querySelector(`.react-pdf__Page[data-page-number="${state.page}"]`);
+    const textLayer = pageEl?.querySelector('.textLayer');
     if (!term || !pageEl || !textLayer) { setSearchBoxes([]); return; }
     const pageRect = pageEl.getBoundingClientRect();
     if (!pageRect.width || !pageRect.height) { setSearchBoxes([]); return; }
@@ -117,7 +144,6 @@ function InnerViewer({ url }) {
         const lower = fullText.toLowerCase();
         let idx = lower.indexOf(term);
         while (idx !== -1) {
-          // Highlight only the matched substring, not the whole span/line.
           const range = document.createRange();
           range.setStart(node, idx);
           range.setEnd(node, idx + term.length);
@@ -125,17 +151,16 @@ function InnerViewer({ url }) {
           idx = lower.indexOf(term, idx + term.length);
         }
       } else if ((span.textContent || '').toLowerCase().includes(term)) {
-        // Fallback: highlight the whole span when we can't locate a text node.
         pushRect(span.getBoundingClientRect());
       }
     });
     setSearchBoxes(boxes);
-  }, [state.searchTerm]);
+  }, [state.searchTerm, state.page]);
 
   useEffect(() => {
     setSearchBoxes([]);
     if (!state.searchTerm.trim()) return undefined;
-    const el = pageWrapRef.current;
+    const el = scrollRef.current;
     if (!el) return undefined;
     let rafId = null;
     const schedule = () => {
@@ -160,11 +185,14 @@ function InnerViewer({ url }) {
       setPalettePos(null);
       return;
     }
-    const pageEl = pageWrapRef.current?.querySelector('.react-pdf__Page');
-    if (!pageEl || !pageEl.contains(sel.anchorNode) || !pageEl.contains(sel.focusNode)) {
-      setPalettePos(null);
-      return;
-    }
+    const fromNode = (n) => {
+      if (!n) return null;
+      const el = n.nodeType === Node.ELEMENT_NODE ? n : n.parentElement;
+      return el ? el.closest('.react-pdf__Page') : null;
+    };
+    const pageEl = fromNode(sel.anchorNode);
+    if (!pageEl || fromNode(sel.focusNode) !== pageEl) { setPalettePos(null); return; }
+    const pageNum = parseInt(pageEl.getAttribute('data-page-number'), 10) || 1;
     try {
       const range = sel.getRangeAt(0);
       const rects = Array.from(range.getClientRects()).filter((r) => r.width > 0 && r.height > 0);
@@ -186,6 +214,7 @@ function InnerViewer({ url }) {
       });
       setSelectionRects(normalized);
       setSelectionText(sel.toString().trim());
+      setSelectionPage(pageNum);
     } catch {
       setPalettePos(null);
     }
@@ -196,7 +225,7 @@ function InnerViewer({ url }) {
     if (!docId || !selectionRects.length) return;
     try {
       const created = await documentService.createHighlight(docId, {
-        page: state.page,
+        page: selectionPage,
         text: selectionText,
         color,
         rects: selectionRects,
@@ -208,7 +237,7 @@ function InnerViewer({ url }) {
     setPalettePos(null);
     setSelectionRects([]);
     setSelectionText('');
-  }, [url, selectionRects, selectionText, state.page]);
+  }, [url, selectionRects, selectionText, selectionPage]);
 
   const removeHighlight = useCallback(async (id) => {
     const docId = getDocId(url);
@@ -245,76 +274,66 @@ function InnerViewer({ url }) {
     })();
   }, [state.searchTerm]);
 
-  // Move to selected search result page
-  useEffect(() => {
-    if (state.searchResults.length) {
-      const target = state.searchResults[state.currentSearchIndex];
-      if (target !== state.page) dispatch({ type: 'SET_PAGE', page: target });
-    }
-  }, [state.searchResults, state.currentSearchIndex]);
-
-  const pageHighlights = highlights.filter((h) => h.page === state.page);
+  const pageNumbers = state.numPages > 0 ? Array.from({ length: state.numPages }, (_, i) => i + 1) : [];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
       <PdfToolbar />
-      <div ref={scrollRef} style={{ flex: 1, overflow: 'auto', background: 'var(--color-ink-soft)', display: 'flex', justifyContent: 'center' }}>
-        <div style={{ padding: 12 }}>
-          <div ref={pageWrapRef} style={{ position: 'relative', width: 'max-content' }} onMouseUp={handleMouseUp}>
-            <Document file={fileObj} onLoadSuccess={onLoadSuccess} loading={<div style={{ padding: 12, color: 'var(--color-white)' }}>Loading PDF…</div>}>
-              {state.numPages > 0 && (
-                <Page
-                  key={state.page + '-' + state.scale}
-                  pageNumber={state.page}
-                  scale={state.scale}
-                  renderTextLayer
-                  renderAnnotationLayer
-                />
-              )}
-            </Document>
-            {pageSize.w > 0 && pageHighlights.map((h) => h.rects.map((r, idx) => (
-              <div
-                key={`${h.id}-${idx}`}
-                role="button"
-                aria-label="Remove highlight"
-                title="Remove highlight"
-                onClick={(e) => { e.stopPropagation(); removeHighlight(h.id); }}
-                style={{
-                  position: 'absolute',
-                  left: r.x * pageSize.w,
-                  top: r.y * pageSize.h,
-                  width: r.w * pageSize.w,
-                  height: r.h * pageSize.h,
-                  backgroundColor: hexToRgba(h.color, 0.45),
-                  borderRadius: 2,
-                  cursor: 'pointer',
-                  zIndex: 3,
-                }}
-              />
-            )))}
-            {/* Search match overlay (temporary, distinct from saved highlights) */}
-            {pageSize.w > 0 && searchBoxes.map((r, idx) => (
-              <div
-                key={`search-${idx}`}
-                style={{
-                  position: 'absolute',
-                  left: r.x * pageSize.w,
-                  top: r.y * pageSize.h,
-                  width: r.w * pageSize.w,
-                  height: r.h * pageSize.h,
-                  backgroundColor: 'rgba(251,191,36,0.5)',
-                  borderRadius: 2,
-                  zIndex: 4,
-                  pointerEvents: 'none',
-                }}
-              />
+      <div
+        ref={scrollRef}
+        onMouseUp={handleMouseUp}
+        style={{ flex: 1, overflow: 'auto', background: 'var(--color-ink-soft)', display: 'flex', justifyContent: 'center' }}
+      >
+        <div style={{ padding: '12px 12px 48px', width: 'max-content' }}>
+          <Document file={fileObj} onLoadSuccess={onLoadSuccess} loading={<div style={{ padding: 12, color: 'var(--color-white)' }}>Loading PDF…</div>}>
+            {pageNumbers.map((p) => (
+              <div key={p} style={{ position: 'relative', width: 'max-content', margin: '0 auto 16px' }}>
+                <Page pageNumber={p} scale={state.scale} renderTextLayer renderAnnotationLayer />
+                {/* Saved text highlights */}
+                {highlights.filter((h) => h.page === p).map((h) => h.rects.map((r, idx) => (
+                  <div
+                    key={`${h.id}-${idx}`}
+                    role="button"
+                    aria-label="Remove highlight"
+                    title="Remove highlight"
+                    onClick={(e) => { e.stopPropagation(); removeHighlight(h.id); }}
+                    style={{
+                      position: 'absolute',
+                      left: `${r.x * 100}%`,
+                      top: `${r.y * 100}%`,
+                      width: `${r.w * 100}%`,
+                      height: `${r.h * 100}%`,
+                      backgroundColor: hexToRgba(h.color, 0.45),
+                      borderRadius: 2,
+                      cursor: 'pointer',
+                      zIndex: 3,
+                    }}
+                  />
+                )))}
+                {/* Search match overlay for the current page */}
+                {p === state.page && searchBoxes.map((r, idx) => (
+                  <div
+                    key={`search-${idx}`}
+                    style={{
+                      position: 'absolute',
+                      left: `${r.x * 100}%`,
+                      top: `${r.y * 100}%`,
+                      width: `${r.w * 100}%`,
+                      height: `${r.h * 100}%`,
+                      backgroundColor: 'rgba(251,191,36,0.5)',
+                      borderRadius: 2,
+                      zIndex: 4,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                ))}
+              </div>
             ))}
-          </div>
+          </Document>
         </div>
       </div>
       {state.numPages > 0 && (
         <div style={{ background: 'linear-gradient(90deg,var(--color-text-deep),var(--color-ink-surface))', color: 'var(--color-white)', display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', fontSize: 13, borderTop: '1px solid var(--color-text-strong)' }}>
-          <PagerBtn ariaLabel="Previous page" disabled={state.page <= 1} onClick={() => dispatch({ type: 'SET_PAGE', page: Math.max(1, state.page - 1) })}>‹</PagerBtn>
           <span style={{ fontSize: 12, opacity: 0.8 }}>Page</span>
           <input
             type="number"
@@ -323,11 +342,11 @@ function InnerViewer({ url }) {
               let v = parseInt(e.target.value, 10) || 1;
               if (v < 1) v = 1; if (v > state.numPages) v = state.numPages;
               dispatch({ type: 'SET_PAGE', page: v });
+              scrollToPage(v);
             }}
             style={{ width: 64, background: 'var(--color-ink-deep)', border: '1px solid var(--color-ink-mid)', color: 'var(--color-white)', borderRadius: 6, padding: '4px 6px', fontSize: 13 }}
           />
           <span style={{ fontSize: 12, opacity: 0.8 }}>of {state.numPages}</span>
-          <PagerBtn ariaLabel="Next page" disabled={state.page >= state.numPages} onClick={() => dispatch({ type: 'SET_PAGE', page: Math.min(state.numPages, state.page + 1) })}>›</PagerBtn>
           {state.searchTerm && (
             <span style={{ marginLeft: 'auto', fontSize: 12, opacity: 0.75 }}>
               {state.searchResults.length ? `${state.searchResults.length} page(s) contain \"${state.searchTerm}\"` : state.searchScanningPage ? `Scanning p.${state.searchScanningPage}/${state.numPages || '?'}` : 'No matches'}
@@ -373,35 +392,6 @@ function InnerViewer({ url }) {
         </div>
       )}
     </div>
-  );
-}
-
-function PagerBtn({ children, onClick, disabled, ariaLabel }) {
-  return (
-    <button
-      aria-label={ariaLabel}
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        width: 36,
-        height: 32,
-        borderRadius: 8,
-        background: disabled ? 'var(--color-ink)' : 'var(--color-teal)',
-        border: '1px solid ' + (disabled ? 'var(--color-ink)' : 'var(--color-teal-bright)'),
-        color: 'var(--color-white)',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        fontSize: 18,
-        lineHeight: '1',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontWeight: 600,
-        boxShadow: disabled ? 'none' : '0 2px 6px color-mix(in srgb, var(--color-black) 40%, transparent)',
-        transition: 'background .15s, transform .15s'
-      }}
-      onMouseDown={(e) => !disabled && (e.currentTarget.style.transform = 'translateY(1px)')}
-      onMouseUp={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-    >{children}</button>
   );
 }
 
