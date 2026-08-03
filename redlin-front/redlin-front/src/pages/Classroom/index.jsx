@@ -31,7 +31,27 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   import './Classroom.css';
   import TranscriptionWorker from '../../workers/transcription.worker.js?worker';
                                                                                                                                                               
-  const POLL_STATUSES = new Set(['recording', 'stopped', 'transcribing', 'ready', 'processing', 'failed']);                                                                        
+  const POLL_STATUSES = new Set(['recording', 'stopped', 'transcribing', 'ready', 'processing', 'failed']);
+
+  // Firefox does not support audio in screen/tab share capture, so it must
+  // fall back to the microphone. Chrome/Edge offer tab audio via the picker.
+  const isFirefox = typeof navigator !== 'undefined' && /Firefox\//i.test(navigator.userAgent);
+
+  // Whisper expects 16 kHz. The mic/display stream may run at the device's
+  // native rate, so resample before handing audio to the worker.
+  const resampleAudio = (input, fromRate, toRate = 16000) => {
+    if (fromRate === toRate || !input || input.length === 0) return input;
+    const ratio = toRate / fromRate;
+    const output = new Float32Array(Math.max(1, Math.floor(input.length * ratio)));
+    for (let i = 0; i < output.length; i += 1) {
+      const pos = i / ratio;
+      const i0 = Math.floor(pos);
+      const i1 = Math.min(i0 + 1, input.length - 1);
+      const frac = pos - i0;
+      output[i] = input[i0] * (1 - frac) + input[i1] * frac;
+    }
+    return output;
+  };                                                                        
                                                                                                                                                               
   const statusTone = (status) => {                                                                                                                            
     switch (status) {                                                                                                                                         
@@ -63,8 +83,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
     const [audioReady, setAudioReady] = useState(false);                                                                                                      
     const [uploading, setUploading] = useState(false);                                                                                                        
     const [processing, setProcessing] = useState(false);                                                                                                      
-    const [manualTranscript, setManualTranscript] = useState('');                                                                                             
+    const [manualTranscript, setManualTranscript] = useState('');
     const [mediaError, setMediaError] = useState('');
+    const [captureMode, setCaptureMode] = useState(null); // 'tab' | 'mic' | null
 
     const isCompleted = session?.status === 'completed';
     const storedTranscript = useMemo(() => {
@@ -208,9 +229,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
         setIsModelReady(false);                                                 
         isModelReadyRef.current = false;                                        
                                                                                 
-        try {                                                                   
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true
-   });                                                                          
+        try {
+          // Firefox cannot capture tab/screen audio, so it records via the
+          // microphone instead. Chrome/Edge share a tab/window/screen and keep
+          // only the audio (video is discarded).
+          const stream = isFirefox
+            ? await navigator.mediaDevices.getUserMedia({ audio: true })
+            : await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+          if (!isFirefox) {
+            stream.getVideoTracks().forEach((track) => { try { track.stop(); } catch {} });
+          }
+          setCaptureMode(isFirefox ? 'mic' : 'tab');
           streamRef.current = stream;
           chunksRef.current = [];                                               
                                                                                 
@@ -252,8 +281,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
           workersRef.current = workers;                                         
                                                                                 
-          // 2. Use AudioContext for LIVE transcription                         
-          const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });                            
+          // 2. Use AudioContext for LIVE transcription. Let the context use its
+          // native sample rate (Firefox rejects forcing a rate that differs
+          // from the captured stream) and resample to 16k for the worker.
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
           const source = audioCtx.createMediaStreamSource(stream);
           const processor = audioCtx.createScriptProcessor(4096, 1, 1);         
                                                                                 
@@ -273,35 +304,40 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             const rms = Math.sqrt(sum / inputData.length);                      
             if (rms < 0.01) return;                                             
                                                                                 
-            if (!audioBufferRef.current) audioBufferRef.current = [];           
-            audioBufferRef.current.push(new Float32Array(inputData));           
-                                                                                
-            // Buffer window: 6 chunks (~1.5s)                                  
-            if (audioBufferRef.current.length >= 6) {                           
-              const totalLength = audioBufferRef.current.reduce((acc, chunk) => acc + chunk.length, 0);                                                       
-              const finalAudio = new Float32Array(totalLength);                 
-              let offset = 0;                                                   
-              for (const chunk of audioBufferRef.current) {                     
-                finalAudio.set(chunk, offset);                                  
-                offset += chunk.length;                                         
-              }                                                                 
-                                                                                
-              // --- PARALLEL ROTATION ---                                      
-              // Pick the next worker in the pool                               
-              const workerIdx = currentWorkerIndexRef.current;                  
-              const worker = workersRef.current[workerIdx];                     
-                                                                                
-              worker.postMessage({                                              
-                type: 'transcribe',                                             
-                audio: finalAudio,                                              
-                language: session?.language || 'en'                             
-              });                                                               
-                                                                                
-              // Move to next worker for the next segment                       
-              currentWorkerIndexRef.current = (workerIdx + 1) % POOL_SIZE;      
-                                                                                
-              audioBufferRef.current = [];                                      
-            }                                                                   
+            if (!audioBufferRef.current) audioBufferRef.current = [];
+            audioBufferRef.current.push(new Float32Array(inputData));
+
+            // Buffer by duration (~1.5s of audio at the actual stream rate),
+            // then resample to 16 kHz for whisper. Fixed chunk counts break
+            // once the AudioContext runs at the device's native rate.
+            const targetSamples = Math.round(audioCtx.sampleRate * 1.5);
+            const bufferedSamples = audioBufferRef.current.reduce((acc, chunk) => acc + chunk.length, 0);
+            if (bufferedSamples >= targetSamples) {
+              const finalAudio = new Float32Array(bufferedSamples);
+              let offset = 0;
+              for (const chunk of audioBufferRef.current) {
+                finalAudio.set(chunk, offset);
+                offset += chunk.length;
+              }
+
+              // --- PARALLEL ROTATION ---
+              // Pick the next worker in the pool
+              const workerIdx = currentWorkerIndexRef.current;
+              const worker = workersRef.current[workerIdx];
+              // whisper needs 16 kHz regardless of the captured stream rate
+              const modelAudio = resampleAudio(finalAudio, audioCtx.sampleRate, 16000);
+
+              worker.postMessage({
+                type: 'transcribe',
+                audio: modelAudio,
+                language: session?.language || 'en'
+              });
+
+              // Move to next worker for the next segment
+              currentWorkerIndexRef.current = (workerIdx + 1) % POOL_SIZE;
+
+              audioBufferRef.current = [];
+            }
           };                                                                    
                                                                                 
           source.connect(processor);                                            
@@ -361,9 +397,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             workersRef.current.forEach(worker => worker.terminate());           
             workersRef.current = [];                                            
           }                                                                                                                                                    
-        setRecording(false);                                                                                                                                  
-                                                                                                                                                              
-        try {                                                                                                                                                 
+        setRecording(false);
+        setCaptureMode(null);
+
+        try {
           if (sessionId) {                                                                                                                                    
             console.log("Calling stopSession API...");                                                                                                        
             await classroomService.stopSession(sessionId);                                                                                                    
@@ -444,7 +481,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             <div>
               <Typography variant="h3" className="classroom-title">{session?.title || 'Classroom space'}</Typography>
               <Typography variant="body1" className="classroom-subtitle">
-                Record the lecture audio, stop when the class ends, then queue the transcription pipeline.
+                Share the meeting tab, window or screen to capture the speaker's voice; stop when the class ends, then queue the transcription pipeline.
               </Typography>
             </div>                                                                                                                                            
               {!isCompleted && (
@@ -476,7 +513,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                   '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
                 }}
               >
-                {recording ? 'Stop listening' : 'Start listening'}
+                {recording ? 'Stop capturing' : 'Capture audio'}
               </Button>
               <Button
                 variant="outlined"
@@ -510,7 +547,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               <div className="classroom-card-header">
                 <div>
                   <Typography variant="overline" sx={{ letterSpacing: 3, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>{isCompleted ? 'Completed session' : 'Recording console'}</Typography>
-                  <Typography variant="h5" sx={{ color: 'var(--color-white)', mt: 0.5 }}>{isCompleted ? 'Summary' : 'Capture lecture audio'}</Typography>
+                  <Typography variant="h5" sx={{ color: 'var(--color-white)', mt: 0.5 }}>{isCompleted ? 'Summary' : 'Capture audio'}</Typography>
                 </div>
                 {isCompleted ? (
                 <Chip label="Completed" color={statusTone(session?.status)} size="small" sx={statusChipSx} />
@@ -557,7 +594,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               )}                                                                                                                                              
               <Stack spacing={1.5} sx={{ mt: 3 }}>                                                                                                            
                 <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>                                                                         
-                  {recording ? 'Your browser is listening now. Stop when the professor finishes speaking.' : audioReady ? 'Audio uploaded. Press Process transcription to start STT and content generation.' : 'Press Start listening to begin capturing the class audio.'}                                          
+                  {recording
+                  ? (captureMode === 'mic' ? 'Recording your microphone now. Stop when the speaker finishes.' : 'Capturing the shared tab audio now. Stop when the speaker finishes.')
+                  : audioReady
+                    ? 'Audio uploaded. Press Process transcription to start STT and content generation.'
+                    : (isFirefox
+                      ? 'Firefox: press Capture audio, then allow the microphone. Firefox cannot capture the tab/meeting sound directly, so it records your microphone instead.'
+                      : 'Press Capture audio and pick the tab, window or screen that is playing the meeting.')}                                          
                 </Typography>                                                                                                                                 
                 {mediaError && <Typography variant="body2" color="error.main">{mediaError}</Typography>}                                                      
                 {session?.status === 'failed' && <Typography variant="body2" color="error.main" sx={{ fontWeight: 'bold' }}>Error: {session.error_message ||  
