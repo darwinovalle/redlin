@@ -279,7 +279,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       setClassroomOpen(true);
       setOpenSampleModal(false);
       if(session?.id){
-        navigate(`/classroom/${session.id}`);
+        navigate(`/classroom/${session.id}?captureHelp=1`);
       }
     }catch(e){
       alert(e?.response?.data?.error || e?.message || 'Failed to create classroom space');

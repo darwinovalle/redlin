@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';                                                                                               
-  import { useNavigate, useParams } from 'react-router-dom';                                                                                                  
+import { useEffect, useMemo, useRef, useState } from 'react';
+  import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+  import CaptureAudioModal from '../../components/Classroom/CaptureAudioModal';                                                                                                  
   import Box from '@mui/material/Box';                                                                                                                        
   import Button from '@mui/material/Button';                                                                                                                  
   import Chip from '@mui/material/Chip';                                                                                                                      
@@ -74,8 +75,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   const Classroom = () => {                                                                                                                                   
     const { sessionId } = useParams();                                                                                                                        
     const navigate = useNavigate();                                                                                                                           
-    const [session, setSession] = useState(null);                                                                                                           
-    const [results, setResults] = useState(null);                                                                                                             
+    const [session, setSession] = useState(null);
+    const [results, setResults] = useState(null);
+    const [captureInfoOpen, setCaptureInfoOpen] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
     const [loading, setLoading] = useState(true);                                                                                                             
     const [error, setError] = useState(null);                                                                                                                 
     const [recording, setRecording] = useState(false);                                                                                                        
@@ -180,10 +183,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
       };                                                                                                                                                      
     }, [sessionId]);                                                                                                                                          
                                                                                                                                                               
-    useEffect(() => {                                                                                                                                         
-      if (!session?.status || !POLL_STATUSES.has(session.status)) {                                                                                           
-        if (pollRef.current) {                                                                                                                                
-          clearInterval(pollRef.current);                                                                                                                     
+    // Show the capture-audio help the first time a user creates a space.
+    useEffect(() => {
+      if (searchParams.get('captureHelp') === '1') {
+        setCaptureInfoOpen(true);
+        setSearchParams({}, { replace: true });
+      }
+    }, [searchParams, setSearchParams]);
+
+    useEffect(() => {
+      if (!session?.status || !POLL_STATUSES.has(session.status)) {
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
           pollRef.current = null;                                                                                                                             
         }                                                                                                                                                     
         return undefined;                                                                                                                                     
@@ -719,6 +730,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               </Typography>
             </DialogContent>
           </Dialog>
+
+          <CaptureAudioModal
+            open={captureInfoOpen}
+            onClose={() => setCaptureInfoOpen(false)}
+          />
         </div>
       </div>
     );
