@@ -3,13 +3,14 @@ import { Box, Typography, Button, Stack } from '@mui/material';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 import { clozeService } from '../../services/api/cloze.jsx';
 import ClozeCard from './ClozeCard';
+import FocusToggle from '../common/FocusToggle';
 
 /**
  * ClozePanel lists clozes for a selected document and allows validation.
  * Props:
  *  - documentId
  */
-const ClozePanel = ({ documentId }) => {
+const ClozePanel = ({ documentId, focus = false, autoStart = false, onStart, onFocusChange }) => {
   const [clozes, setClozes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -45,6 +46,15 @@ const ClozePanel = ({ documentId }) => {
   // Reset start gate when document changes
   useEffect(() => { setStarted(false); }, [documentId]);
   useEffect(() => { setAnsweredMap({}); }, [sessionKey]);
+
+  // Focus Mode: when rendered inside the focus popup, begin immediately.
+  useEffect(() => {
+    if (autoStart && clozes.length) {
+      setSessionKey(Date.now());
+      setStarted(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, clozes.length]);
 
   const handleValidate = async ({ clozeId, answer }) => {
     return clozeService.validate({ clozeId, answer, type: 'document' });
@@ -100,7 +110,7 @@ const ClozePanel = ({ documentId }) => {
             variant="contained"
             size="large"
             disabled={!clozes.length}
-            onClick={() => { setClozes((prev) => shuffle(prev)); setSessionKey(Date.now()); setStarted(true); }}
+            onClick={() => { if (focus) onStart?.(); else { setClozes((prev) => shuffle(prev)); setSessionKey(Date.now()); setStarted(true); } }}
             sx={{
               borderRadius: '999px',
               backgroundColor: 'var(--color-success)',
@@ -114,6 +124,7 @@ const ClozePanel = ({ documentId }) => {
           >
             Start Cloze Practice
           </Button>
+          <FocusToggle focus={focus} onChange={onFocusChange} />
         </Stack>
       </Box>
     );

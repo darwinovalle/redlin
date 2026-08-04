@@ -1,16 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
+import CloseIcon from '@mui/icons-material/Close';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import StudyHero from '../common/StudyHero';
 import { documentService } from '../../services/api';
 
-const Summary = ({ documentId }) => {
+const Summary = ({ documentId, title = '' }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +76,11 @@ const Summary = ({ documentId }) => {
 
   return (
     <Box sx={{ p: 2, height: '100%', overflowY: 'auto' }}>
+      <StudyHero
+        title={title}
+        subtitle="Summary — the key ideas of the document at a glance."
+        onExpand={() => setSummaryOpen(true)}
+      />
       <Box
         sx={{
           p: 2.5,
@@ -100,6 +111,54 @@ const Summary = ({ documentId }) => {
           </ReactMarkdown>
         </Box>
       </Box>
+
+      <Dialog
+        open={summaryOpen}
+        onClose={() => setSummaryOpen(false)}
+        fullWidth
+        maxWidth="md"
+        PaperProps={{
+          style: { backgroundColor: '#1A2A3A' },
+          sx: {
+            borderRadius: '20px',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+            maxHeight: '92vh',
+            overflow: 'hidden',
+          },
+        }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              backgroundColor: 'color-mix(in srgb, var(--color-navy-deep) 74%, transparent)',
+              backdropFilter: 'blur(10px)',
+            },
+          },
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.01em' }}>Summary</Typography>
+          <IconButton onClick={() => setSummaryOpen(false)} size="small" sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ p: { xs: 2, sm: 3 }, overflowY: 'auto' }}>
+          <Box sx={{
+            lineHeight: 1.7,
+            fontSize: '0.95rem',
+            '& h1, & h2, & h3, & h4, & h5, & h6': { color: 'var(--color-white)', fontWeight: 700, mt: 2.5, mb: 0.75 },
+            '& p': { mb: 1.5, color: 'color-mix(in srgb, var(--color-white) 90%, transparent)' },
+            '& li': { mb: 0.5, color: 'color-mix(in srgb, var(--color-white) 90%, transparent)' },
+            '& ul, & ol': { pl: 3, mb: 1.5 },
+            '& a': { color: 'var(--color-teal)' },
+            '& code': { fontFamily: 'monospace', background: 'color-mix(in srgb, var(--color-white) 10%, transparent)', color: 'var(--color-teal-pale)', px: 0.5, borderRadius: 0.5 },
+            '& pre': { p: 1.5, background: 'color-mix(in srgb, var(--color-black) 40%, transparent)', color: 'var(--color-white)', borderRadius: 2, overflow: 'auto', mb: 1.5 },
+          }}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {summary?.content || 'No content'}
+            </ReactMarkdown>
+          </Box>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };

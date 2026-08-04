@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Box, Typography, Button, Divider, Stack } from '@mui/material';
 import { feynmanService } from '../../services/api/feynman.jsx';
+import FocusToggle from '../common/FocusToggle';
 import FeynmanAttemptForm from './FeynmanAttemptForm';
 import AIFeedback from './AIFeedback';
 import Timer from './Timer';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 
-const FeynmanPanel = ({ documentId }) => {
+const FeynmanPanel = ({ documentId, focus = false, autoStart = false, onStart, onFocusChange }) => {
   const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -86,6 +87,12 @@ const FeynmanPanel = ({ documentId }) => {
     setQuestionDone(false);
   };
 
+  // Focus Mode: when rendered inside the focus popup, begin immediately.
+  useEffect(() => {
+    if (autoStart && prompts.length) startSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, prompts]);
+
   // Reset countdown whenever we move to a new question during an active session (before rendering branches)
   useEffect(() => {
     if (!sessionActive || sessionFinished) return; // keep hook order stable regardless of state
@@ -132,7 +139,7 @@ const FeynmanPanel = ({ documentId }) => {
             variant="contained"
             size="large"
             disabled={!prompts.length}
-            onClick={startSession}
+            onClick={() => { if (focus) onStart?.(); else startSession(); }}
             sx={{
               borderRadius: '999px',
               backgroundColor: 'var(--color-success)',
@@ -146,6 +153,7 @@ const FeynmanPanel = ({ documentId }) => {
           >
             Start Session ({prompts.length} questions)
           </Button>
+          <FocusToggle focus={focus} onChange={onFocusChange} />
         </Stack>
       </Box>
     );

@@ -13,6 +13,7 @@ import {
   Alert,
 } from '@mui/material';
 import { documentService } from '../../services/api';
+import FocusToggle from '../common/FocusToggle';
 
 const shuffleArray = (array) => {
   let currentIndex = array.length, randomIndex;
@@ -26,7 +27,7 @@ const shuffleArray = (array) => {
 
 const UNANSWERED_SEGMENT_COLOR = 'color-mix(in srgb, var(--color-white) 18%, transparent)';
 
-const QuizView = ({ documentId }) => {
+const QuizView = ({ documentId, focus = false, autoStart = false, onStart, onExit, onFocusChange }) => {
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
@@ -82,7 +83,9 @@ const QuizView = ({ documentId }) => {
         setQuizQuestions(transformedQuestions);
         setCurrentQuestionIndex(0);
         setUserAnswers({});
-        setIsQuizActive(false);
+        // Don't reset to the start screen when the focus popup auto-started the
+        // quiz — otherwise a refetch (StrictMode double-mount) would cancel it.
+        if (!autoStart) setIsQuizActive(false);
         setFeedback(null);
         setFinished(false);
         setScore(0);
@@ -97,7 +100,8 @@ const QuizView = ({ documentId }) => {
     };
 
     fetchQuizData();
-  }, [documentId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentId, autoStart]);
 
   const startQuizHandler = () => {
     if (quizQuestions.length > 0) {
@@ -109,6 +113,12 @@ const QuizView = ({ documentId }) => {
         setScore(0);
     }
   };
+
+  // Focus Mode: when rendered inside the focus popup, begin immediately.
+  useEffect(() => {
+    if (autoStart && quizQuestions.length) startQuizHandler();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, quizQuestions.length]);
 
   const endQuizHandler = () => {
     setIsQuizActive(false);
@@ -176,7 +186,7 @@ const QuizView = ({ documentId }) => {
         <Typography variant="body1" sx={{ mb:3, color:'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Score: {score} / {totalQuestions}</Typography>
         <Button
           variant="contained"
-          onClick={endQuizHandler}
+          onClick={() => { endQuizHandler(); onExit?.(); }}
           sx={{
             borderRadius:'999px', px:4,
             backgroundColor:'var(--color-success)', color:'var(--color-navy-deep)', fontWeight:700,
@@ -209,22 +219,15 @@ const QuizView = ({ documentId }) => {
         <Typography variant="h4" gutterBottom sx={{ fontWeight:700, color:'var(--color-white)' }}>
           {quizTitle}
         </Typography>
-        {documentId && (
-          <Typography variant="body1" sx={{ mb: 3, maxWidth: 520, color:'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
-            {canStart
-              ? `Ready? This quiz contains ${totalQuestions} questions.`
-              : `No questions generated for this document yet.`}
-          </Typography>
-        )}
-        {!documentId && (
-             <Typography variant="body1" sx={{ mb: 3, maxWidth: '500px', color:'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
-                Select a document to generate a quiz.
-            </Typography>
-        )}
+        <Typography variant="body1" sx={{ mb: 3, maxWidth: 520, color:'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+          {canStart
+            ? `Test your knowledge — answer ${totalQuestions} multiple-choice questions about the document.`
+            : (documentId ? 'No questions generated for this document yet.' : 'Select a document to generate a quiz.')}
+        </Typography>
         <Button
           variant="contained"
           size="large"
-          onClick={startQuizHandler}
+          onClick={() => { if (focus) onStart?.(); else startQuizHandler(); }}
           disabled={!canStart || !documentId}
           sx={{
             borderRadius:'999px', backgroundColor:'var(--color-success)', color:'var(--color-navy-deep)',
@@ -236,6 +239,7 @@ const QuizView = ({ documentId }) => {
         >
           {canStart ? 'Start Quiz' : (documentId ? 'No Questions Found' : 'Select Document')}
         </Button>
+        <FocusToggle focus={focus} onChange={onFocusChange} />
       </Box>
     );
   }
@@ -386,7 +390,7 @@ const QuizView = ({ documentId }) => {
           <Button
             size="small"
             variant="contained"
-            onClick={endQuizHandler}
+            onClick={() => { endQuizHandler(); onExit?.(); }}
             sx={{
               borderRadius:'999px',
               backgroundColor:'var(--color-success)', color:'var(--color-navy-deep)', fontWeight:700,

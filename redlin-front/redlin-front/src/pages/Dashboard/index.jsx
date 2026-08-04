@@ -2,8 +2,15 @@ import * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import LockIcon from '@mui/icons-material/Lock';
 // import { FlashcardProvider } from '../../context/FlashcardContext'; // MVP: Flashcards hidden
 import { documentService } from '../../services/api';
 import PdfViewer from '../../components/PdfViewer/PdfViewer';
@@ -62,9 +69,23 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = React.useState(0); 
 
   const [selectedDocumentId, setSelectedDocumentId] = useState(null);
+  const [documents, setDocuments] = useState([]);
   // const [flashcardsRefreshKey, setFlashcardsRefreshKey] = useState(0); // MVP: Flashcards hidden
   const { user: authUser } = useAuth();
   const { docSlug } = useParams();
+
+  // Focus Mode: tests open fullscreen so the student can't peek at the summary.
+  // Persisted; defaults to ON (same behaviour as Classroom Spaces).
+  const [focusMode, setFocusMode] = useState(() => {
+    try {
+      const stored = localStorage.getItem('study:focusMode');
+      return stored === null ? true : stored === '1';
+    } catch {
+      return true;
+    }
+  });
+  const [focusSession, setFocusSession] = useState(null); // 'quiz' | 'cloze' | 'feynman' | null
+  const [focusKey, setFocusKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +99,7 @@ const Dashboard = () => {
       try {
         const documents = await documentService.getUserDocuments(authUser.id);
         if (cancelled) return;
+        setDocuments(documents);
 
         let initialId = null;
         if (docSlug && documents?.length) {
@@ -113,6 +135,16 @@ const Dashboard = () => {
     setActiveTab(newValue);
   };
 
+  // Persist the focus-mode preference across reloads.
+  useEffect(() => {
+    try { localStorage.setItem('study:focusMode', focusMode ? '1' : '0'); } catch {}
+  }, [focusMode]);
+
+  const openFocus = (type) => { setFocusKey((k) => k + 1); setFocusSession(type); };
+
+  const selectedDoc = documents.find((d) => d.id === selectedDocumentId);
+  const studyTitle = selectedDoc?.title || 'Study Document';
+
   // const handleReviewChange = () => { // MVP: Review hidden
   //   setFlashcardsRefreshKey((k) => k + 1);
   // };
@@ -139,7 +171,7 @@ const Dashboard = () => {
               {/* MVP: Flashcards + Review hidden */}
               {/* <Tab label="FLASHCARDS" /> */}
               {/* <Tab label="REVIEW" /> */}
-              <Tab label="QUIZ" />
+              <Tab label="MCQS" />
               <Tab label="CLOZE" />
               <Tab label="FEYNMAN" />
             </Tabs>
@@ -148,7 +180,7 @@ const Dashboard = () => {
           <div className="study-content-scroll">
             <TabPanel value={activeTab} index={0}>
               <React.Suspense fallback={<LoadingPanel />}>
-                <SummaryLazy documentId={selectedDocumentId} />
+                <SummaryLazy documentId={selectedDocumentId} title={studyTitle} />
               </React.Suspense>
             </TabPanel>
             {/* MVP: Flashcards + Review hidden */}
@@ -166,25 +198,69 @@ const Dashboard = () => {
             </TabPanel> */}
             <TabPanel value={activeTab} index={1}>
               <React.Suspense fallback={<LoadingPanel />}>
-                <QuizViewLazy documentId={selectedDocumentId} />
+                <QuizViewLazy documentId={selectedDocumentId} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('quiz')} />
               </React.Suspense>
             </TabPanel>
             <TabPanel value={activeTab} index={2}>
               <React.Suspense fallback={<LoadingPanel />}>
-                <ClozePanelLazy documentId={selectedDocumentId} />
+                <ClozePanelLazy documentId={selectedDocumentId} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('cloze')} />
               </React.Suspense>
             </TabPanel>
             <TabPanel value={activeTab} index={3}>
               {/* Feynman Panel */}
               {selectedDocumentId && (
                 <React.Suspense fallback={<LoadingPanel />}>
-                  <FeynmanPanelLazy documentId={selectedDocumentId} />
+                  <FeynmanPanelLazy documentId={selectedDocumentId} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('feynman')} />
                 </React.Suspense>
               )}
             </TabPanel>
           </div>
         </div>
       </Box>
+
+      {/* Focus Mode dialog: opens the selected test fullscreen with a blurred backdrop */}
+      <Dialog
+        open={Boolean(focusSession)}
+        onClose={() => setFocusSession(null)}
+        fullWidth
+        maxWidth="md"
+        PaperProps={{
+          style: { backgroundColor: '#1A2A3A' },
+          sx: {
+            borderRadius: '20px',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+            maxHeight: '92vh',
+            overflow: 'hidden',
+          },
+        }}
+        slotProps={{
+          backdrop: {
+            sx: {
+              backgroundColor: 'color-mix(in srgb, var(--color-navy-deep) 74%, transparent)',
+              backdropFilter: 'blur(10px)',
+            },
+          },
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <LockIcon sx={{ color: 'var(--color-teal)', fontSize: 18 }} />
+            <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.01em' }}>
+              Focus Mode · {focusSession === 'quiz' ? 'MCQs' : focusSession === 'cloze' ? 'Cloze' : 'Feynman'}
+            </Typography>
+          </Stack>
+          <IconButton onClick={() => setFocusSession(null)} size="small" sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ p: { xs: 1.5, sm: 3 }, overflowY: 'auto' }}>
+          {focusSession === 'quiz' && <QuizViewLazy key={focusKey} documentId={selectedDocumentId} autoStart onExit={() => setFocusSession(null)} />}
+          {focusSession === 'cloze' && <ClozePanelLazy key={focusKey} documentId={selectedDocumentId} autoStart />}
+          {focusSession === 'feynman' && selectedDocumentId && (
+            <FeynmanPanelLazy key={focusKey} documentId={selectedDocumentId} autoStart />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
