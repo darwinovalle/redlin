@@ -179,9 +179,12 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def clozes(self, request, pk=None):
-        """List Clozes for a document sub-resource."""
+        """List Clozes for a document sub-resource (paginated)."""
         document = self.get_object()
         qs = document.clozes.all().order_by("-id")
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            return self.get_paginated_response(ClozeSerializer(page, many=True).data)
         return Response(ClozeSerializer(qs, many=True).data)
 
 

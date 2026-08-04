@@ -17,6 +17,11 @@ const ClozePanel = ({ documentId, focus = false, autoStart = false, onStart, onF
   const [started, setStarted] = useState(false);
   const [sessionKey, setSessionKey] = useState(null); // changes each time user starts practice
   const [answeredMap, setAnsweredMap] = useState({}); // { clozeId: true|false }
+  // Progressive loading: clozes are fetched a page at a time.
+  const [clozePage, setClozePage] = useState(1);
+  const [clozeTotal, setClozeTotal] = useState(0);
+  const [clozeHasMore, setClozeHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Simple Fisher-Yates shuffle
   const shuffle = useCallback((arr) => {
@@ -29,18 +34,38 @@ const ClozePanel = ({ documentId, focus = false, autoStart = false, onStart, onF
   }, []);
 
   const load = useCallback(async () => {
-    if (!documentId) { setClozes([]); return; }
+    if (!documentId) { setClozes([]); setClozeTotal(0); setClozeHasMore(false); return; }
     setLoading(true);
     setError(null);
     try {
-      const data = await clozeService.listDocumentClozes(documentId);
-      setClozes(data || []);
+      const { results, count, hasMore } = await clozeService.listDocumentClozesPage(documentId, 1);
+      setClozes(results || []);
+      setClozeTotal(count ?? (results || []).length);
+      setClozeHasMore(hasMore);
+      setClozePage(1);
     } catch (e) {
       setError(e?.detail || e?.error || 'Failed to load clozes');
     } finally {
       setLoading(false);
     }
   }, [documentId]);
+
+  const loadMore = useCallback(async () => {
+    if (!documentId || loadingMore || !clozeHasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = clozePage + 1;
+      const { results, count, hasMore } = await clozeService.listDocumentClozesPage(documentId, nextPage);
+      setClozes((prev) => [...prev, ...(results || [])]);
+      setClozeTotal(count ?? (results || []).length);
+      setClozeHasMore(hasMore);
+      setClozePage(nextPage);
+    } catch (e) {
+      setError(e?.detail || e?.error || 'Failed to load more clozes');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [documentId, loadingMore, clozeHasMore, clozePage]);
 
   useEffect(() => { load(); }, [load]);
   // Reset start gate when document changes
@@ -104,7 +129,7 @@ const ClozePanel = ({ documentId, focus = false, autoStart = false, onStart, onF
             Cloze Practice
           </Typography>
           <Typography variant="body1" sx={{ mb: 1.5, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)', maxWidth: 520 }}>
-            Ready? This set contains {clozes.length} cloze {clozes.length === 1 ? 'item' : 'items'}. Fill in the blanks accurately.
+            Ready? This set contains {clozeTotal || clozes.length} cloze {(clozeTotal || clozes.length) === 1 ? 'item' : 'items'}. Fill in the blanks accurately.
           </Typography>
           <Button
             variant="contained"
@@ -135,7 +160,7 @@ const ClozePanel = ({ documentId, focus = false, autoStart = false, onStart, onF
   const answeredCount = answeredIds.length;
   const correctCount = answeredIds.reduce((acc, id) => acc + (answeredMap[id] ? 1 : 0), 0);
 
-  if (answeredCount === total) {
+  if (answeredCount === total && !clozeHasMore) {
     return (
       <Box sx={{ p: 3, textAlign: 'center', maxWidth: 760, mx: 'auto' }}>
         <Stack spacing={2} alignItems="center">
@@ -164,7 +189,7 @@ const ClozePanel = ({ documentId, focus = false, autoStart = false, onStart, onF
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2, height: '100%', overflowY: 'auto' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
         <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', letterSpacing: 2 }}>
-          CLOZES ({total})
+          CLOZES ({clozeTotal || total})
         </Typography>
         <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
           Progress: {answeredCount} / {total}
@@ -182,6 +207,27 @@ const ClozePanel = ({ documentId, focus = false, autoStart = false, onStart, onF
           />
         ))}
       </Stack>
+
+      {clozeHasMore && (
+        <Box sx={{ textAlign: 'center', mt: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={loadMore}
+            disabled={loadingMore}
+            sx={{
+              borderRadius: 999,
+              borderColor: 'color-mix(in srgb, var(--color-white) 22%, transparent)',
+              color: 'var(--color-white)',
+              fontWeight: 700,
+              textTransform: 'none',
+              '&:hover': { borderColor: 'var(--color-teal)', backgroundColor: 'color-mix(in srgb, var(--color-teal) 10%, transparent)' },
+              '&.Mui-disabled': { color: 'color-mix(in srgb, var(--color-white) 40%, transparent)', borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
+            }}
+          >
+            {loadingMore ? 'Loading…' : `Load more (${Math.max(0, (clozeTotal || clozes.length) - clozes.length)} remaining)`}
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };
