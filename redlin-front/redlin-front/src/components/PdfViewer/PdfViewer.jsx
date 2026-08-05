@@ -30,7 +30,9 @@ const getDocId = (u) => {
 
 // Continuous scroll: every page is rendered stacked so scrolling flows
 // naturally from one page to the next (no page remount / blink).
-function InnerViewer({ url }) {
+// `pageRange` ([start, end]) restricts the viewer to only those PDF pages —
+// used for book chapters ("no more no less"). Pass null to show every page.
+function InnerViewer({ url, initialPage, pageRange }) {
   const { state, dispatch } = useViewer();
   const pdfRef = useRef(null);
   const searchJobRef = useRef(null);
@@ -48,6 +50,11 @@ function InnerViewer({ url }) {
   // Search-match boxes for the current page (derived from the text layer).
   const [searchBoxes, setSearchBoxes] = useState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // Virtualized render window: only pages up to `renderEnd` are mounted, and the
+  // window grows as the user scrolls — a large book isn't fully rendered at once.
+  const [renderEnd, setRenderEnd] = useState(0);
+  const [pageH, setPageH] = useState(0);
+  const [pageW, setPageW] = useState(0);
 
   const fileObj = React.useMemo(() => {
     if (!url) return null;
@@ -79,7 +86,9 @@ function InnerViewer({ url }) {
     return () => { cancelled = true; };
   }, [url]);
 
-  // Which page is most in view, based on the scroll position.
+  // Which page is most in view, based on the scroll position. Reads the real
+  // `data-page-number` off each rendered page (so it's correct even when the
+  // first rendered page is not page 1, e.g. a chapter range or virtualized set).
   const updateCurrentPageFromScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -89,8 +98,11 @@ function InnerViewer({ url }) {
     const threshold = el.clientHeight * 0.35;
     let current = 1;
     for (let i = 0; i < pages.length; i++) {
-      if (pages[i].getBoundingClientRect().top - containerTop < threshold) current = i + 1;
-      else break;
+      const top = pages[i].getBoundingClientRect().top - containerTop;
+      if (top < threshold) {
+        const n = parseInt(pages[i].getAttribute('data-page-number'), 10);
+        if (n) current = n;
+      } else break;
     }
     if (current !== navStateRef.current.page) dispatch({ type: 'SET_PAGE', page: current });
   }, [dispatch]);
@@ -103,6 +115,79 @@ function InnerViewer({ url }) {
     const pageRect = pageEl.getBoundingClientRect();
     el.scrollTop += (pageRect.top - containerRect.top) - 8;
   }, []);
+
+  // Visible page window: when `pageRange` is set (a book chapter), render only
+  // [start, end] of the PDF; otherwise the whole document. Declared before the
+  // effects below so their dependency arrays can reference these safely.
+  const hasRange = Boolean(pageRange && pageRange.length >= 2);
+  const rangeStart = hasRange ? Math.max(1, Number(pageRange[0]) || 1) : 1;
+  const rangeEnd = hasRange
+    ? (Number(pageRange[1]) > 0 ? Number(pageRange[1]) : state.numPages || 0)
+    : (state.numPages || 0);
+
+  const pageNumbers = state.numPages > 0
+    ? Array.from({ length: state.numPages }, (_, i) => i + 1).filter((p) => p >= rangeStart && p <= rangeEnd)
+    : [];
+
+  // Virtualized window tuning.
+  const PAGE_GAP = 16; // matches the margin-bottom on each page wrapper
+  const INITIAL_RENDER = 6;
+  const PRELOAD = 5;
+
+  // Measure the (uniform) page size so the spacer below the rendered set keeps
+  // the scrollbar spanning the whole PDF while only a few pages are mounted.
+  useEffect(() => {
+    if (!pdfRef.current || !state.numPages) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const p = await pdfRef.current.getPage(rangeStart);
+        const vp = p.getViewport({ scale: state.scale });
+        if (!cancelled) { setPageH(vp.height); setPageW(vp.width); }
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rangeStart, state.scale, state.numPages]);
+
+  // Reset the render window whenever the document or active range changes.
+  useEffect(() => {
+    if (!state.numPages) return;
+    setRenderEnd(Math.min(rangeStart + INITIAL_RENDER - 1, rangeEnd));
+  }, [state.numPages, rangeStart, rangeEnd]);
+
+  // Grow the window as the user scrolls / jumps so pages mount just before
+  // they come into view (render-end only ever increases — no unmount churn).
+  useEffect(() => {
+    if (!state.numPages) return;
+    setRenderEnd((prev) => Math.max(prev, Math.min(state.page + PRELOAD, rangeEnd)));
+  }, [state.page, rangeEnd, state.numPages]);
+
+  // Books: when a chapter study opens, jump to the chapter's start page.
+  useEffect(() => {
+    if (initialPage && state.numPages) {
+      const target = Math.min(initialPage, state.numPages);
+      dispatch({ type: 'SET_PAGE', page: target });
+      const t = setTimeout(() => scrollToPage(target), 120);
+      return () => clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPage, state.numPages]);
+
+  // Books: when the active chapter changes, jump to that chapter's first page.
+  // Guarded by a ref so a range change re-fires (jump) but steady state does not.
+  const lastRangeRef = useRef(null);
+  useEffect(() => {
+    if (!hasRange || !state.numPages) return;
+    const key = `${rangeStart}-${rangeEnd}`;
+    if (lastRangeRef.current === key) return;
+    lastRangeRef.current = key;
+    const target = Math.min(rangeStart, state.numPages);
+    dispatch({ type: 'SET_PAGE', page: target });
+    const t = setTimeout(() => scrollToPage(target), 150);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasRange, rangeStart, rangeEnd, state.numPages]);
 
   // Keep the fullscreen icon in sync with the browser fullscreen state.
   useEffect(() => {
@@ -137,11 +222,14 @@ function InnerViewer({ url }) {
 
   // Move to the selected search result page (scrolls the continuous view).
   useEffect(() => {
-    if (state.searchResults.length) {
-      const target = state.searchResults[state.currentSearchIndex];
-      if (target && target !== navStateRef.current.page) scrollToPage(target);
-    }
-  }, [state.searchResults, state.currentSearchIndex, scrollToPage]);
+    if (!state.searchResults.length) return;
+    const target = state.searchResults[state.currentSearchIndex];
+    if (target == null || target === navStateRef.current.page) return;
+    // Grow the render window so the target page mounts, then scroll once it's there.
+    setRenderEnd((prev) => Math.max(prev, Math.min(target + PRELOAD, rangeEnd || state.numPages)));
+    const t = setTimeout(() => scrollToPage(target), 150);
+    return () => clearTimeout(t);
+  }, [state.searchResults, state.currentSearchIndex, scrollToPage, rangeEnd, state.numPages]);
 
   // Precise search-match boxes for the current page. Recomputes whenever the
   // text layer DOM changes (react-pdf renders it asynchronously).
@@ -283,8 +371,10 @@ function InnerViewer({ url }) {
     searchJobRef.current = jobId;
     if (!term) { dispatch({ type: 'SEARCH_CANCEL' }); return; }
     dispatch({ type: 'SEARCH_INIT', jobId });
+    const from = Math.max(1, rangeStart);
+    const to = Math.min(rangeEnd || pdf.numPages, pdf.numPages);
     (async () => {
-      for (let p = 1; p <= pdf.numPages; p++) {
+      for (let p = from; p <= to; p++) {
         if (searchJobRef.current !== jobId) return;
         dispatch({ type: 'SEARCH_PROGRESS', page: p });
         try {
@@ -296,9 +386,7 @@ function InnerViewer({ url }) {
       }
       if (searchJobRef.current === jobId) dispatch({ type: 'SEARCH_COMPLETE' });
     })();
-  }, [state.searchTerm]);
-
-  const pageNumbers = state.numPages > 0 ? Array.from({ length: state.numPages }, (_, i) => i + 1) : [];
+  }, [state.searchTerm, rangeStart, rangeEnd]);
 
   return (
     <div ref={viewerRootRef} style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
@@ -310,7 +398,7 @@ function InnerViewer({ url }) {
       >
         <div style={{ padding: '12px 12px 48px', width: 'max-content' }}>
           <Document file={fileObj} onLoadSuccess={onLoadSuccess} loading={<div style={{ padding: 12, color: 'var(--color-white)' }}>Loading PDF…</div>}>
-            {pageNumbers.map((p) => (
+            {pageNumbers.filter((p) => p <= renderEnd).map((p) => (
               <div key={p} style={{ position: 'relative', width: 'max-content', margin: '0 auto 16px' }}>
                 <Page pageNumber={p} scale={state.scale} renderTextLayer renderAnnotationLayer />
                 {/* Saved text highlights */}
@@ -353,6 +441,11 @@ function InnerViewer({ url }) {
                 ))}
               </div>
             ))}
+            {/* Reserve space for pages that aren't rendered yet so the scrollbar
+                still spans the whole PDF while only a few pages are mounted. */}
+            {state.numPages > 0 && renderEnd < rangeEnd && (
+              <div style={{ height: (rangeEnd - renderEnd) * (pageH + PAGE_GAP), width: pageW || '100%' }} />
+            )}
           </Document>
         </div>
       </div>
@@ -362,15 +455,20 @@ function InnerViewer({ url }) {
           <input
             type="number"
             value={state.page}
+            min={rangeStart}
+            max={rangeEnd || state.numPages}
             onChange={(e) => {
-              let v = parseInt(e.target.value, 10) || 1;
-              if (v < 1) v = 1; if (v > state.numPages) v = state.numPages;
+              let v = parseInt(e.target.value, 10) || rangeStart;
+              if (v < rangeStart) v = rangeStart;
+              if (v > (rangeEnd || state.numPages)) v = rangeEnd || state.numPages;
+              // Grow the render window so the target mounts, then scroll to it.
+              setRenderEnd((prev) => Math.max(prev, Math.min(v + PRELOAD, rangeEnd || state.numPages)));
               dispatch({ type: 'SET_PAGE', page: v });
-              scrollToPage(v);
+              setTimeout(() => scrollToPage(v), 150);
             }}
             style={{ width: 64, background: 'var(--color-ink-deep)', border: '1px solid var(--color-ink-mid)', color: 'var(--color-white)', borderRadius: 6, padding: '4px 6px', fontSize: 13 }}
           />
-          <span style={{ fontSize: 12, opacity: 0.8 }}>of {state.numPages}</span>
+          <span style={{ fontSize: 12, opacity: 0.8 }}>of {rangeEnd || state.numPages}</span>
           {state.searchTerm && (
             <span style={{ marginLeft: 'auto', fontSize: 12, opacity: 0.75 }}>
               {state.searchResults.length ? `${state.searchResults.length} page(s) contain \"${state.searchTerm}\"` : state.searchScanningPage ? `Scanning p.${state.searchScanningPage}/${state.numPages || '?'}` : 'No matches'}
@@ -432,11 +530,11 @@ function InnerViewer({ url }) {
   );
 }
 
-export default function PdfViewer({ url }) {
+export default function PdfViewer({ url, initialPage, pageRange }) {
   if (!url) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>No document selected</div>;
   return (
     <ViewerProvider>
-      <InnerViewer url={url} />
+      <InnerViewer url={url} initialPage={initialPage} pageRange={pageRange} />
     </ViewerProvider>
   );
 }

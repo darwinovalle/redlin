@@ -136,7 +136,7 @@ const Summary = ({ documentId, title = '' }) => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.01em' }}>Summary</Typography>
+          <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em' }}>Summary</Typography>
           <IconButton onClick={() => setSummaryOpen(false)} size="small" sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
             <CloseIcon fontSize="small" />
           </IconButton>

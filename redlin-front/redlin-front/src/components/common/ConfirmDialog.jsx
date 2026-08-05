@@ -63,7 +63,7 @@ export default function ConfirmDialog({
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <DeleteOutlineIcon sx={{ color: 'var(--color-danger-soft)', fontSize: 22 }} />
-            <Typography id="confirm-dialog-title" variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 800, letterSpacing: '-0.01em' }}>
+            <Typography id="confirm-dialog-title" variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 700, letterSpacing: '-0.01em' }}>
               {title}
             </Typography>
           </Box>

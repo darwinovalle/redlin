@@ -4,7 +4,7 @@ import { Box, Typography, Chip } from '@mui/material';
 const Metric = ({ label, value, color }) => (
   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 1, minWidth: 84 }}>
     <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 52%, transparent)' }}>{label}</Typography>
-    <Typography variant="subtitle1" sx={{ fontWeight: 800, color }}>{value ?? '—'}</Typography>
+    <Typography variant="subtitle1" sx={{ fontWeight: 700, color }}>{value ?? '—'}</Typography>
   </Box>
 );
 
@@ -23,7 +23,7 @@ const AIFeedback = ({ attempt }) => {
       }}
     >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, gap: 1, flexWrap: 'wrap' }}>
-        <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--color-white)' }}>AI Evaluation</Typography>
+        <Typography variant="h6" sx={{ fontWeight: 700, color: 'var(--color-white)' }}>AI Evaluation</Typography>
         {attempt.score != null && (
           <Chip
             label={`Score: ${attempt.score}`}

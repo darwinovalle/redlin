@@ -25,7 +25,7 @@ const formatTime = (seconds) => {
 const Metric = ({ label, value, color }) => (
   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 1, minWidth: 84 }}>
     <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 52%, transparent)' }}>{label}</Typography>
-    <Typography variant="subtitle1" sx={{ fontWeight: 800, color }}>{value ?? '—'}</Typography>
+    <Typography variant="subtitle1" sx={{ fontWeight: 700, color }}>{value ?? '—'}</Typography>
   </Box>
 );
 
@@ -340,7 +340,7 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, gap: 1, flexWrap: 'wrap' }}>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--color-white)' }}>AI Evaluation</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: 'var(--color-white)' }}>AI Evaluation</Typography>
           {attempt.score != null && (
             <Chip
               label={`Score: ${attempt.score}`}
@@ -380,7 +380,7 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
   if (sessionFinished) {
     return (
       <Box sx={{ p: 2, height: '100%', position: 'relative', overflowY: 'auto', color: 'var(--color-white)' }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, mb: 2, color: 'var(--color-white)' }}>Session Summary</Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, color: 'var(--color-white)' }}>Session Summary</Typography>
         <Typography variant="body2" sx={{ mb: 3, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
           You completed {results.length} / {prompts.length} questions.
         </Typography>
@@ -399,14 +399,14 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
                 bgcolor: 'color-mix(in srgb, var(--color-white) 3%, transparent)',
               }}
             >
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
                 Question
               </Typography>
               <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 1.5, color: 'var(--color-white)' }}>
                 {promptItem.prompt || ''}
               </Typography>
               {attempt.score != null && (
-                <Typography variant="caption" sx={{ fontWeight: 800, color: 'var(--color-white)' }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: 'var(--color-white)' }}>
                   Score: {attempt.score}
                 </Typography>
               )}
@@ -424,7 +424,7 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
             color: 'var(--color-navy-deep)',
             borderRadius: '999px',
             px: 4,
-            fontWeight: 800,
+            fontWeight: 700,
             '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
           }}
         >
@@ -437,7 +437,7 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
   return (
     <Box sx={{ p: 2, height: '100%', position: 'relative', overflowY: 'auto', color: 'var(--color-white)' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 1, flexWrap: 'wrap' }}>
-        <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--color-white)' }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, color: 'var(--color-white)' }}>
           Question {currentIndex + 1} / {prompts.length}
         </Typography>
         <Box sx={{ color: 'color-mix(in srgb, var(--color-white) 78%, transparent)', fontFamily: 'monospace', fontSize: 14 }}>
@@ -455,7 +455,7 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
           color: 'var(--color-white)',
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
           Question
         </Typography>
         <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.45, color: 'var(--color-white)' }}>
@@ -521,7 +521,7 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
               color: 'var(--color-navy-deep)',
               borderRadius: '999px',
               px: 4,
-              fontWeight: 800,
+              fontWeight: 700,
               '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
               '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' },
             }}
@@ -583,7 +583,7 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
               backgroundColor: 'var(--color-success)',
               color: 'var(--color-navy-deep)',
               borderRadius: '999px',
-              fontWeight: 800,
+              fontWeight: 700,
               '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
             }}
             onClick={() => {

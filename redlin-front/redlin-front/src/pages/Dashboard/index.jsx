@@ -245,7 +245,7 @@ const Dashboard = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <Stack direction="row" spacing={1} alignItems="center">
             <LockIcon sx={{ color: 'var(--color-teal)', fontSize: 18 }} />
-            <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.01em' }}>
+            <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em' }}>
               Focus Mode · {focusSession === 'quiz' ? 'MCQs' : focusSession === 'cloze' ? 'Cloze' : 'Feynman'}
             </Typography>
           </Stack>

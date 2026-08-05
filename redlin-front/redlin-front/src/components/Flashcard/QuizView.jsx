@@ -210,8 +210,8 @@ const QuizView = ({ documentId, focus = false, autoStart = false, onStart, onExi
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          p: 4,
+          justifyContent: 'flex-start',
+          p: 3,
           height: '100%',
           textAlign: 'center'
         }}

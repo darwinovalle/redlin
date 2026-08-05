@@ -229,8 +229,8 @@ const CSVStudy = () => {
             '& .MuiTabs-flexContainer': { justifyContent: 'center' }
           }}
         >
-          <Tab label="Flashcards" sx={{ fontWeight: 900, color: 'var(--color-black)', '&.Mui-selected': { color: 'var(--color-white)' } }} />
-          <Tab label="Review" sx={{ fontWeight: 900, color: 'var(--color-black)', '&.Mui-selected': { color: 'var(--color-white)' } }} />
+          <Tab label="Flashcards" sx={{ fontWeight: 700, color: 'var(--color-black)', '&.Mui-selected': { color: 'var(--color-white)' } }} />
+          <Tab label="Review" sx={{ fontWeight: 700, color: 'var(--color-black)', '&.Mui-selected': { color: 'var(--color-white)' } }} />
         </Tabs>
       </Box>
       <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%', display: 'flex', flexDirection: 'column', p: 3 }}>

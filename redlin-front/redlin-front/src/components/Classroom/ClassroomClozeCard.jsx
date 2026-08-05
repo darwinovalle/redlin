@@ -136,7 +136,7 @@ const ClassroomClozeCard = ({ cloze, sessionKey, onResult }) => {
             borderRadius: 2,
             bgcolor: 'var(--color-success)',
             color: 'var(--color-navy-deep)',
-            fontWeight: 800,
+            fontWeight: 700,
             '&:hover': { bgcolor: 'var(--color-teal-pale)' },
             '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' },
           }}

@@ -1,7 +1,13 @@
+import json
 from pathlib import Path
 
+try:
+    import fitz  # PyMuPDF — renders PDF pages to images for cover thumbnails
+except ImportError:
+    import pymupdf as fitz
+
 from django.conf import settings
-from django.http import FileResponse, Http404, HttpResponseForbidden
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status, viewsets
@@ -25,6 +31,7 @@ from .serializers import (
 )
 from .services.document_processing_service import process_pdf
 from .services.feynman_service import evaluate_and_record_attempt, get_document_feynman_or_error
+from .tasks import process_pdf_task
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -40,6 +47,10 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         document = serializer.save()
+        # Books are containers and chapters are created via the book endpoint,
+        # so only regular documents auto-process on create.
+        if document.kind != Document.KIND_DOCUMENT:
+            return
         try:
             process_pdf(document.id)
         except Exception as exc:
@@ -57,14 +68,16 @@ class DocumentViewSet(viewsets.ModelViewSet):
         document = self.get_object()
         if request.user != document.user:
             return HttpResponseForbidden("Not allowed")
-        if not document.pdf_file:
+        # A Book chapter reuses its parent book's PDF file.
+        source = document.source_document
+        if not source.pdf_file:
             raise Http404("File not found")
 
         file_handle = None
         try:
-            file_handle = document.pdf_file.open("rb")
+            file_handle = source.pdf_file.open("rb")
         except FileNotFoundError:
-            fname = Path(document.pdf_file.name).name
+            fname = Path(source.pdf_file.name).name
             alt_path = Path(settings.BASE_DIR) / "documents" / fname
             if alt_path.exists():
                 file_handle = open(alt_path, "rb")
@@ -72,7 +85,52 @@ class DocumentViewSet(viewsets.ModelViewSet):
                 raise Http404("File not found")
 
         response = FileResponse(file_handle, content_type="application/pdf")
-        response["Content-Disposition"] = f"inline; filename=\"{document.title or 'document'}.pdf\""
+        response["Content-Disposition"] = f"inline; filename=\"{source.title or 'document'}.pdf\""
+        return response
+
+    @extend_schema(responses={200: OpenApiResponse(description="Book cover thumbnail (JPEG)")})
+    @action(detail=True, methods=["get"], url_path="cover")
+    def cover(self, request, pk=None):
+        """Render the first page of the document's PDF as a small JPEG cover.
+
+        Used by the Books grid so each card can show the book's cover as a
+        lightweight image instead of the frontend downloading the whole PDF.
+        """
+        document = self.get_object()
+        if request.user != document.user:
+            return HttpResponseForbidden("Not allowed")
+        # A Book chapter reuses its parent book's PDF file.
+        source = document.source_document
+        if not source.pdf_file:
+            raise Http404("File not found")
+
+        file_handle = None
+        try:
+            file_handle = source.pdf_file.open("rb")
+        except FileNotFoundError:
+            fname = Path(source.pdf_file.name).name
+            alt_path = Path(settings.BASE_DIR) / "documents" / fname
+            if alt_path.exists():
+                file_handle = open(alt_path, "rb")
+            else:
+                raise Http404("File not found")
+
+        try:
+            doc = fitz.open(stream=file_handle.read(), filetype="pdf")
+            page = doc.load_page(0)
+            # Aim for a ~480px-wide strip, plenty for a ~300px card cover.
+            zoom = 480 / page.rect.width
+            pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
+            data = pix.tobytes("jpeg", jpg_quality=82)
+        except Exception:
+            raise Http404("Could not render cover")
+        finally:
+            doc.close()
+            if file_handle:
+                file_handle.close()
+
+        response = HttpResponse(data, content_type="image/jpeg")
+        response["Cache-Control"] = "public, max-age=86400"
         return response
 
     @extend_schema(responses={200: OpenApiResponse(description="Document highlights")})
@@ -187,11 +245,140 @@ class DocumentViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(ClozeSerializer(page, many=True).data)
         return Response(ClozeSerializer(qs, many=True).data)
 
+    @extend_schema(responses={200: OpenApiResponse(description="Books")})
+    @action(detail=False, methods=["get", "post"], url_path="books")
+    def books(self, request):
+        """List books (with chapters) or create a book + its chapters."""
+        if request.method == "GET":
+            books = Document.objects.filter(user=request.user, kind=Document.KIND_BOOK).order_by("-upload_date")
+            data = []
+            for book in books:
+                chapters = book.chapters.filter(user=request.user).order_by("page_start")
+                data.append({
+                    "id": book.id,
+                    "title": book.title,
+                    "upload_date": book.upload_date,
+                    "total_pages": (book.source_meta or {}).get("total_pages"),
+                    "chapters": [
+                        {
+                            "id": ch.id,
+                            "title": ch.title,
+                            "page_start": ch.page_start,
+                            "page_end": ch.page_end,
+                            "processing_status": ch.processing_status,
+                        }
+                        for ch in chapters
+                    ],
+                })
+            return Response(data)
+
+        title = (request.data.get("title") or "").strip()
+        pdf_file = request.FILES.get("pdf_file")
+        if not title or not pdf_file:
+            return Response({"detail": "title and pdf_file are required."}, status=status.HTTP_400_BAD_REQUEST)
+        chapters_json = request.data.get("chapters_json", "[]")
+        try:
+            chapters_defs = json.loads(chapters_json) if isinstance(chapters_json, str) else chapters_json
+        except json.JSONDecodeError:
+            return Response({"detail": "chapters_json must be valid JSON."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            total_pages = int(request.data.get("total_pages") or 0)
+        except (TypeError, ValueError):
+            total_pages = 0
+        book = Document.objects.create(
+            user=request.user,
+            title=title,
+            pdf_file=pdf_file,
+            kind=Document.KIND_BOOK,
+            processing_status="completed",  # a book is a container; chapters carry the study items
+            source_meta={"total_pages": total_pages} if total_pages else {},
+        )
+        created = []
+        for index, ch in enumerate(chapters_defs):
+            c_title = str(ch.get("title") or "").strip() or f"Chapter {index + 1}"
+            page_start = int(ch.get("page_start") or 1)
+            page_end = ch.get("page_end")
+            page_end = int(page_end) if page_end else None
+            chapter = Document.objects.create(
+                user=request.user,
+                title=c_title,
+                kind=Document.KIND_CHAPTER,
+                parent=book,
+                page_start=page_start,
+                page_end=page_end,
+                processing_status="pending",
+            )
+            process_pdf_task.delay(chapter.id, chapter.page_start, chapter.page_end)
+            created.append({
+                "id": chapter.id,
+                "title": chapter.title,
+                "page_start": chapter.page_start,
+                "page_end": chapter.page_end,
+                "processing_status": chapter.processing_status,
+            })
+        return Response({"id": book.id, "title": book.title, "chapters": created}, status=status.HTTP_201_CREATED)
+
+    @extend_schema(responses={200: OpenApiResponse(description="Book chapters")})
+    @action(detail=True, methods=["get", "post"], url_path="chapters")
+    def chapters(self, request, pk=None):
+        """Return a book's chapters, or add new chapters to an existing book."""
+        book = self.get_object()
+        if request.method == "POST":
+            if book.kind != Document.KIND_BOOK:
+                return Response({"detail": "Only books can have chapters."}, status=status.HTTP_400_BAD_REQUEST)
+            chapters_defs = request.data.get("chapters") or request.data.get("chapters_json") or []
+            if isinstance(chapters_defs, str):
+                try:
+                    chapters_defs = json.loads(chapters_defs)
+                except json.JSONDecodeError:
+                    return Response({"detail": "chapters must be valid JSON."}, status=status.HTTP_400_BAD_REQUEST)
+            if not isinstance(chapters_defs, list) or not chapters_defs:
+                return Response({"detail": "chapters must be a non-empty list."}, status=status.HTTP_400_BAD_REQUEST)
+            created = []
+            for index, ch in enumerate(chapters_defs):
+                c_title = str(ch.get("title") or "").strip() or f"Chapter {book.chapters.count() + index + 1}"
+                page_start = int(ch.get("page_start") or 1)
+                page_end = ch.get("page_end")
+                page_end = int(page_end) if page_end else None
+                chapter = Document.objects.create(
+                    user=request.user,
+                    title=c_title,
+                    kind=Document.KIND_CHAPTER,
+                    parent=book,
+                    page_start=page_start,
+                    page_end=page_end,
+                    processing_status="pending",
+                )
+                process_pdf_task.delay(chapter.id, chapter.page_start, chapter.page_end)
+                created.append({
+                    "id": chapter.id,
+                    "title": chapter.title,
+                    "page_start": chapter.page_start,
+                    "page_end": chapter.page_end,
+                    "processing_status": chapter.processing_status,
+                })
+            return Response(created, status=status.HTTP_201_CREATED)
+
+        chapters = book.chapters.filter(user=request.user).order_by("page_start")
+        return Response([
+            {
+                "id": ch.id,
+                "title": ch.title,
+                "page_start": ch.page_start,
+                "page_end": ch.page_end,
+                "processing_status": ch.processing_status,
+            }
+            for ch in chapters
+        ])
+
 
 @extend_schema(responses={200: DocumentSerializer(many=True)}, tags=["documents"])
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_user_documents(request, user_id):
-    documents = Document.objects.filter(user_id=user_id)
+    # Only regular study documents appear in "Study Documents" — books and
+    # chapters live under the Books section.
+    documents = Document.objects.filter(user_id=user_id, kind=Document.KIND_DOCUMENT)
     serializer = DocumentSerializer(documents, many=True)
     return Response(serializer.data)

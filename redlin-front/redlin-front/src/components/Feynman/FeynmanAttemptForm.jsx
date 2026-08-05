@@ -204,7 +204,7 @@ const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeco
             color: 'var(--color-navy-deep)',
             borderRadius: '999px',
             px: 4,
-            fontWeight: 800,
+            fontWeight: 700,
             '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
             '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' },
           }}

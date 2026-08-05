@@ -174,7 +174,7 @@ const ClozePanel = ({ documentId, focus = false, autoStart = false, onStart, onF
               px: 4,
               bgcolor: 'var(--color-success)',
               color: 'var(--color-navy-deep)',
-              fontWeight: 800,
+              fontWeight: 700,
               '&:hover': { bgcolor: 'var(--color-teal-pale)' },
             }}
           >

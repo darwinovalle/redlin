@@ -240,7 +240,19 @@ export const authService = {
 
 export const documentService = {
   getPdfUrl: (documentId) => `${API_URL}/documents/${documentId}/file/`,
+  getBookCoverUrl: (documentId) => `${API_URL}/documents/${documentId}/cover/`,
   getHighlights: (documentId) => api.get(`/documents/${documentId}/highlights/`).then((r) => r.data),
+  listBooks: () => api.get('/documents/books/').then((r) => r.data),
+  getBookChapters: (bookId) => api.get(`/documents/${bookId}/chapters/`).then((r) => r.data),
+  addBookChapters: (bookId, chapters) => api.post(`/documents/${bookId}/chapters/`, { chapters }).then((r) => r.data),
+  createBook: ({ title, file, chapters, totalPages }) => {
+    const formData = new FormData();
+    formData.append('pdf_file', file);
+    formData.append('title', title);
+    formData.append('chapters_json', JSON.stringify(chapters));
+    if (totalPages) formData.append('total_pages', String(totalPages));
+    return api.post('/documents/books/', formData).then((r) => r.data);
+  },
   createHighlight: (documentId, data) => api.post(`/documents/${documentId}/highlights/`, data).then((r) => r.data),
   deleteHighlight: (documentId, highlightId) => api.delete(`/documents/${documentId}/highlights/${highlightId}/`).then(() => {}),
   uploadDocument: async (file, userId) => {
