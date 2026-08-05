@@ -255,10 +255,10 @@ export const documentService = {
   },
   createHighlight: (documentId, data) => api.post(`/documents/${documentId}/highlights/`, data).then((r) => r.data),
   deleteHighlight: (documentId, highlightId) => api.delete(`/documents/${documentId}/highlights/${highlightId}/`).then(() => {}),
-  uploadDocument: async (file, userId) => {
+  uploadDocument: async (file, userId, title) => {
     const formData = new FormData();
     formData.append('pdf_file', file);
-    formData.append('title', file.name); // Use filename as title
+    formData.append('title', (title || '').trim() || file.name); // custom title, else filename
     formData.append('user', userId);
 
     try {

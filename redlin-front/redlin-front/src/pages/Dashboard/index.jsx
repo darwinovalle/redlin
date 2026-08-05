@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Dialog from '@mui/material/Dialog';
@@ -70,9 +71,11 @@ const Dashboard = () => {
 
   const [selectedDocumentId, setSelectedDocumentId] = useState(null);
   const [documents, setDocuments] = useState([]);
+  const [docTotal, setDocTotal] = useState(null); // page count reported by the viewer on load
   // const [flashcardsRefreshKey, setFlashcardsRefreshKey] = useState(0); // MVP: Flashcards hidden
   const { user: authUser } = useAuth();
   const { docSlug } = useParams();
+  const navigate = useNavigate();
 
   // Focus Mode: tests open fullscreen so the student can't peek at the summary.
   // Persisted; defaults to ON (same behaviour as Classroom Spaces).
@@ -151,10 +154,32 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-root">
-      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', gap: 0, p: 0, m: 0, height: '100%', overflow: 'hidden' }}>
+      {/* Return hero header — back to the /documents directory */}
+      <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 1.5, px: 3, py: 2, borderBottom: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)', background: 'var(--color-navy-deep)' }}>
+        <IconButton
+          onClick={() => navigate('/documents')}
+          size="small"
+          aria-label="Back to documents"
+          title="Back to documents"
+          sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}
+        >
+          <ArrowBackIcon fontSize="small" />
+        </IconButton>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {studyTitle}
+          </Typography>
+          {docTotal != null && docTotal > 0 && (
+            <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>
+              {docTotal} pages
+            </Typography>
+          )}
+        </Box>
+      </Box>
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', gap: 0, p: 0, m: 0, overflow: 'hidden' }}>
         {/* PDF Viewer reverted to original styling */}
         <Box sx={{ flex: 1, minWidth: 480, maxWidth: 'calc(100% - 700px)', height: '100%', overflow: 'hidden', borderRight: '1px solid var(--color-divider-soft)' }}>
-          <PdfViewer url={pdfUrl} />
+          <PdfViewer url={pdfUrl} onPageCount={setDocTotal} />
         </Box>
         {/* Study / Flashcard Panel retains new style */}
         <div className="study-panel" style={{ width: 700 }}>

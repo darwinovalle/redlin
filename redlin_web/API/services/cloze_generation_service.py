@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 from CORE.services.cloze_generator import ClozeGenerator
 
@@ -65,6 +66,34 @@ def _clean_ai_json(raw: str) -> dict | None:
     return None
 
 
+def _condense_cloze(text: str) -> str | None:
+    """Reduce an AI cloze to a single concise sentence around the blank.
+
+    The model sometimes returns the whole document summary with a single blank
+    inserted. Trim to the sentence containing ``____`` (or a short window around
+    it) so each item is a tight fill-in-the-blank instead of the full resume.
+    """
+    if "____" not in text:
+        return None
+    if len(text.split()) <= 30:
+        return text
+
+    # 1) Prefer the sentence that contains the blank.
+    for sentence in re.split(r"(?<=[.!?])\s+", text):
+        if "____" in sentence:
+            s_words = sentence.split()
+            if 3 <= len(s_words) <= 34:
+                return sentence.strip()
+            break
+
+    # 2) Fallback: a short window around the blank.
+    idx = text.index("____")
+    before = text[:idx].split()
+    after = text[idx:].split()
+    window = " ".join(before[-14:]) + " " + " ".join(after[:14])
+    return window.strip() or None
+
+
 def generate_ai_clozes(
     document: Document,
     source_text: str,
@@ -119,7 +148,11 @@ def generate_ai_clozes(
     for item in items:
         if not isinstance(item, dict):
             continue
-        text_val = str(item.get("text") or "").strip()
+        # Condense to a concise sentence around the blank (the model sometimes
+        # emits the whole summary per item).
+        text_val = _condense_cloze(str(item.get("text") or "").strip())
+        if not text_val:
+            continue
         answer = str(item.get("answer") or "").strip()
         distractors = item.get("distractors") or []
         difficulty = str(item.get("difficulty") or "medium").lower()
