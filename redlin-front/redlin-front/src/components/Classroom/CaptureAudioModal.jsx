@@ -48,7 +48,7 @@ export default function CaptureAudioModal({ open, onClose }) {
       <Box sx={{ position: 'relative', p: 3 }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography id="capture-info-title" variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 800, letterSpacing: '-0.01em' }}>
+          <Typography id="capture-info-title" variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 700, letterSpacing: '-0.01em' }}>
             Capture meeting audio
           </Typography>
           <IconButton onClick={onClose} size="small" sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>

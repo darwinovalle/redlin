@@ -18,6 +18,25 @@ export const clozeService = {
     }
   },
 
+  // List a single page of clozes for a document (paginated progressive loading).
+  // Returns { count, results, hasMore }.
+  async listDocumentClozesPage(documentId, page = 1) {
+    if (!documentId) throw new Error('documentId required');
+    try {
+      const resp = await api.get(`/documents/${documentId}/clozes/`, { params: { page } });
+      const data = resp.data;
+      if (data && typeof data === 'object' && Array.isArray(data.results)) {
+        const count = data.count != null ? data.count : data.results.length;
+        return { count, results: data.results, hasMore: count > data.results.length };
+      }
+      const arr = Array.isArray(data) ? data : [];
+      return { count: arr.length, results: arr, hasMore: false };
+    } catch (error) {
+      console.error('Error listing document clozes page:', error.response?.data || error.message);
+      throw error.response?.data || { error: 'Failed to list document clozes' };
+    }
+  },
+
   // List clozes for a video
   async listVideoClozes(videoId) {
     if (!videoId) throw new Error('videoId required');

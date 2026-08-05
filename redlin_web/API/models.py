@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
 from django.utils import timezone
 
 from .services.llm_encryption import decrypt_api_key, encrypt_api_key
@@ -28,6 +30,15 @@ class Document(models.Model):
         (SOURCE_TRANSCRIPT, "Transcript"),
     ]
 
+    KIND_DOCUMENT = "document"
+    KIND_BOOK = "book"
+    KIND_CHAPTER = "chapter"
+    KIND_CHOICES = [
+        (KIND_DOCUMENT, "Document"),
+        (KIND_BOOK, "Book"),
+        (KIND_CHAPTER, "Chapter"),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='documents')
     title = models.CharField(max_length=255)
     upload_date = models.DateTimeField(auto_now_add=True)
@@ -44,8 +55,59 @@ class Document(models.Model):
         default='pending'
     )
 
+    # Books: a Book is a container Document holding the PDF; each Chapter is its
+    # own Document that reuses the book's pdf_file but processes only its range.
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES, default=KIND_DOCUMENT)
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="chapters",
+    )
+    page_start = models.PositiveIntegerField(null=True, blank=True)
+    page_end = models.PositiveIntegerField(null=True, blank=True)
+    # Processing metadata: total pages, processed page range, etc.
+    source_meta = models.JSONField(default=dict, blank=True)
+
+    @property
+    def is_book(self):
+        return self.kind == self.KIND_BOOK
+
+    @property
+    def is_chapter(self):
+        return self.kind == self.KIND_CHAPTER
+
+    @property
+    def source_document(self):
+        """The document whose pdf_file should be served/extracted (parent for chapters)."""
+        return self.parent if (self.is_chapter and self.parent_id) else self
+
     def __str__(self):
         return self.title
+
+
+class DocumentHighlight(models.Model):
+    """User text highlights over a document's PDF pages (stored as overlay data)."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='document_highlights')
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='highlights')
+    page = models.PositiveIntegerField(default=1)
+    text = models.TextField(blank=True, default='')
+    color = models.CharField(max_length=32, default='#FDE047')
+    # Normalized rects (x, y, w, h as 0..1 fractions of the page box) so the
+    # overlay re-renders correctly at any zoom level.
+    rects = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['page', 'created_at']
+        indexes = [
+            models.Index(fields=['document', 'page']),
+        ]
+
+    def __str__(self):
+        return f"Highlight on doc {self.document_id} p.{self.page}"
+
 
 class Summary(models.Model):
     document = models.OneToOneField(Document, on_delete=models.CASCADE, related_name='summary')

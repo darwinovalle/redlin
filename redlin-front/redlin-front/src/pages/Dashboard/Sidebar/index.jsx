@@ -22,6 +22,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AddIcon from '@mui/icons-material/Add';
 import SchoolIcon from '@mui/icons-material/School';
 import MicIcon from '@mui/icons-material/Mic';
@@ -146,6 +147,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname.startsWith('/home');
+  const isBooks = location.pathname.startsWith('/books');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -382,6 +384,10 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 );})}
               </NestedList>
             </Collapse>
+            <NavItem type="button" onClick={()=>navigate('/books')} className={isBooks?'active':''}>
+              <ItemIcon><MenuBookIcon sx={{ fontSize:20 }} /></ItemIcon>
+              <span style={{ flex:1 }}>Books</span>
+            </NavItem>
           </div>
           {/* <div className="nav-section">
             <NavItem type="button" onClick={()=>setSheetsOpen(v=>!v)} className={sheetsOpen?'active':''}>

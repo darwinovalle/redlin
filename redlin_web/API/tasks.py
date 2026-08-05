@@ -15,7 +15,7 @@ def process_pdf(document_id: int) -> None:
 
 
 @shared_task(bind=True, name="API.tasks.process_pdf")
-def process_pdf_task(self, document_id: int):
-    """Async wrapper to process a document through the AI pipeline."""
-    process_pdf_service(document_id)
+def process_pdf_task(self, document_id: int, page_start: int | None = None, page_end: int | None = None):
+    """Async wrapper to process a document (or a page range) through the AI pipeline."""
+    process_pdf_service(document_id, page_start=page_start, page_end=page_end)
     return {"status": "ok", "document_id": document_id}

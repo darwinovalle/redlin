@@ -12,7 +12,7 @@ Endpoint semantics (Issue #13):
 """
 
 from rest_framework import serializers
-from .models import User, Document, Summary, Flashcard, MCQ, Cloze, Feynman, FeynmanAttempt, UserLLMSettings
+from .models import User, Document, DocumentHighlight, Summary, Flashcard, MCQ, Cloze, Feynman, FeynmanAttempt, UserLLMSettings
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,6 +23,12 @@ class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = '__all__'
+
+class DocumentHighlightSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentHighlight
+        fields = ['id', 'document', 'page', 'text', 'color', 'rects', 'created_at']
+        read_only_fields = ['id', 'document', 'created_at']
 
 class SummarySerializer(serializers.ModelSerializer):
     class Meta:

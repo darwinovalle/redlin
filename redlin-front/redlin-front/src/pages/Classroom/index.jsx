@@ -879,7 +879,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
               <Stack direction="row" spacing={1} alignItems="center">
                 <OpenInFullIcon sx={{ color: 'var(--color-teal)', fontSize: 18 }} />
-                <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.01em' }}>
+                <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em' }}>
                   Summary
                 </Typography>
               </Stack>
@@ -920,7 +920,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
               <Stack direction="row" spacing={1} alignItems="center">
                 <LockIcon sx={{ color: 'var(--color-teal)', fontSize: 18 }} />
-                <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.01em' }}>
+                <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em' }}>
                   Focus Mode · {focusSession === 'mcq' ? 'MCQs' : focusSession === 'cloze' ? 'Clozes' : 'Feynman'}
                 </Typography>
               </Stack>
@@ -980,7 +980,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             <Box sx={{ position: 'relative', p: 3 }}>
               {/* Header */}
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography id="silence-session-title" variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 800, letterSpacing: '-0.01em' }}>
+                <Typography id="silence-session-title" variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 700, letterSpacing: '-0.01em' }}>
                   Recording stopped (silence)
                 </Typography>
                 <IconButton onClick={() => setSilenceDialogOpen(false)} size="small" sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>

@@ -76,7 +76,7 @@ export default function RenameDialog({
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <EditIcon sx={{ color: 'var(--color-teal)', fontSize: 22 }} />
-              <Typography id="rename-dialog-title" variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 800, letterSpacing: '-0.01em' }}>
+              <Typography id="rename-dialog-title" variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 700, letterSpacing: '-0.01em' }}>
                 {title}
               </Typography>
             </Box>
@@ -98,6 +98,7 @@ export default function RenameDialog({
             value={value}
             onChange={(e) => setValue(e.target.value)}
             disabled={submitting}
+            inputProps={{ maxLength: 80 }}
             InputLabelProps={{ sx: { color: 'color-mix(in srgb, var(--color-white) 65%, transparent)' } }}
             sx={{
               '& .MuiOutlinedInput-root': {

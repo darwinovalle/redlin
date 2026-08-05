@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Box, Typography, Button, Divider, Stack } from '@mui/material';
 import { feynmanService } from '../../services/api/feynman.jsx';
+import FocusToggle from '../common/FocusToggle';
 import FeynmanAttemptForm from './FeynmanAttemptForm';
 import AIFeedback from './AIFeedback';
 import Timer from './Timer';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 
-const FeynmanPanel = ({ documentId }) => {
+const FeynmanPanel = ({ documentId, focus = false, autoStart = false, onStart, onFocusChange }) => {
   const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -86,6 +87,12 @@ const FeynmanPanel = ({ documentId }) => {
     setQuestionDone(false);
   };
 
+  // Focus Mode: when rendered inside the focus popup, begin immediately.
+  useEffect(() => {
+    if (autoStart && prompts.length) startSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, prompts]);
+
   // Reset countdown whenever we move to a new question during an active session (before rendering branches)
   useEffect(() => {
     if (!sessionActive || sessionFinished) return; // keep hook order stable regardless of state
@@ -132,7 +139,7 @@ const FeynmanPanel = ({ documentId }) => {
             variant="contained"
             size="large"
             disabled={!prompts.length}
-            onClick={startSession}
+            onClick={() => { if (focus) onStart?.(); else startSession(); }}
             sx={{
               borderRadius: '999px',
               backgroundColor: 'var(--color-success)',
@@ -146,6 +153,7 @@ const FeynmanPanel = ({ documentId }) => {
           >
             Start Session ({prompts.length} questions)
           </Button>
+          <FocusToggle focus={focus} onChange={onFocusChange} />
         </Stack>
       </Box>
     );
@@ -157,16 +165,16 @@ const FeynmanPanel = ({ documentId }) => {
     <Box sx={{ p: 2, height: '100%', position: 'relative', overflowY: 'auto', color: 'var(--color-white)' }}>
       {sessionFinished ? (
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, mb: 2, color: 'var(--color-white)' }}>Session Summary</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, color: 'var(--color-white)' }}>Session Summary</Typography>
           <Typography variant="body2" sx={{ mb: 3, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
             You completed {results.length} / {prompts.length} questions.
           </Typography>
           <Divider sx={{ mb: 2, borderColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' }} />
           {results.map(r => (
             <Box key={r.id} sx={{ mb: 2, p: 2, border: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)', borderRadius: 3, bgcolor: 'color-mix(in srgb, var(--color-white) 3%, transparent)' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Question</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Question</Typography>
               <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 1, color: 'var(--color-white)' }}>{(prompts.find(p => p.id === r.feynman) || {}).prompt}</Typography>
-              {r.score != null && <Typography variant="caption" sx={{ fontWeight: 800, color: 'var(--color-white)' }}>Score: {r.score}</Typography>}
+              {r.score != null && <Typography variant="caption" sx={{ fontWeight: 700, color: 'var(--color-white)' }}>Score: {r.score}</Typography>}
               <AIFeedback attempt={r} />
             </Box>
           ))}
@@ -179,7 +187,7 @@ const FeynmanPanel = ({ documentId }) => {
               color: 'var(--color-navy-deep)',
               borderRadius: '999px',
               px: 4,
-              fontWeight: 800,
+              fontWeight: 700,
               '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
             }}
           >
@@ -189,7 +197,7 @@ const FeynmanPanel = ({ documentId }) => {
       ) : (
         <>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--color-white)' }}>Question {currentIndex + 1} / {prompts.length}</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: 'var(--color-white)' }}>Question {currentIndex + 1} / {prompts.length}</Typography>
             <Timer
               key={currentIndex}
               active={sessionActive && !questionDone}
@@ -200,7 +208,7 @@ const FeynmanPanel = ({ documentId }) => {
             />
           </Box>
           <Box sx={{ p: 2, border: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)', borderRadius: 3, mb: 2, background: 'color-mix(in srgb, var(--color-white) 3%, transparent)', color: 'var(--color-white)' }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Question</Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Question</Typography>
             <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.45, color: 'var(--color-white)' }}>{current.prompt}</Typography>
           </Box>
           <FeynmanAttemptForm
@@ -226,7 +234,7 @@ const FeynmanPanel = ({ documentId }) => {
                   backgroundColor: 'var(--color-success)',
                   color: 'var(--color-navy-deep)',
                   borderRadius: '999px',
-                  fontWeight: 800,
+                  fontWeight: 700,
                   '&:hover': { backgroundColor: 'var(--color-teal-pale)' },
                 }}
                 onClick={() => {

@@ -33,7 +33,6 @@ export default function PdfToolbar() {
 
       {/* Search box */}
       <div style={{ display: 'flex', alignItems: 'center', background: 'var(--color-ink-4)', padding: '2px 6px', borderRadius: 6, flex: '1 1 260px', maxWidth: 320 }}>
-        <SearchIcon sx={{ fontSize: 16, color: 'var(--color-text-dim)', mr: 0.5 }} />
         <input
           style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--color-white)', fontSize: 13 }}
           placeholder="Search in document..."
