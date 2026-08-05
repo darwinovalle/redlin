@@ -172,6 +172,42 @@ class ClozeGenerator:
         )
         return cloze
 
+    @staticmethod
+    def _extract_sentence_context(text: str, span_start: int, span_end: int) -> str:
+        """Return the sentence containing [span_start:span_end] with only that span blanked.
+
+        Finds sentence boundaries (period/!/? followed by whitespace, or paragraph
+        breaks) around the candidate and replaces only the answer word with ``____``.
+        Falls back to the full text when boundaries can't be resolved.
+        """
+        import re
+
+        blank = '____'
+        # --- find sentence START (nearest boundary before span_start) ---
+        sent_start = 0
+        for m in re.finditer(r'(?<=[.!?])\s', text):
+            if m.end() <= span_start and m.end() > sent_start:
+                sent_start = m.end()
+        for m in re.finditer(r'\n\s*\n', text):
+            if m.end() <= span_start and m.end() > sent_start:
+                sent_start = m.end()
+
+        # --- find sentence END (nearest boundary after span_end) ---
+        sent_end = len(text)
+        for m in re.finditer(r'[.!?](?:\s|$)', text):
+            if m.start() >= span_end and m.start() < sent_end:
+                sent_end = m.start() + 1  # include the punctuation
+                break
+        for m in re.finditer(r'\n\s*\n', text):
+            if m.start() >= span_end and m.start() < sent_end:
+                sent_end = m.start()
+                break
+
+        sentence = text[sent_start:sent_end].strip()
+        blank_start_rel = max(0, span_start - sent_start)
+        blank_end_rel = max(blank_start_rel, min(span_end - sent_start, len(sentence)))
+        return sentence[:blank_start_rel] + blank + sentence[blank_end_rel:]
+
     def generate(self) -> List[Cloze]:  # pragma: no cover
         """Generate single-blank Cloze items from document text.
         Strategy v1: select diverse high-score candidates and replace span with '____'.
@@ -193,7 +229,9 @@ class ClozeGenerator:
         for cand in selected:
             answer = cand['text']
             span_start, span_end = cand['start'], cand['end']
-            blank_text = text[:span_start] + '____' + text[span_end:]
+            # Only the sentence containing the answer, so the user isn't shown
+            # the whole document block per cloze.
+            blank_text = self._extract_sentence_context(text, span_start, span_end)
             difficulty = self._heuristic_difficulty(cand)
             distractors = self._build_distractors(answer, base, cand, nlp=nlp)
             meta = {
