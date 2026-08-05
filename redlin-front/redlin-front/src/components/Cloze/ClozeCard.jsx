@@ -11,6 +11,41 @@ import CloseIcon from '@mui/icons-material/HighlightOff';
  *  - sessionKey: number (changes each practice start to reshuffle options)
  *  - onResult: function({ clozeId, correct }) optional callback when user validates
  */
+
+// Strip markdown/noise from the cloze text so a sentence pulled from a structured
+// summary reads as plain text (no `##`, `-`, `**`, backticks). The blank token is
+// preserved and restored; works for clozes already stored in the DB too.
+const cleanClozeText = (text) => {
+  if (!text) return '';
+  const BLANK = '@@BLANK@@';
+  let s = String(text);
+  // protect the blank token (4-6 underscores)
+  s = s.replace(/_{4,6}/g, BLANK);
+  // images/links -> their text
+  s = s.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1');
+  s = s.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+  // code spans -> plain text
+  s = s.replace(/`([^`]*)`/g, '$1');
+  // bold / italic
+  s = s.replace(/\*\*([^*]*)\*\*/g, '$1');
+  s = s.replace(/__([^_]*)__/g, '$1');
+  // headings
+  s = s.replace(/^\s{0,3}#{1,6}\s+/gm, '');
+  // list + numbered markers
+  s = s.replace(/^\s{0,3}[-*+]\s+/gm, '');
+  s = s.replace(/^\s{0,3}\d+\.\s+/gm, '');
+  // horizontal rules
+  s = s.replace(/^\s*(?:[-*_]\s*){3,}\s*$/gm, '');
+  // any remaining lone markers + stray html
+  s = s.replace(/\*\*/g, '').replace(/__/g, '');
+  s = s.replace(/<[^>]+>/g, '');
+  // collapse repeated newlines into sentence breaks
+  s = s.replace(/\n{2,}/g, '\n');
+  // restore the blank as the display token the card highlights (5 underscores)
+  s = s.split(BLANK).join('_____');
+  return s.trim();
+};
+
 const ClozeCard = ({ cloze, onValidate, sessionKey, onResult }) => {
   const [userAnswer, setUserAnswer] = useState('');
   const [result, setResult] = useState(null); // null | true | false
@@ -53,8 +88,9 @@ const ClozeCard = ({ cloze, onValidate, sessionKey, onResult }) => {
 
   // Ensure readable text color; sanitize / simple blank highlight (Classroom style)
   const renderedText = useMemo(() => {
-    if (!text_with_blank) return '';
-    return text_with_blank.replace(
+    const cleaned = cleanClozeText(text_with_blank);
+    if (!cleaned) return '';
+    return cleaned.replace(
       '_____',
       '<span style="background:color-mix(in srgb, var(--color-success) 14%, transparent);padding:2px 6px;border-radius:6px;font-weight:700;letter-spacing:1px;border:1px solid color-mix(in srgb, var(--color-success) 18%, transparent)">_____</span>'
     );
