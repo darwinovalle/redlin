@@ -7,6 +7,7 @@ import AppLayout from './layouts/AppLayout';
 import LandingPage from './pages/LandingPage/LandingPage';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Documents = lazy(() => import('./pages/Documents'));
 const CSVStudy = lazy(() => import('./pages/CSVStudy'));
 const VideoStudy = lazy(() => import('./pages/VideoStudy'));
 const Classroom = lazy(() => import('./pages/Classroom'));
@@ -54,6 +55,7 @@ const RouterContent = () => {
             </ProtectRoute>
           }>
             <Route path="/home" element={<Home />} />
+            <Route path="/documents" element={<Documents />} />
             <Route path="/documents/:docSlug" element={<Dashboard />} />
             <Route path="/csv/:csvSlug" element={<CSVStudy />} />
             <Route path="/videos/:videoId" element={<VideoStudy />} />

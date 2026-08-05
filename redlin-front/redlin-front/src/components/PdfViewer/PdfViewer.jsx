@@ -32,7 +32,7 @@ const getDocId = (u) => {
 // naturally from one page to the next (no page remount / blink).
 // `pageRange` ([start, end]) restricts the viewer to only those PDF pages —
 // used for book chapters ("no more no less"). Pass null to show every page.
-function InnerViewer({ url, initialPage, pageRange }) {
+function InnerViewer({ url, initialPage, pageRange, onPageCount }) {
   const { state, dispatch } = useViewer();
   const pdfRef = useRef(null);
   const searchJobRef = useRef(null);
@@ -67,6 +67,7 @@ function InnerViewer({ url, initialPage, pageRange }) {
     pdfRef.current = pdf;
     dispatch({ type: 'SET_NUM_PAGES', numPages: pdf.numPages });
     dispatch({ type: 'SET_PAGE', page: 1 });
+    onPageCount?.(pdf.numPages);
   };
 
   // Load saved highlights for this document.
@@ -530,11 +531,11 @@ function InnerViewer({ url, initialPage, pageRange }) {
   );
 }
 
-export default function PdfViewer({ url, initialPage, pageRange }) {
+export default function PdfViewer({ url, initialPage, pageRange, onPageCount }) {
   if (!url) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>No document selected</div>;
   return (
     <ViewerProvider>
-      <InnerViewer url={url} initialPage={initialPage} pageRange={pageRange} />
+      <InnerViewer url={url} initialPage={initialPage} pageRange={pageRange} onPageCount={onPageCount} />
     </ViewerProvider>
   );
 }

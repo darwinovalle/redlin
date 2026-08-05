@@ -148,6 +148,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const location = useLocation();
   const isHome = location.pathname.startsWith('/home');
   const isBooks = location.pathname.startsWith('/books');
+  const isDocuments = location.pathname.startsWith('/documents');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -342,28 +343,10 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
                 );})}
               </NestedList>
             </Collapse>
-            <NavItem type="button" onClick={()=>setDocsOpen(v=>!v)} className={docsOpen?'active':''}>
+            <NavItem type="button" onClick={()=>navigate('/documents')} className={isDocuments?'active':''}>
               <ItemIcon><FolderIcon sx={{ fontSize:20 }} /></ItemIcon>
-              <span style={{ flex:1 }}>Study Documents</span>
-              {docsOpen? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+              <span style={{ flex:1 }}>Documents</span>
             </NavItem>
-            <Collapse in={docsOpen} timeout="auto" unmountOnExit>
-              <NestedList>
-                {loadingDocs && <Typography sx={{ px:3, py:1, color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>Loading documents...</Typography>}
-                {fetchError && <Typography sx={{ px:3, py:1, color:'var(--color-danger-soft)' }}>Error: {fetchError}</Typography>}
-                {!loadingDocs && !fetchError && userDocuments.length===0 && user && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No documents yet.</Typography>}
-                {userDocuments.map(doc=>{ const active = selectedDocumentId===doc.id || (currentDocSlug && slugify(doc.title||String(doc.id))===currentDocSlug); return (
-                  <NavItem type="button" key={doc.id} className={active?'active':''} style={{ paddingLeft:40 }}
-                    onClick={()=>{ const slug=slugify(doc.title||String(doc.id)); try{ localStorage.setItem('lastDocSlug', slug);}catch{} navigate(`/documents/${slug}`); onDocumentSelect?.(doc.id); }}
-                  >
-                    <StatusDot complete={doc.processing_status === 'completed'} />
-                    <ItemIcon><InsertDriveFileIcon sx={{ fontSize:18 }} /></ItemIcon>
-                    <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{doc.title}</span>
-                    <ItemMenu onRename={()=>openRename(doc)} onDelete={()=>handleDeleteDocument(doc)} />
-                  </NavItem>
-                );})}
-              </NestedList>
-            </Collapse>
             <NavItem type="button" onClick={()=>setVideosOpen(v=>!v)} className={videosOpen?'active':''}>
               <ItemIcon><OndemandVideoIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Videos</span>
