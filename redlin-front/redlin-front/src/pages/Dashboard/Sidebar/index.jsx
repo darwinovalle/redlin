@@ -149,6 +149,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const isHome = location.pathname.startsWith('/home');
   const isBooks = location.pathname.startsWith('/books');
   const isDocuments = location.pathname.startsWith('/documents');
+  const isVideos = location.pathname.startsWith('/videos');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -347,26 +348,10 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
               <ItemIcon><FolderIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Documents</span>
             </NavItem>
-            <NavItem type="button" onClick={()=>setVideosOpen(v=>!v)} className={videosOpen?'active':''}>
+            <NavItem type="button" onClick={()=>navigate('/videos')} className={isVideos?'active':''}>
               <ItemIcon><OndemandVideoIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Videos</span>
-              {videosOpen? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
             </NavItem>
-            <Collapse in={videosOpen} timeout="auto" unmountOnExit>
-              <NestedList>
-                {loadingVideos && <Typography sx={{ px:3, py:1, color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>Loading videos...</Typography>}
-                {videoError && <Typography sx={{ px:3, py:1, color:'var(--color-danger-soft)' }}>{videoError}</Typography>}
-                {!loadingVideos && !videoError && videos.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No videos yet.</Typography>}
-                {videos.map(v=> { const active = currentVideoId && String(v.id)===currentVideoId; return (
-                  <NavItem type="button" key={v.id} className={active?'active':''} style={{ paddingLeft:40 }} onClick={()=>navigate(`/videos/${v.id}`)}>
-                    <StatusDot complete={v.processing_status === 'completed'} />
-                    <ItemIcon><OndemandVideoIcon sx={{ fontSize:18 }} /></ItemIcon>
-                    <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{v.title||v.video_id||'Video '+v.id}</span>
-                    <ItemMenu onRename={()=>openRenameVideo(v)} onDelete={()=>handleDeleteVideo(v)} />
-                  </NavItem>
-                );})}
-              </NestedList>
-            </Collapse>
             <NavItem type="button" onClick={()=>navigate('/books')} className={isBooks?'active':''}>
               <ItemIcon><MenuBookIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Books</span>

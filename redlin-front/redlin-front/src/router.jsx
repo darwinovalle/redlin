@@ -9,6 +9,7 @@ import LandingPage from './pages/LandingPage/LandingPage';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Documents = lazy(() => import('./pages/Documents'));
 const CSVStudy = lazy(() => import('./pages/CSVStudy'));
+const Videos = lazy(() => import('./pages/Videos'));
 const VideoStudy = lazy(() => import('./pages/VideoStudy'));
 const Classroom = lazy(() => import('./pages/Classroom'));
 const Books = lazy(() => import('./pages/Books'));
@@ -58,6 +59,7 @@ const RouterContent = () => {
             <Route path="/documents" element={<Documents />} />
             <Route path="/documents/:docSlug" element={<Dashboard />} />
             <Route path="/csv/:csvSlug" element={<CSVStudy />} />
+            <Route path="/videos" element={<Videos />} />
             <Route path="/videos/:videoId" element={<VideoStudy />} />
             <Route path="/classroom/:sessionId" element={<Classroom />} />
             <Route path="/books" element={<Books />} />
