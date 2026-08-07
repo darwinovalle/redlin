@@ -23,7 +23,7 @@ const MethodPercent = ({ label, value }) => (
       <Typography sx={{ fontSize: 14, color: 'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>{value.percent}% · {value.correct}/{value.total}</Typography>
     </Box>
     <Box sx={{ height: 8, borderRadius: 999, overflow: 'hidden', background: 'color-mix(in srgb, var(--color-white) 10%, transparent)' }}>
-      <Box sx={{ width: `${Math.max(0, Math.min(100, value.percent))}%`, height: '100%', borderRadius: 999, background: 'var(--color-teal)', transition: 'width .4s' }} />
+      <Box sx={{ width: `${Math.max(0, Math.min(100, value.percent))}%`, height: '100%', borderRadius: 999, background: 'var(--color-teal)' }} />
     </Box>
   </Box>
 );
