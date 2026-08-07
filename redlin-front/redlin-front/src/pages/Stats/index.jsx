@@ -151,6 +151,29 @@ const Stats = () => {
         </Box>
       </Box>
 
+      {/* per-source accuracy */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Accuracy by study source</Typography>
+        {!stats.per_source || stats.per_source.length === 0 ? (
+          <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 55%, transparent)', fontStyle: 'italic' }}>Answer quiz questions on a document, video, book or lecture to see its accuracy here.</Typography>
+        ) : (
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2 }}>
+            {stats.per_source.map((s) => (
+              <Box key={`${s.type}-${s.id}`} sx={{ p: 2.5, borderRadius: 3, border: '1px solid color-mix(in srgb, var(--color-white) 12%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                  <Chip size="small" label={s.type === 'document' ? 'Document' : s.type === 'video' ? 'Video' : 'Lecture'} sx={{ color: 'var(--color-teal)', bgcolor: 'color-mix(in srgb, var(--color-teal) 16%, transparent)', fontSize: 11 }} />
+                  <Typography sx={{ flex: 1, fontWeight: 700, fontSize: 15, minWidth: 0 }}>{s.title}</Typography>
+                  <Typography sx={{ color: 'var(--color-teal)', fontWeight: 800, fontSize: 16 }}>{s.overall.percent}%</Typography>
+                </Box>
+                {['MCQ', 'CLOZE', 'FEYNMAN'].filter((m) => (s.methods?.[m]?.total || 0) > 0).map((m) => (
+                  <MethodPercent key={m} label={m} value={s.methods[m]} />
+                ))}
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Box>
+
       {/* due reviews */}
       <Box sx={{ p: 3, borderRadius: 3, border: '1px solid color-mix(in srgb, var(--color-teal) 30%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>

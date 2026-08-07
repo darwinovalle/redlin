@@ -188,6 +188,7 @@ from rest_framework.decorators import api_view  # noqa: E402
 from django.db import transaction  # noqa: E402
 from django.db.models import Sum  # noqa: E402
 from django.utils import timezone  # noqa: E402
+from django.contrib.contenttypes.models import ContentType  # noqa: E402
 
 from .models import Topic as TopicModel, Card as CardModel, StudyTime, CoreAttempt, CoreLearningProgress  # noqa: E402
 from .serializers import StudyTimeSerializer  # noqa: E402
@@ -217,6 +218,82 @@ def _per_method_breakdown(user, method):
 		"correct": correct,
 		"percent": round(correct / total * 100, 1) if total else 0,
 	}
+
+
+# Map a quiz content-type -> the FK that points to its source (document/video/lecture).
+SOURCE_PARENT = {
+	("API", "mcq"): ("document", "document"),
+	("API", "cloze"): ("document", "document"),
+	("API", "feynman"): ("document", "document"),
+	("VIDEO", "videomcq"): ("video", "video"),
+	("VIDEO", "videocloze"): ("video", "video"),
+	("VIDEO", "videofeynman"): ("video", "video"),
+	("CLASSROOM", "classsessionmcq"): ("class_session", "lecture"),
+	("CLASSROOM", "classsessioncloze"): ("class_session", "lecture"),
+	("CLASSROOM", "classsessionfeynman"): ("class_session", "lecture"),
+}
+
+
+def _source_stats(user):
+	"""Per-source (document/video/lecture) quiz accuracy from the user's attempts."""
+	from collections import defaultdict
+
+	attempts = CoreAttempt.objects.filter(user=user)
+	cts = attempts.values_list("content_type_id", flat=True).distinct()
+	per = {}  # (kind, id) -> {type, title, methods:{method:{total,correct}}}
+
+	def ensure(kind, sid, title):
+		key = (kind, sid)
+		if key not in per:
+			per[key] = {"id": sid, "type": kind, "title": title,
+						"methods": {"MCQ": {"total": 0, "correct": 0}, "CLOZE": {"total": 0, "correct": 0},
+									"FEYNMAN": {"total": 0, "correct": 0}}}
+		return per[key]
+
+	for ct_id in cts:
+		ct = ContentType.objects.get(pk=ct_id)
+		key = (ct.app_label, ct.model)
+		if key not in SOURCE_PARENT:
+			continue
+		parent_attr, kind = SOURCE_PARENT[key]
+		ids = list(attempts.filter(content_type_id=ct_id).values_list("object_id", flat=True).distinct())
+		model = ct.model_class()
+		obj_to_parent = {}
+		for obj in model.objects.filter(pk__in=ids).select_related(parent_attr):
+			par = getattr(obj, parent_attr)
+			if par is not None:
+				obj_to_parent[obj.pk] = par
+		for a in attempts.filter(content_type_id=ct_id):
+			par = obj_to_parent.get(a.object_id)
+			if par is None:
+				continue
+			entry = ensure(kind, par.id, getattr(par, "title", "") or "Untitled")
+			key_m = a.method if a.method in entry["methods"] else "MCQ"
+			if a.method not in entry["methods"]:
+				entry["methods"][a.method] = {"total": 0, "correct": 0}
+			entry["methods"][a.method]["total"] += 1
+			if a.correct:
+				entry["methods"][a.method]["correct"] += 1
+
+	out = []
+	for entry in per.values():
+		ov_total = ov_correct = 0
+		for m in entry["methods"]:
+			v = entry["methods"][m]
+			if v["total"]:
+				v["percent"] = round(v["correct"] / v["total"] * 100, 1)
+				ov_total += v["total"]
+				ov_correct += v["correct"]
+			else:
+				v["percent"] = 0
+		entry["overall"] = {
+			"total": ov_total,
+			"correct": ov_correct,
+			"percent": round(ov_correct / ov_total * 100, 1) if ov_total else 0,
+		}
+		out.append(entry)
+	out.sort(key=lambda x: -x["overall"]["total"])
+	return out
 
 
 def _stats_payload(user):
@@ -258,6 +335,7 @@ def _stats_payload(user):
 			for m in ("MCQ", "CLOZE", "FEYNMAN", "MIXED")
 		},
 		"study": {"total_seconds": study_total, "per_topic": per_topic, "per_day": per_day},
+		"per_source": _source_stats(user),
 		"due": {"count": due_count},
 	}
 
