@@ -180,3 +180,145 @@ class CardResourceViewSet(viewsets.ModelViewSet):
 		if card.user_id != self.request.user.id:
 			raise PermissionDenied("This card belongs to another user.")
 		serializer.save()
+
+
+# ------------------------------------------------------------- analytics ---
+
+from rest_framework.decorators import api_view  # noqa: E402
+from django.db import transaction  # noqa: E402
+from django.db.models import Sum  # noqa: E402
+from django.utils import timezone  # noqa: E402
+
+from .models import Topic as TopicModel, Card as CardModel, StudyTime, CoreAttempt, CoreLearningProgress  # noqa: E402
+from .serializers import StudyTimeSerializer  # noqa: E402
+
+
+def _per_method_breakdown(user, method):
+	qs = CoreAttempt.objects.filter(user=user, method=method)
+	total = qs.count()
+	correct = qs.filter(correct=True).count()
+	return {
+		"total": total,
+		"correct": correct,
+		"percent": round(correct / total * 100, 1) if total else 0,
+	}
+
+
+def _stats_payload(user):
+	xp = user.xp_account
+	today = timezone.localdate()
+	attempts_total = CoreAttempt.objects.filter(user=user).count()
+	attempts_ok = CoreAttempt.objects.filter(user=user, correct=True).count()
+	study_total = StudyTime.objects.filter(user=user).aggregate(t=Sum("seconds"))["t"] or 0
+	per_topic = list(
+		StudyTime.objects.filter(user=user)
+		.exclude(topic__isnull=True)
+		.values("topic_id", "topic__name")
+		.annotate(seconds=Sum("seconds"))
+		.order_by("-seconds")
+	)
+	per_day = list(
+		StudyTime.objects.filter(user=user)
+		.values("started_at__date")
+		.annotate(seconds=Sum("seconds"))
+		.order_by("started_at__date")
+	)
+	due_count = CoreLearningProgress.objects.filter(
+		user=user, next_review_at__lte=timezone.now()
+	).count()
+	return {
+		"streak": {
+			"current": xp.current_streak,
+			"longest": xp.longest_streak,
+			"today_active": xp.last_active_date == today,
+		},
+		"xp": {"total": xp.xp_total, "level": xp.level},
+		"overall": {
+			"total": attempts_total,
+			"correct": attempts_ok,
+			"percent": round(attempts_ok / attempts_total * 100, 1) if attempts_total else 0,
+		},
+		"methods": {
+			m: _per_method_breakdown(user, m)
+			for m in ("MCQ", "CLOZE", "FEYNMAN", "MIXED")
+		},
+		"study": {"total_seconds": study_total, "per_topic": per_topic, "per_day": per_day},
+		"due": {"count": due_count},
+	}
+
+
+@api_view(["POST"])
+def attempt_view(request):
+	"""Registra una respuesta y avanza scheduling SR + streak + XP (transaction)."""
+	from CORE.services.srs import record_attempt, resolve_target
+
+	data = request.data
+	ct_id, oid = data.get("content_type_id"), data.get("object_id")
+	if not ct_id or oid is None:
+		return Response({"error": "content_type_id and object_id are required"}, status=400)
+	ct_id, oid = int(ct_id), int(oid)
+	if resolve_target(ct_id, oid) is None:
+		return Response({"error": "unknown content target"}, status=400)
+	method = str(data.get("method") or "MCQ").upper()
+	with transaction.atomic():
+		result = record_attempt(
+			user=request.user, method=method, content_type_id=ct_id, object_id=oid,
+			correct=bool(data.get("correct")), latency_ms=data.get("latency_ms"),
+			raw_answer=data.get("raw_answer"), ai_score=data.get("ai_score"),
+		)
+	return Response(result, status=201)
+
+
+@api_view(["POST", "GET"])
+def study_view(request):
+	"""POST: registra tiempo de estudio. GET: retorna analytics completos."""
+	if request.method == "POST":
+		data = request.data
+		topic = TopicModel.objects.filter(id=data.get("topic"), user=request.user).first() if data.get("topic") else None
+		card = CardModel.objects.filter(id=data.get("card"), user=request.user).first() if data.get("card") else None
+		try:
+			seconds = max(0, min(int(data.get("seconds") or 0), 86400))
+		except (TypeError, ValueError):
+			seconds = 0
+		st = StudyTime.objects.create(
+			user=request.user, topic=topic, card=card,
+			method=str(data.get("method") or ""), seconds=seconds,
+			object_id=data.get("object_id"),
+		)
+		return Response(StudyTimeSerializer(st).data, status=201)
+	return Response(_stats_payload(request.user))
+
+
+@api_view(["GET"])
+def stats_view(request):
+	return Response(_stats_payload(request.user))
+
+
+@api_view(["GET"])
+def reminders_due_view(request):
+	"""Ítems de SR vencidos (next_review_at <= now) con su texto para revisar."""
+	from CORE.services.srs import resolve_target
+
+	now = timezone.now()
+	rows = CoreLearningProgress.objects.filter(
+		user=request.user, next_review_at__lte=now
+	).order_by("next_review_at")
+	items = []
+	for p in rows:
+		target = resolve_target(p.content_type_id, p.object_id)
+		if target is None:
+			continue
+		question = (
+			getattr(target, "question", None)
+			or getattr(target, "text_with_blank", None)
+			or getattr(target, "prompt", None)
+			or str(target)
+		)
+		model = p.content_type.model if p.content_type_id else ""
+		method = "FEYNMAN" if "feynman" in model else ("CLOZE" if "cloze" in model else "MCQ")
+		items.append({
+			"progress_id": p.id, "content_type": model, "object_id": p.object_id,
+			"method": method, "question": question, "status": p.status,
+			"interval_days": p.interval, "due_at": p.next_review_at,
+		})
+	return Response({"count": len(items), "items": items})

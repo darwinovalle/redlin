@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.contenttypes.models import ContentType
 
-from .models import Space, Topic, Board, Column, Card, CardResource
+from .models import Space, Topic, Board, Column, Card, CardResource, StudyTime
 
 
 class SpaceSerializer(serializers.ModelSerializer):
@@ -111,6 +111,21 @@ class BoardSerializer(serializers.ModelSerializer):
         model = Board
         fields = ["id", "topic", "title", "color", "created_at", "columns"]
         read_only_fields = ["id", "created_at"]
+
+
+class StudyTimeSerializer(serializers.ModelSerializer):
+    topic_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StudyTime
+        fields = [
+            "id", "topic", "topic_name", "card", "method", "started_at",
+            "seconds", "content_type", "object_id", "created_at",
+        ]
+        read_only_fields = ["id", "topic_name", "created_at"]
+
+    def get_topic_name(self, obj):
+        return obj.topic.name if obj.topic_id else ""
 
 
 def ensure_default_board(topic):

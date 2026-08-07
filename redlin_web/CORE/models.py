@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from API.models import User
@@ -246,6 +247,28 @@ class Card(models.Model):
 
 	def __str__(self):
 		return self.title
+
+
+class StudyTime(models.Model):
+	"""Tiempo de estudio acumulado, opcionalmente ligado a Topic/Card/recurso."""
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="study_times")
+	topic = models.ForeignKey("Topic", on_delete=models.SET_NULL, null=True, blank=True, related_name="study_times")
+	card = models.ForeignKey("Card", on_delete=models.SET_NULL, null=True, blank=True, related_name="study_times")
+	content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True)
+	object_id = models.PositiveIntegerField(null=True, blank=True)
+	method = models.CharField(max_length=20, blank=True, default="")
+	started_at = models.DateTimeField(default=timezone.now)
+	seconds = models.PositiveIntegerField(default=0)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		indexes = [
+			models.Index(fields=["user", "started_at"]),
+			models.Index(fields=["user", "topic"]),
+		]
+
+	def __str__(self):
+		return f"StudyTime(user={self.user_id}, topic={self.topic_id}, {self.seconds}s)"
 
 
 class CardResource(models.Model):
