@@ -66,14 +66,19 @@ const Board = () => {
   const [cardCol, setCardCol] = useState(null);
   const lib = useResourceLibrary(user?.id);
 
-  const loadTopic = useCallback(async () => {
-    setLoading(true); setError(null);
+  // silent=true refreshes data without toggling the full-screen spinner, so a
+  // drag/reload doesn't unmount the board (which was causing a white blink).
+  const loadTopic = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    setError(null);
     try {
       const t = await topicsService.getTopic(topicId);
       setTopic(t);
     } catch (e) {
-      setError(e?.message || 'Could not load this subject.');
-    } finally { setLoading(false); }
+      if (!silent) setError(e?.message || 'Could not load this subject.');
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, [topicId]);
 
   useEffect(() => { if (topicId) loadTopic(); }, [topicId, loadTopic]);
@@ -97,7 +102,7 @@ const Board = () => {
       },
     } : t);
     try { await topicsService.updateCard(cardId, { column: toColumnId }); }
-    finally { loadTopic(); }
+    finally { loadTopic(true); }
   };
 
   const handleDragEnd = (e) => {
@@ -120,30 +125,30 @@ const Board = () => {
       try { await topicsService.addResource(card.id, resType, resId); }
       catch (e) { window.alert((e?.response?.data?.detail) || 'Could not attach the material to the card.'); }
     } catch (e) { window.alert(e?.response?.data?.detail || 'Failed to add card'); }
-    await loadTopic();
+    await loadTopic(true);
   };
 
   const addColumn = async (title) => {
     setOpenCol(false);
     try { await topicsService.createColumn({ board: topic?.board?.id, title }); }
     catch (e) { window.alert(e?.response?.data?.detail || 'Failed to add column'); }
-    await loadTopic();
+    await loadTopic(true);
   };
 
   const deleteColumn = async (col) => {
     if (!window.confirm(`Delete column "${col.title}"? Its cards are removed too.`)) return;
     await topicsService.deleteColumn(col.id);
-    await loadTopic();
+    await loadTopic(true);
   };
 
   const deleteCard = async (card) => {
     if (!window.confirm(`Delete card "${card.title}"?`)) return;
     await topicsService.deleteCard(card.id);
-    await loadTopic();
+    await loadTopic(true);
   };
 
-  if (loading) return <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><CircularProgress sx={{ color: 'var(--color-teal)' }} /></Box>;
-  if (!topic) return <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>{error || 'Subject not found'}</Box>;
+  if (loading) return <Box sx={{ minHeight: '100vh', width: '100%', background: 'var(--color-navy-deep)', display: 'grid', placeItems: 'center' }}><CircularProgress sx={{ color: 'var(--color-teal)' }} /></Box>;
+  if (!topic) return <Box sx={{ minHeight: '100vh', width: '100%', background: 'var(--color-navy-deep)', display: 'grid', placeItems: 'center', color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>{error || 'Subject not found'}</Box>;
 
   return (
     <Box sx={{ minHeight: '100vh', width: '100%', background: 'var(--color-navy-deep)', p: { xs: 3, md: 5 }, color: 'var(--color-white)', display: 'flex', flexDirection: 'column' }}>
