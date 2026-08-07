@@ -50,6 +50,7 @@ class ClassSessionViewSet(viewsets.ModelViewSet):
                     'title': s.title,
                     'status': s.status,
                     'language': s.language,
+                    'cover_image_url': request.build_absolute_uri(s.cover_image.url) if s.cover_image else None,
                     'created_at': s.created_at,
                     'updated_at': s.updated_at,
                 })
@@ -75,6 +76,17 @@ class ClassSessionViewSet(viewsets.ModelViewSet):
             status=ClassSession.STATUS_NEW,
         )
         return Response(ClassSessionSerializer(session).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"], url_path="cover")
+    def cover(self, request, pk=None):
+        """Set the card cover image for a classroom space (owner only)."""
+        session = self.get_object()
+        cover = request.FILES.get("cover_image")
+        if not cover:
+            return Response({"detail": "cover_image is required."}, status=status.HTTP_400_BAD_REQUEST)
+        session.cover_image = cover
+        session.save(update_fields=["cover_image"])
+        return Response(ClassSessionSerializer(session, context={"request": request}).data)
 
     @action(detail=True, methods=["post"], url_path="stop")
     def stop(self, request, pk=None):

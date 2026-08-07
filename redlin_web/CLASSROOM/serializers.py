@@ -43,6 +43,7 @@ class TranscriptSegmentSerializer(serializers.ModelSerializer):
 
 class ClassSessionSerializer(serializers.ModelSerializer):
     segments = TranscriptSegmentSerializer(many=True, read_only=True)
+    cover_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = ClassSession
@@ -54,6 +55,7 @@ class ClassSessionSerializer(serializers.ModelSerializer):
             "status",
             "language",
             "audio_file",
+            "cover_image_url",
             "transcript_text",
             "source_meta",
             "error_message",
@@ -63,6 +65,15 @@ class ClassSessionSerializer(serializers.ModelSerializer):
             "updated_at",
             "segments",
         ]
+
+    def get_cover_image_url(self, obj):
+        if not obj.cover_image:
+            return None
+        request = self.context.get("request")
+        url = obj.cover_image.url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
         read_only_fields = [
             "id",
             "user",
