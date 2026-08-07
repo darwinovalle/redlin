@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { srService } from '../../services/api/sr';
 import {
   Alert,
   Box,
@@ -148,6 +149,8 @@ const ClassroomQuiz = ({ mcqs, focus = false, autoStart = false, onStart, onExit
 
     setAnswers((previous) => ({ ...previous, [idx]: picked }));
     setFeedback(isCorrect ? 'correct' : 'incorrect');
+    // Feed the SR/stats engine (fire-and-forget).
+    srService.submitAttempt({ model: 'class_mcq', item_id: current.id, method: 'MCQ', correct: isCorrect }).then(() => {}).catch(() => {});
 
     if (isCorrect) {
       setScore((previousScore) => previousScore + 1);

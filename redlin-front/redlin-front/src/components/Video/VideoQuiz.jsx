@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Button, Card, CardActionArea, FormControlLabel, Radio, RadioGroup, Stack, CircularProgress, Alert } from '@mui/material';
 import FocusToggle from '../common/FocusToggle';
+import { srService } from '../../services/api/sr';
 
 // Accepts mcqs array [{question, correct_answer, option_1, option_2, option_3}]
 const shuffle = (arr) => {
@@ -83,6 +84,8 @@ const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, onFocus
     setAnswers(a => ({ ...a, [idx]: picked }));
     setFeedback(correct ? 'correct' : 'incorrect');
     if (correct) setScore(s => s + 1);
+    // Feed the SR/stats engine (fire-and-forget).
+    srService.submitAttempt({ model: 'video_mcq', item_id: current.id, method: 'MCQ', correct }).then(() => {}).catch(() => {});
     // audio feedback only
     if (correct) {
       correctAudioRef.current && correctAudioRef.current.play().catch(()=>{});
