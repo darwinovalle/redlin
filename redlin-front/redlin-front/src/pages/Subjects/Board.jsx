@@ -129,7 +129,7 @@ const Board = () => {
     <Box sx={{ minHeight: '100vh', width: '100%', background: 'var(--color-navy-deep)', p: { xs: 3, md: 5 }, color: 'var(--color-white)', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
         <IconButton onClick={() => navigate('/subjects')} aria-label="Back to subjects" sx={{ color: 'var(--color-white)' }}><ArrowBackIcon /></IconButton>
-        <Box sx={{ width: 40, height: 40, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, background: `color-mix(in srgb, ${topic.color || '#14B8A6'} 20%, transparent)` }}>{topic.emoji || '🧠'}</Box>
+        <Box sx={{ width: 40, height: 40, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, background: `color-mix(in srgb, ${topic.color || 'var(--color-teal)'} 20%, transparent)` }}>{topic.emoji || '🧠'}</Box>
         <Typography variant="h5" sx={{ fontWeight: 800 }}>{topic.name}</Typography>
       </Box>
 

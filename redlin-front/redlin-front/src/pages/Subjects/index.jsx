@@ -13,8 +13,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Chip from '@mui/material/Chip';
 import { useNavigate } from 'react-router-dom';
 
-// Accent swatches for a New subject. #14B8A6 is the app's teal (--color-teal).
-const PALETTE = ['#14B8A6', '#38BDF8', '#6366F1', '#A855F7', '#F43F5E', '#F59E0B', '#22C55E'];
+// Accent swatches for a New subject. #20C997 is the app's teal (--color-teal).
+const PALETTE = ['#20C997', '#38BDF8', '#6366F1', '#A855F7', '#F43F5E', '#F59E0B', '#22C55E'];
 
 const NewSubjectDialog = ({ open, onClose, onCreated }) => {
   const [name, setName] = useState('');
@@ -186,7 +186,7 @@ const Subjects = () => {
               <Box sx={{ height: 6, bgcolor: t.color || 'var(--color-teal)' }} />
               <Box sx={{ p: 2.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                  <Box sx={{ width: 44, height: 44, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, background: `color-mix(in srgb, ${t.color || '#14B8A6'} 18%, transparent)` }}>{t.emoji || '🧠'}</Box>
+                  <Box sx={{ width: 44, height: 44, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, background: `color-mix(in srgb, ${t.color || 'var(--color-teal)'} 18%, transparent)` }}>{t.emoji || '🧠'}</Box>
                   <Box sx={{ minWidth: 0 }}>
                     <Typography sx={{ fontWeight: 700, fontSize: 17, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.name}</Typography>
                     <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>{t.board ? `${t.board.columns.filter((c) => (c.cards || []).length > 0).length} active column` : 'board'}</Typography>
