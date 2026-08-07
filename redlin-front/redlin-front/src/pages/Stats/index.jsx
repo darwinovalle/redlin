@@ -123,9 +123,9 @@ const Stats = () => {
         {/* accuracy */}
         <Box sx={{ p: 3, borderRadius: 3, border: '1px solid color-mix(in srgb, var(--color-white) 12%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)' }}>
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Quiz accuracy</Typography>
-          {mT.length === 0 ? (
+          {mql.length === 0 ? (
             <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 55%, transparent)', fontStyle: 'italic' }}>No practice recorded yet. Keep answering MCQs, Cloze and Feynman prompts.</Typography>
-          ) : mT.map((x) => <MethodPercent key={x.label} label={x.label} value={x.value} />)}
+          ) : mql.map((x) => <MethodPercent key={x.label} label={x.label} value={x.value} />)}
           <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', display: 'flex', justifyContent: 'space-between' }}>
             <Typography sx={{ fontWeight: 600 }}>Overall</Typography>
             <Typography sx={{ color: 'var(--color-teal)', fontWeight: 700 }}>{stats.overall.percent}% ({stats.overall.correct}/{stats.overall.total})</Typography>
