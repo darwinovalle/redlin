@@ -151,6 +151,8 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const isDocuments = location.pathname.startsWith('/documents');
   const isVideos = location.pathname.startsWith('/videos');
   const isClassroom = location.pathname.startsWith('/classroom');
+  const isSubjects = location.pathname.startsWith('/subjects');
+  const isStats = location.pathname.startsWith('/stats');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -368,28 +370,16 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </Collapse>
           </div> */}
           <div className="nav-section">
-            <NavItem type="button" onClick={()=>setKanbanOpen(v=>!v)} className={kanbanOpen?'active':''}>
-              <ItemIcon><ViewKanbanIcon sx={{ fontSize:20 }} /></ItemIcon>
+            <NavItem type="button" onClick={()=>navigate('/subjects')} className={isSubjects?'active':''}>
+              <ItemIcon><ViewKanbanIcon sx={{ fontSize:20 }}/></ItemIcon>
               <span style={{ flex:1 }}>Kanban Tasks</span>
-              {kanbanOpen? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
             </NavItem>
-            <Collapse in={kanbanOpen} timeout="auto" unmountOnExit>
-              <NestedList>
-                <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No tasks yet.</Typography>
-              </NestedList>
-            </Collapse>
           </div>
           <div className="nav-section">
-            <NavItem type="button" onClick={()=>setStatsOpen(v=>!v)} className={statsOpen?'active':''}>
-              <ItemIcon><BarChartIcon sx={{ fontSize:20 }} /></ItemIcon>
+            <NavItem type="button" onClick={()=>navigate('/stats')} className={isStats?'active':''}>
+              <ItemIcon><BarChartIcon sx={{ fontSize:20 }}/></ItemIcon>
               <span style={{ flex:1 }}>Stats</span>
-              {statsOpen? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
             </NavItem>
-            <Collapse in={statsOpen} timeout="auto" unmountOnExit>
-              <NestedList>
-                <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No stats yet.</Typography>
-              </NestedList>
-            </Collapse>
           </div>
           <AddSpaceButton type="button" onClick={()=>setOpenSampleModal(true)}>
             <AddIcon sx={{ fontSize:18, mr:1 }} />
