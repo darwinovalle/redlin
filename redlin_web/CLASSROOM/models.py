@@ -40,6 +40,8 @@ class ClassSession(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_RECORDING)
     language = models.CharField(max_length=8, default="es")
     audio_file = models.FileField(upload_to="class_audio/", null=True, blank=True)
+    # Optional cover image shown in the /classroom directory card.
+    cover_image = models.FileField(upload_to="class_covers/", null=True, blank=True)
     transcript_text = models.TextField(blank=True, default="")
     source_meta = models.JSONField(default=dict, blank=True)
     error_message = models.TextField(blank=True, default="")

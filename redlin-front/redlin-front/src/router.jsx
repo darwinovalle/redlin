@@ -12,6 +12,7 @@ const CSVStudy = lazy(() => import('./pages/CSVStudy'));
 const Videos = lazy(() => import('./pages/Videos'));
 const VideoStudy = lazy(() => import('./pages/VideoStudy'));
 const Classroom = lazy(() => import('./pages/Classroom'));
+const ClassroomDirectory = lazy(() => import('./pages/ClassroomDirectory'));
 const Books = lazy(() => import('./pages/Books'));
 const BookDetail = lazy(() => import('./pages/Books/BookDetail'));
 const BookUpload = lazy(() => import('./pages/Books/BookUpload'));
@@ -61,6 +62,7 @@ const RouterContent = () => {
             <Route path="/csv/:csvSlug" element={<CSVStudy />} />
             <Route path="/videos" element={<Videos />} />
             <Route path="/videos/:videoId" element={<VideoStudy />} />
+            <Route path="/classroom" element={<ClassroomDirectory />} />
             <Route path="/classroom/:sessionId" element={<Classroom />} />
             <Route path="/books" element={<Books />} />
             <Route path="/books/new" element={<BookUpload />} />

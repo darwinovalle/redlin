@@ -62,6 +62,15 @@ export const classroomService = {
     return response.data;
   },
 
+  async uploadCover(sessionId, file) {
+    if (!sessionId) throw new Error('sessionId is required');
+    if (!file) throw new Error('cover file is required');
+    const formData = new FormData();
+    formData.append('cover_image', file);
+    const response = await api.post(`/classroom/sessions/${sessionId}/cover/`, formData);
+    return response.data;
+  },
+
   async getFeynmanPrompts(sessionId) {
     if (!sessionId) throw new Error('sessionId is required');
     const response = await api.get(`/classroom/sessions/${sessionId}/feynman/prompts/`);
