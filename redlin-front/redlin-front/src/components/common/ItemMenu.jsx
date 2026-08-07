@@ -4,8 +4,9 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
-// Reusable 3-dot kebab menu (Rename / Delete), matching the sidebar's ItemMenu.
-const ItemMenu = ({ onRename, onDelete }) => {
+// Reusable 3-dot kebab menu (Rename / optional Add image / Delete). The Add image
+// option only renders when onAddImage is provided.
+const ItemMenu = ({ onRename, onDelete, onAddImage, addImageLabel = 'Add image' }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const handleOpen = (e) => { e.stopPropagation(); setAnchorEl(e.currentTarget); };
@@ -47,6 +48,11 @@ const ItemMenu = ({ onRename, onDelete }) => {
         <MenuItem onClick={(e) => { e.stopPropagation(); handleClose(); onRename?.(); }} sx={{ fontSize: 14, '&:hover': { backgroundColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' } }}>
           Rename
         </MenuItem>
+        {onAddImage && (
+          <MenuItem onClick={(e) => { e.stopPropagation(); handleClose(); onAddImage?.(); }} sx={{ fontSize: 14, '&:hover': { backgroundColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' } }}>
+          {addImageLabel}
+        </MenuItem>
+        )}
         <MenuItem onClick={(e) => { e.stopPropagation(); handleClose(); onDelete?.(); }} sx={{ fontSize: 14, color: 'var(--color-danger-soft)', '&:hover': { backgroundColor: 'color-mix(in srgb, var(--color-danger-softer) 14%, transparent)' } }}>
           Delete
         </MenuItem>

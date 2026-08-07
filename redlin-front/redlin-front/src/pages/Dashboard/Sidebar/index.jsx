@@ -150,6 +150,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const isBooks = location.pathname.startsWith('/books');
   const isDocuments = location.pathname.startsWith('/documents');
   const isVideos = location.pathname.startsWith('/videos');
+  const isClassroom = location.pathname.startsWith('/classroom');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -324,26 +325,10 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
               <ItemIcon><HomeIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span>Home</span>
             </NavItem>
-            <NavItem type="button" onClick={()=>setClassroomOpen(v=>!v)} className={classroomOpen?'active':''}>
+            <NavItem type="button" onClick={()=>navigate('/classroom')} className={isClassroom?'active':''}>
               <ItemIcon><SchoolIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Classroom Spaces</span>
-              {classroomOpen? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
             </NavItem>
-            <Collapse in={classroomOpen} timeout="auto" unmountOnExit>
-              <NestedList>
-                {loadingClassroomSessions && <Typography sx={{ px:3, py:1, color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>Loading classrooms...</Typography>}
-                {classroomError && <Typography sx={{ px:3, py:1, color:'var(--color-danger-soft)' }}>{classroomError}</Typography>}
-                {!loadingClassroomSessions && !classroomError && classroomSessions.length===0 && <Typography sx={{ px:3, py:1, fontStyle:'italic', color:'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>No classroom spaces yet.</Typography>}
-                {classroomSessions.map((session)=> { const active = currentClassroomSessionId && String(session.id)===currentClassroomSessionId; return (
-                  <NavItem type="button" key={session.id} onClick={()=>navigate(`/classroom/${session.id}`)} style={{ paddingLeft:40 }}>
-                    <StatusDot complete={session.status === 'completed'} />
-                    <ItemIcon><MicIcon sx={{ fontSize:18 }} /></ItemIcon>
-                    <span style={{ flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{session.title}</span>
-                    <ItemMenu onRename={()=>openRenameClass(session)} onDelete={()=>handleDeleteClass(session)} />
-                  </NavItem>
-                );})}
-              </NestedList>
-            </Collapse>
             <NavItem type="button" onClick={()=>navigate('/documents')} className={isDocuments?'active':''}>
               <ItemIcon><FolderIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Documents</span>
