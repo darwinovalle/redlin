@@ -13,6 +13,7 @@ import {
   Alert,
 } from '@mui/material';
 import { documentService } from '../../services/api';
+import { srService } from '../../services/api/sr';
 import FocusToggle from '../common/FocusToggle';
 
 const shuffleArray = (array) => {
@@ -140,6 +141,10 @@ const QuizView = ({ documentId, focus = false, autoStart = false, onStart, onExi
 
     setFeedback(correct ? 'correct' : 'incorrect');
     if (correct) setScore(s => s + 1);
+
+    // Feed the SR/stats engine: record this MCQ attempt (fire-and-forget).
+    srService.submitAttempt({ model: 'mcq', item_id: currentCard.id, method: 'MCQ', correct })
+      .then(() => {}).catch(() => {})
 
     // audio feedback only
     if (correct) {

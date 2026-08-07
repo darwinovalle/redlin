@@ -193,6 +193,21 @@ from .models import Topic as TopicModel, Card as CardModel, StudyTime, CoreAttem
 from .serializers import StudyTimeSerializer  # noqa: E402
 
 
+# Friendly slug -> (app_label, model) so the frontend can post an attempt with
+# just {model, item_id} instead of knowing content-type ids.
+MODEL_SLUGS = {
+	"mcq": ("API", "mcq"),
+	"cloze": ("API", "cloze"),
+	"feynman": ("API", "feynman"),
+	"video_mcq": ("VIDEO", "videomcq"),
+	"video_cloze": ("VIDEO", "videocloze"),
+	"video_feynman": ("VIDEO", "videofeynman"),
+	"class_mcq": ("CLASSROOM", "classsessionmcq"),
+	"class_cloze": ("CLASSROOM", "classsessioncloze"),
+	"class_feynman": ("CLASSROOM", "classsessionfeynman"),
+}
+
+
 def _per_method_breakdown(user, method):
 	qs = CoreAttempt.objects.filter(user=user, method=method)
 	total = qs.count()
@@ -251,11 +266,20 @@ def _stats_payload(user):
 def attempt_view(request):
 	"""Registra una respuesta y avanza scheduling SR + streak + XP (transaction)."""
 	from CORE.services.srs import record_attempt, resolve_target
+	from django.contrib.contenttypes.models import ContentType
 
 	data = request.data
 	ct_id, oid = data.get("content_type_id"), data.get("object_id")
+	model = data.get("model")
+	if model and model in MODEL_SLUGS:
+		app_label, model_name = MODEL_SLUGS[model]
+		ct_id = ContentType.objects.get(app_label=app_label, model=model_name).id
+		oid = data.get("item_id") or oid
 	if not ct_id or oid is None:
-		return Response({"error": "content_type_id and object_id are required"}, status=400)
+		return Response(
+			{"error": "content_type_id+object_id (or model+item_id) are required"},
+			status=400,
+		)
 	ct_id, oid = int(ct_id), int(oid)
 	if resolve_target(ct_id, oid) is None:
 		return Response({"error": "unknown content target"}, status=400)

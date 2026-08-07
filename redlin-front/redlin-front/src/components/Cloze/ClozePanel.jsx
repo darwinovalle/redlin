@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Typography, Button, Stack } from '@mui/material';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 import { clozeService } from '../../services/api/cloze.jsx';
+import { srService } from '../../services/api/sr';
 import ClozeCard from './ClozeCard';
 import FocusToggle from '../common/FocusToggle';
 
@@ -203,7 +204,13 @@ const ClozePanel = ({ documentId, focus = false, autoStart = false, onStart, onF
             cloze={c}
             onValidate={handleValidate}
             sessionKey={sessionKey}
-            onResult={({ clozeId, correct }) => setAnsweredMap((prev) => prev[clozeId] == null ? { ...prev, [clozeId]: correct } : prev)}
+            onResult={({ clozeId, correct }) => {
+              if (answeredMap[clozeId] == null) {
+                // Feed the SR/stats engine (fire-and-forget).
+                srService.submitAttempt({ model: 'cloze', item_id: clozeId, method: 'CLOZE', correct }).then(() => {}).catch(() => {});
+                setAnsweredMap((prev) => ({ ...prev, [clozeId]: correct }));
+              }
+            }}
           />
         ))}
       </Stack>
