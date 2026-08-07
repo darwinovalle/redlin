@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { srService } from '../../services/api/sr';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { topicsService } from '../../services/api/topics';
@@ -19,6 +20,8 @@ import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
 import MenuItem from '@mui/material/MenuItem';
+import PlayCircleRoundedIcon from '@mui/icons-material/PlayCircleRounded';
+import PauseCircleRoundedIcon from '@mui/icons-material/PauseCircleRounded';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
@@ -64,7 +67,33 @@ const Board = () => {
   const [openCol, setOpenCol] = useState(false);
   const [cardCol, setCardCol] = useState(null);
   const [activeCard, setActiveCard] = useState(null);
+  // Study timer -> records time to the stats/SR engine on stop.
+  const [ticking, setTicking] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const startAtRef = useRef(null);
   const lib = useResourceLibrary(user?.id);
+
+  useEffect(() => {
+    if (!ticking) return undefined;
+    const id = window.setInterval(() => {
+      setElapsed(Math.round((Date.now() - (startAtRef.current || Date.now())) / 1000));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [ticking]);
+
+  const toggleTimer = () => {
+    if (ticking) {
+      const s = Math.round((Date.now() - (startAtRef.current || Date.now())) / 1000);
+      setTicking(false); setElapsed(0);
+      if (s >= 3 && topic?.id) {
+        srService.recordStudy({ seconds: s, topic: topic.id, method: 'STUDY' }).catch(() => {});
+      }
+    } else {
+      startAtRef.current = Date.now();
+      setElapsed(0);
+      setTicking(true);
+    }
+  };
 
   // silent=true refreshes data without toggling the full-screen spinner, so a
   // drag/reload doesn't unmount the board (which was causing a white blink).
@@ -165,6 +194,13 @@ const Board = () => {
         <Box sx={{ width: 40, height: 40, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, background: `color-mix(in srgb, ${topic.color || 'var(--color-teal)'} 20%, transparent)` }}>{topic.emoji || '🧠'}</Box>
         <Typography variant="h5" sx={{ fontWeight: 800 }}>{topic.name}</Typography>
         <Chip size="small" label="drag cards between columns to change status" sx={{ color: 'color-mix(in srgb, var(--color-white) 60%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-white) 8%, transparent)', fontSize: 12 }} />
+        <Button
+          onClick={toggleTimer}
+          startIcon={ticking ? <PauseCircleRoundedIcon /> : <PlayCircleRoundedIcon />}
+          sx={{ ml: 'auto', borderRadius: '999px', px: 2.5, py: 0.8, color: 'var(--color-navy-deep)', bgcolor: 'var(--color-teal)', fontWeight: 700, textTransform: 'none', '&:hover': { bgcolor: 'var(--color-teal-pale)' } }}
+        >
+          {ticking ? `Stop · ${Math.floor(elapsed / 60)}m ${(elapsed % 60).toString().padStart(2, '0')}s` : 'Start studying'}
+        </Button>
       </Box>
 
       <DndContext onDragStart={handleDragStart} onDragEnd={(e) => { handleDragEnd(e); closeDrag(); }} onDragCancel={closeDrag}>

@@ -317,7 +317,8 @@ def reminders_due_view(request):
 		model = p.content_type.model if p.content_type_id else ""
 		method = "FEYNMAN" if "feynman" in model else ("CLOZE" if "cloze" in model else "MCQ")
 		items.append({
-			"progress_id": p.id, "content_type": model, "object_id": p.object_id,
+			"progress_id": p.id, "content_type": model, "content_type_id": p.content_type_id,
+			"object_id": p.object_id,
 			"method": method, "question": question, "status": p.status,
 			"interval_days": p.interval, "due_at": p.next_review_at,
 		})
