@@ -125,7 +125,7 @@ const Board = () => {
   if (!topic) return <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>{error || 'Subject not found'}</Box>;
 
   return (
-    <Box sx={{ minHeight: '100vh', p: { xs: 3, md: 5 }, color: 'var(--color-white)', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ minHeight: '100vh', width: '100%', background: 'var(--color-navy-deep)', p: { xs: 3, md: 5 }, color: 'var(--color-white)', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
         <IconButton onClick={() => navigate('/subjects')} aria-label="Back to subjects" sx={{ color: 'var(--color-white)' }}><ArrowBackIcon /></IconButton>
         <Box sx={{ width: 40, height: 40, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, background: `color-mix(in srgb, ${topic.color || '#14B8A6'} 20%, transparent)` }}>{topic.emoji || '🧠'}</Box>
@@ -171,7 +171,7 @@ const ColumnShell = ({ col, onDropCard, onAddCard, onDeleteColumn, onDeleteCard 
       onDrop={(e) => { e.preventDefault(); setOver(false); const id = e.dataTransfer.getData('text/card'); if (id) onDropCard(id); }}
       sx={{
         flexShrink: 0, width: 280, borderRadius: 3, display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 180px)', overflow: 'hidden',
-        bgcolor: over ? 'color-mix(in srgb, var(--color-teal) 12%, transparent)' : 'color-mix(in srgb, var(--color-white) 4%, transparent)',
+        bgcolor: over ? 'color-mix(in srgb, var(--color-teal) 12%, transparent)' : 'color-mix(in srgb, var(--color-navy-700) 55%, transparent)',
         border: '1px solid color-mix(in srgb, var(--color-white) 12%, transparent)', transition: 'background .15s',
       }}
     >
@@ -198,7 +198,7 @@ const CardShell = ({ card, onDelete }) => (
     draggable
     onDragStart={(e) => { e.dataTransfer.setData('text/card', String(card.id)); e.dataTransfer.effectAllowed = 'move'; }}
     sx={{
-      p: 1.5, borderRadius: 2, bgcolor: 'color-mix(in srgb, var(--color-white) 7%, transparent)',
+      p: 1.5, borderRadius: 2, bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)',
       border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', cursor: 'grab',
       transition: 'transform .1s', '&:active': { cursor: 'grabbing' },
       '&:hover': { borderColor: 'color-mix(in srgb, var(--color-teal) 45%, transparent)' },

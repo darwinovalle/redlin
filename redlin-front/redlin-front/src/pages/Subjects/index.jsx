@@ -134,7 +134,7 @@ const Subjects = () => {
     (topic?.board?.columns || []).map((c) => ({ title: c.title, count: (c.cards || []).length }));
 
   return (
-    <Box sx={{ minHeight: '100vh', p: { xs: 3, md: 5 }, maxWidth: 1200, margin: '0 auto', color: 'var(--color-white)' }}>
+    <Box sx={{ minHeight: '100vh', width: '100%', background: 'var(--color-navy-deep)', p: { xs: 3, md: 6, lg: 7 }, color: 'var(--color-white)' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, flexWrap: 'wrap' }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: 0.3, mb: 0.5 }}>Subjects</Typography>
@@ -177,7 +177,7 @@ const Subjects = () => {
               role="button"
               tabIndex={0}
               sx={{
-                cursor: 'pointer', borderRadius: 4, overflow: 'hidden', bgcolor: 'color-mix(in srgb, var(--color-white) 5%, transparent)',
+                cursor: 'pointer', borderRadius: 4, overflow: 'hidden', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)',
                 border: '1px solid color-mix(in srgb, var(--color-white) 12%, transparent)',
                 transition: 'transform .2s, border .2s',
                 '&:hover': { transform: 'translateY(-3px)', borderColor: 'color-mix(in srgb, var(--color-teal) 55%, transparent)' },
