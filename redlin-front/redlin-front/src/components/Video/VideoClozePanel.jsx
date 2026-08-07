@@ -3,12 +3,13 @@ import { Box, Typography, Button, Stack } from '@mui/material';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 import { clozeService } from '../../services/api/cloze.jsx';
 import VideoClozeCard from './VideoClozeCard';
+import FocusToggle from '../common/FocusToggle';
 
 /**
  * VideoClozePanel handles listing & practice flow for video clozes.
- * Props: videoId
+ * Props: videoId, focus, onFocusChange, onStart, autoStart, title
  */
-const VideoClozePanel = ({ videoId }) => {
+const VideoClozePanel = ({ videoId, title = 'Cloze Practice', focus = false, onFocusChange, onStart, autoStart = false }) => {
   const [clozes, setClozes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -40,6 +41,16 @@ const VideoClozePanel = ({ videoId }) => {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setStarted(false); }, [videoId]);
+
+  // Focus Mode: when rendered inside the focus dialog, begin immediately.
+  useEffect(() => {
+    if (autoStart && clozes.length && !started) {
+      setClozes((prev) => shuffle(prev));
+      setSessionKey(Date.now());
+      setStarted(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, clozes.length, started]);
   useEffect(() => { setAnsweredMap({}); }, [sessionKey]);
 
   const handleValidate = async ({ clozeId, answer }) => {
@@ -86,7 +97,7 @@ const VideoClozePanel = ({ videoId }) => {
       <Box sx={{ textAlign: 'center', p: 3, maxWidth: 760, mx: 'auto' }}>
         <Stack spacing={2} alignItems="center">
           <Typography variant="h4" sx={{ mb: 0.5, fontWeight: 700, color: 'var(--color-white)' }}>
-            Cloze Practice
+            {title}
           </Typography>
           <Typography variant="body1" sx={{ mb: 1.5, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)', maxWidth: 520 }}>
             Ready? This session contains {clozes.length} cloze {clozes.length === 1 ? 'item' : 'items'}. Fill in the blanks.
@@ -95,7 +106,7 @@ const VideoClozePanel = ({ videoId }) => {
             variant="contained"
             size="large"
             disabled={!clozes.length}
-            onClick={() => { setClozes(prev => shuffle(prev)); setSessionKey(Date.now()); setStarted(true); }}
+            onClick={() => { if (focus) onStart?.(); else { setClozes(prev => shuffle(prev)); setSessionKey(Date.now()); setStarted(true); } }}
             sx={{
               borderRadius: '999px',
               backgroundColor: 'var(--color-success)',
@@ -109,6 +120,7 @@ const VideoClozePanel = ({ videoId }) => {
           >
             Start Cloze Practice
           </Button>
+          <FocusToggle focus={focus} onChange={onFocusChange} />
         </Stack>
       </Box>
     );

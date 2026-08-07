@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Button, Card, CardActionArea, FormControlLabel, Radio, RadioGroup, Stack, CircularProgress, Alert } from '@mui/material';
+import FocusToggle from '../common/FocusToggle';
 
-// Accepts mcqs array [{id, question, correct_answer, option_1, option_2, option_3}]
+// Accepts mcqs array [{question, correct_answer, option_1, option_2, option_3}]
 const shuffle = (arr) => {
   const a = [...arr];
   for (let i=a.length-1;i>0;i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
@@ -10,7 +11,7 @@ const shuffle = (arr) => {
 
 const UNANSWERED_SEGMENT_COLOR = 'color-mix(in srgb, var(--color-white) 18%, transparent)';
 
-const VideoQuiz = ({ mcqs }) => {
+const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, onFocusChange, onStart, autoStart = false }) => {
   const [questions, setQuestions] = useState([]);
   const [active, setActive] = useState(false);
   const [idx, setIdx] = useState(0);
@@ -34,20 +35,25 @@ const VideoQuiz = ({ mcqs }) => {
     }
   }, [mcqs]);
 
+  // Focus Mode: when rendered inside the focus dialog, begin immediately.
+  useEffect(() => {
+    if (autoStart && !active && questions.length) setActive(true);
+  }, [autoStart, active, questions.length]);
+
   if (!mcqs) return <CircularProgress size={20} sx={{ color:'var(--color-teal)' }} />;
 
   if (!active) {
     return (
-      <Box sx={{ textAlign:'center', p:3 }}>
-        <Typography variant="h4" sx={{ mb:2, fontWeight:700, color:'var(--color-white)' }}>Test Your Knowledge</Typography>
-        <Typography variant="body1" sx={{ mb:3, color:'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
-          {questions.length ? `This quiz has ${questions.length} questions.` : 'No MCQs generated yet.'}
+      <Box sx={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', p:3, height:'100%', textAlign:'center' }}>
+        <Typography variant="h4" gutterBottom sx={{ fontWeight:700, color:'var(--color-white)' }}>{title}</Typography>
+        <Typography variant="body1" sx={{ mb:3, maxWidth:520, color:'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+          {questions.length ? `This quiz has ${questions.length} multiple-choice questions.` : 'No MCQs generated yet.'}
         </Typography>
         <Button
           variant="contained"
           size="large"
           disabled={!questions.length}
-          onClick={()=>setActive(true)}
+          onClick={() => { if (focus) onStart?.(); else setActive(true); }}
           sx={{
             borderRadius:'999px', backgroundColor:'var(--color-success)', color:'var(--color-navy-deep)',
             px:4, fontWeight:700,
@@ -58,6 +64,7 @@ const VideoQuiz = ({ mcqs }) => {
         >
           Start Quiz
         </Button>
+        <FocusToggle focus={focus} onChange={onFocusChange} />
       </Box>
     );
   }

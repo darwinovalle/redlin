@@ -5,8 +5,9 @@ import FeynmanAttemptForm from '../Feynman/FeynmanAttemptForm';
 import AIFeedback from '../Feynman/AIFeedback';
 import Timer from '../Feynman/Timer';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
+import FocusToggle from '../common/FocusToggle';
 
-const VideoFeynmanPanel = ({ videoId }) => {
+const VideoFeynmanPanel = ({ videoId, title = 'Feynman Session', focus = false, onFocusChange, onStart, autoStart = false }) => {
   const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -93,6 +94,12 @@ const VideoFeynmanPanel = ({ videoId }) => {
     setCountdownRemaining(COUNTDOWN);
   }, [currentIndex, sessionActive, sessionFinished, questionDone]);
 
+  // Focus Mode: when rendered inside the focus dialog, begin immediately.
+  useEffect(() => {
+    if (autoStart && prompts.length && !sessionActive && !sessionFinished) startSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, prompts.length, sessionActive, sessionFinished]);
+
   if (!videoId) {
     return (
       <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
@@ -121,18 +128,18 @@ const VideoFeynmanPanel = ({ videoId }) => {
       <Box sx={{ textAlign: 'center', p: 3, maxWidth: 760, mx: 'auto' }}>
         <Stack spacing={2} alignItems="center">
           <Typography variant="h4" sx={{ mb: 0.5, fontWeight: 700, color: 'var(--color-white)' }}>
-            Feynman Session
+            {title}
           </Typography>
           <Typography variant="body1" sx={{ mb: 1.5, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)', maxWidth: 520 }}>
             {prompts.length
-              ? `You will have 3 minutes and 30 seconds per question to write or dictate your explanation via the mic. When time ends, your answer (even if incomplete) is auto-submitted. After evaluation, click Next to continue and you'll see a summary at the end.`
+              ? `You will have 3 minutes and 30 seconds per question to answer then dictate your explanation via the mic. When time ends, your answer (even if incomplete) is auto-submitted. After evaluation, click Next to continue and you'll see a summary at the end.`
               : 'No Feynman prompts generated yet.'}
           </Typography>
           <Button
             variant="contained"
             size="large"
             disabled={!prompts.length}
-            onClick={startSession}
+            onClick={() => { if (focus) onStart?.(); else startSession(); }}
             sx={{
               borderRadius: '999px',
               backgroundColor: 'var(--color-success)',
@@ -146,6 +153,7 @@ const VideoFeynmanPanel = ({ videoId }) => {
           >
             Start Session ({prompts.length} questions)
           </Button>
+          <FocusToggle focus={focus} onChange={onFocusChange} />
         </Stack>
       </Box>
     );
