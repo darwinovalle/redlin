@@ -5,8 +5,7 @@ import { topicsService } from '../../services/api/topics';
 import { documentService } from '../../services/api';
 import { videoService } from '../../services/api/video';
 import { classroomService } from '../../services/api/classroom';
-import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
+import { DndContext, useDraggable, useDroppable, DragOverlay } from '@dnd-kit/core';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -64,6 +63,7 @@ const Board = () => {
   const [openCard, setOpenCard] = useState(false);
   const [openCol, setOpenCol] = useState(false);
   const [cardCol, setCardCol] = useState(null);
+  const [activeCard, setActiveCard] = useState(null);
   const lib = useResourceLibrary(user?.id);
 
   // silent=true refreshes data without toggling the full-screen spinner, so a
@@ -118,6 +118,14 @@ const Board = () => {
     moveCard(cardId, toColumnId);
   };
 
+  const handleDragStart = (e) => {
+    const id = Number(e.active.id);
+    const card = columns.flatMap((c) => (c.cards || [])).find((k) => k.id === id);
+    setActiveCard(card || null);
+  };
+
+  const closeDrag = () => setActiveCard(null);
+
   const addCreateCard = async (title, resType, resId) => {
     setOpenCard(false);
     try {
@@ -159,7 +167,7 @@ const Board = () => {
         <Chip size="small" label="drag cards between columns to change status" sx={{ color: 'color-mix(in srgb, var(--color-white) 60%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-white) 8%, transparent)', fontSize: 12 }} />
       </Box>
 
-      <DndContext onDragEnd={handleDragEnd}>
+      <DndContext onDragStart={handleDragStart} onDragEnd={(e) => { handleDragEnd(e); closeDrag(); }} onDragCancel={closeDrag}>
         <Box sx={{ flex: 1, display: 'flex', gap: 2, overflowX: 'auto', pb: 2, alignItems: 'flex-start' }}>
           {columns.map((col) => (
             <ColumnShell
@@ -175,6 +183,7 @@ const Board = () => {
             <Typography sx={{ fontWeight: 600 }}>Add column</Typography>
           </Box>
         </Box>
+        <DragOverlay dropAnimation={null}>{activeCard ? <OverlayCard card={activeCard} /> : null}</DragOverlay>
       </DndContext>
 
       {openCard && (
@@ -210,7 +219,7 @@ const ColumnShell = ({ col, onAddCard, onDeleteColumn, onDeleteCard }) => {
       </Box>
       <Box sx={{ px: 1.5, pb: 1.5, display: 'flex', flexDirection: 'column', gap: 1, overflowY: 'auto', flex: 1 }}>
         {(col.cards || []).map((card) => (
-          <CardShell key={card.id} card={card} onDelete={() => onDeleteCard(card)} />
+          <Draggable key={card.id} card={card} onDelete={() => onDeleteCard(card)} />
         ))}
         {(col.cards || []).length === 0 && (
           <Typography sx={{ px: 1, py: 2, textAlign: 'center', fontSize: 13, fontStyle: 'italic', color: 'color-mix(in srgb, var(--color-white) 45%, transparent)' }}>Drop study material here</Typography>
@@ -220,8 +229,30 @@ const ColumnShell = ({ col, onAddCard, onDeleteColumn, onDeleteCard }) => {
   );
 };
 
-const CardShell = ({ card, onDelete }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: String(card.id) });
+const CardView = ({ card, onDelete }) => (
+  <>
+    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+      <Typography sx={{ fontSize: 14, fontWeight: 600, flex: 1, minWidth: 0 }}>{card.title}</Typography>
+      {onDelete && (
+        <IconButton size="small" aria-label="Delete card" onPointerDown={(e) => e.stopPropagation()} onClick={onDelete} sx={{ p: 0.25, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)', '&:hover': { color: 'var(--color-danger-soft)' } }}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      )}
+    </Box>
+    {(card.resources || []).length > 0 && (
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+        {(card.resources || []).map((r) => (
+          <Chip key={`${r.content_type}-${r.object_id}`} size="small" label={r.resource?.title || 'material'} sx={{ fontSize: 11, bgcolor: 'color-mix(in srgb, var(--color-teal) 16%, transparent)', color: 'var(--color-white)' }} />
+        ))}
+      </Box>
+    )}
+  </>
+);
+
+// In-column card: draggable but NOT translated — the moving copy lives in the
+// DragOverlay, so this card stays put and is never clipped by overflow:hidden.
+const Draggable = ({ card, onDelete }) => {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: String(card.id) });
   return (
     <Box
       ref={setNodeRef}
@@ -229,29 +260,28 @@ const CardShell = ({ card, onDelete }) => {
       {...listeners}
       sx={{
         p: 1.5, borderRadius: 2, bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)',
-        border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', cursor: 'grab',
+        border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)',
+        cursor: isDragging ? 'grabbing' : 'grab',
         touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none',
-        transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.5 : 1,
-        '&:active': { cursor: 'grabbing' },
+        opacity: isDragging ? 0.3 : 1,
         '&:hover': { borderColor: 'color-mix(in srgb, var(--color-teal) 45%, transparent)' },
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
-        <Typography sx={{ fontSize: 14, fontWeight: 600, flex: 1, minWidth: 0 }}>{card.title}</Typography>
-        <IconButton size="small" aria-label="Delete card" onPointerDown={(e) => e.stopPropagation()} onClick={onDelete} sx={{ p: 0.25, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)', '&:hover': { color: 'var(--color-danger-soft)' } }}>
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      </Box>
-      {(card.resources || []).length > 0 && (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-          {(card.resources || []).map((r) => (
-            <Chip key={`${r.content_type}-${r.object_id}`} size="small" label={r.resource?.title || 'material'} sx={{ fontSize: 11, bgcolor: 'color-mix(in srgb, var(--color-teal) 16%, transparent)', color: 'var(--color-white)' }} />
-          ))}
-        </Box>
-      )}
+      <CardView card={card} onDelete={onDelete} />
     </Box>
   );
 };
+
+// Floating copy shown while dragging — rendered on top, never clipped/overlapped.
+const OverlayCard = ({ card }) => (
+  <Box sx={{
+    p: 1.5, borderRadius: 2, minWidth: 248, maxWidth: 248, cursor: 'grabbing',
+    bgcolor: 'var(--color-navy-700)', boxShadow: '0 18px 40px rgba(0,0,0,0.45)',
+    border: '1px solid color-mix(in srgb, var(--color-teal) 55%, transparent)',
+  }}>
+    <CardView card={card} />
+  </Box>
+);
 
 const NewCardDialog = ({ open, onClose, library, onSubmit }) => {
   const [title, setTitle] = useState('');
