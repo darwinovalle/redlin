@@ -97,7 +97,8 @@ def _video_feynman_prompt(source_text: str, *, lang_label: str, soft_cap: int | 
         f"{cap_text}\n"
         "RULES:\n- Prompts <= 140 chars (hard cut 180).\n- Each targets a distinct concept/mechanism/process/relationship.\n"
         "- Provide 3-8 key_points per prompt (atomic, declarative).\n- Assign weight (1.0 default, up to 1.5).\n"
-        "- No duplicates, no numbering, no quotes, no trivial surface-level prompts.\n"
+        "\n- No duplicates, no numbering, no quotes, no trivial surface-level prompts.\n"
+        "- Do NOT add a source preface (no \"In the video\", \"In the text\", \"In the paragraph\"); phrase each prompt as a direct concept prompt.\n"
         "OUTPUT STRICT JSON ONLY:\n{\n  \"items\": [ { \"prompt\": \"...\", \"key_points\": [ {\"point\": \"...\", \"weight\": 1.0} ] } ]\n}\n"
         f"{language_line}\n\nVIDEO TRANSCRIPT (truncated):\n{snippet}"
     )
@@ -336,7 +337,7 @@ def _ai_video_cloze_prompt(source_text: str, *, desired_count: int, words_per_it
     snippet = source_text[:16000]
     return (
         "You are an expert educational content generator.\n"
-        "Generate as many high-quality fill-in-the-blank items (Cloze) as there are DISTINCT key concepts in the SOURCE TEXT.\n"
+        "Generate as many high-quality fill-in-the-blank items (Cloze) as there are DISTINCT key concepts in the VIDEO TRANSCRIPT.\n"
         f"Guideline: about 1 item per ~{words_per_item} words (estimated target ≈ {desired_count}). Continue until additional items would be redundant.\n"
         "Prioritize: core definitions → causal relations → processes → contrasts → implications.\n"
         "Skip trivial filler (articles, pronouns, purely structural verbs, generic words like 'thing', 'people').\n"
@@ -345,8 +346,9 @@ def _ai_video_cloze_prompt(source_text: str, *, desired_count: int, words_per_it
         "REQUIREMENTS:\n"
         "- Each item has exactly one blank represented by the four underscores token: ____\n"
         "- Sentence must be concise, pedagogically meaningful (avoid over-long verbatim copying).\n"
-        "- Blank hides a key term/concept present EXACTLY in the text.\n"
-        "- All 3 distractors also appear in the text and share semantic / POS class with answer.\n"
+        "- Sentences should read naturally and self-contained; do NOT start them with \"In the video\", \"In the text\", or \"In the paragraph\".\n"
+        "- Blank hides a key term/concept present EXACTLY in the video.\n"
+        "- All 3 distractors also appear in the video and share semantic / POS class with answer.\n"
         "- No duplicate answers or duplicate sentences.\n"
         "- Difficulty: easy | medium | hard.\n"
         "- Provide a MIX of difficulties; harder = abstraction, multi-step reasoning, rarity.\n"
@@ -355,11 +357,11 @@ def _ai_video_cloze_prompt(source_text: str, *, desired_count: int, words_per_it
         "{\n  \"clozes\": [\n     {\n       \"text\": \"La célula contiene ____ que protege el material genético.\",\n       \"answer\": \"núcleo\",\n       \"distractors\": [\"citoplasma\",\"membrana\",\"ribosoma\"],\n       \"difficulty\": \"medium\"\n     }\n  ]\n}\n\n"
         "VALIDATION RULES:\n"
         "- 'text' has exactly one '____'.\n"
-        "- answer + distractors all appear in SOURCE TEXT.\n"
+        "- answer + distractors all appear in the video transcript.\n"
         "- Exactly 3 distractors.\n"
         "- Answer is NOT a stopword / trivial function word.\n"
         "- No trailing commas, no extra keys, no wrapper prose.\n\n"
-        f"{language_line}\n\nSOURCE TEXT (truncated):\n{snippet}"
+        f"{language_line}\n\nVIDEO TRANSCRIPT (truncated):\n{snippet}"
     )
 
 def generate_ai_video_clozes(video: Video, source_text: str, lang_label: str, *, max_items: int, words_per_item: int) -> list[VideoCloze]:
@@ -481,7 +483,7 @@ GOAL
 Produce a high-signal, chapter/section-structured summary that captures the core intellectual substance of the source.
 
 OUTPUT FORMAT (Pure Markdown only)
-- First line MUST be exactly an H1 with the document title:
+- First line MUST be exactly an H1 with the video title:
 - After the title, output the structured summary only. No preamble, no meta text, no “analysis”.
 - Use section headings as H2 (“##”), each starting with ONE emoji + space + concise heading (no trailing punctuation).
 - Under each heading, use dense bullets ("- ") OR tight mini paragraphs.
@@ -497,7 +499,7 @@ CONTENT RULES (Absolute)
 - Include concrete numbers, definitions, and conditions when present; keep units and constraints.
 - Use brief emphasis for pivotal terms (bold) sparingly. Use inline code `like_this` for terms, variables, or API names when appropriate.
 - Tables are allowed if they clarify comparisons or taxonomies.
-- Forbidden phrases anywhere: "Here is", "This book", "The document", "This section".
+- Forbidden phrases anywhere: "Here is", "This video", "The video", "This segment".
 - Output language: {lang_label}
 - If negligible substance after filtering: output:
 
@@ -524,7 +526,7 @@ QUALITY CHECK (silent, do not output)
 - No unsupported claims; numbers/definitions preserved.
 - Ends with “## ⭐ Key Takeaways” (5–12 bullets).
 
-SOURCE TEXT (for analysis; paraphrase in output)
+VIDEO TRANSCRIPT (for analysis; paraphrase in output)
 {full_text}
 
 """
@@ -544,15 +546,15 @@ SOURCE TEXT (for analysis; paraphrase in output)
         mcq_prompt_template = """
 You are an expert assessment designer specializing in educational content analysis.
 
-TASK: Create up to {limit} multiple-choice questions based ONLY on the provided text.
+TASK: Create up to {limit} multiple-choice questions based ONLY on the provided video transcript.
 Language: {lang_label}
 
 CRITICAL REQUIREMENTS:
 
-1. Focus on the MOST IMPORTANT concepts, facts, relationships, or principles in the text — quality over exhaustiveness.
+1. Focus on the MOST IMPORTANT concepts, facts, relationships, or principles in the video — quality over exhaustiveness.
 2. **ACCURACY GUARANTEE**:
-   - Double-check each correct answer against the source text
-   - The correct answer must be 100% verifiable from the text
+   - Double-check each correct answer against the transcript
+   - The correct answer must be 100% verifiable from the transcript
    - If uncertain about factual accuracy, skip that question
 
 3. **QUESTION TYPES** (use a mix):
@@ -570,7 +572,8 @@ CRITICAL REQUIREMENTS:
    - NO questions about: publication dates, ISBN, publisher, author bio, dedications, acknowledgments
    - NO "All/None of the above" or combination options
    - NO negatively-phrased questions ("Which is NOT...")
-   - NO questions that begin like "According to the text", or "In the text".
+   - NEVER phrase questions as if read from a "text", "document", "passage", or "file".
+   - Questions MUST be self-contained and NOT begin with a source preface like "In the video", "In the text", "In the paragraph", "According to", or "Based on". Ask directly (e.g., "What is the primary definition of software architecture?").
 
 6. **EXACT FORMAT** (no deviations):
    Q: <Question text>
@@ -581,7 +584,7 @@ CRITICAL REQUIREMENTS:
 
    [blank line between each question block]
 
-DOCUMENT TEXT:
+VIDEO TRANSCRIPT:
 {chunk}
 """
         try:
