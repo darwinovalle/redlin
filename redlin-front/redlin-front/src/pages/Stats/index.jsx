@@ -174,6 +174,24 @@ const Stats = () => {
         </Box>
       </Box>
 
+      {/* study time by source */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Study time by source</Typography>
+        {!stats.study_sources || stats.study_sources.length === 0 ? (
+          <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 55%, transparent)', fontStyle: 'italic' }}>No study time recorded yet — open a document, video, lecture or book and study it.</Typography>
+        ) : (
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2 }}>
+            {stats.study_sources.map((s) => (
+              <Box key={`t-${s.type}-${s.id}`} sx={{ p: 2.5, borderRadius: 3, border: '1px solid color-mix(in srgb, var(--color-white) 12%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Chip size="small" label={s.type === 'document' ? 'Document' : s.type === 'book' ? 'Book' : s.type === 'video' ? 'Video' : 'Lecture'} sx={{ color: 'var(--color-teal)', bgcolor: 'color-mix(in srgb, var(--color-teal) 16%, transparent)', fontSize: 11 }} />
+                <Typography sx={{ flex: 1, fontWeight: 700, fontSize: 15, minWidth: 0 }}>{s.title}</Typography>
+                <Typography sx={{ color: 'var(--color-white)', fontWeight: 700, fontSize: 15 }}>{fmtTime(s.seconds)}</Typography>
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Box>
+
       {/* per-source accuracy */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Accuracy by study source</Typography>

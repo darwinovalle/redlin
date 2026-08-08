@@ -350,6 +350,7 @@ def _stats_payload(user):
 			for m in ("MCQ", "CLOZE", "FEYNMAN", "MIXED")
 		},
 		"study": {"total_seconds": study_total, "per_topic": per_topic, "per_day": per_day},
+		"study_sources": _source_study_time(user),
 		"per_source": _source_stats(user),
 		"feynman": _feynman_summary(user),
 		"due": {"count": due_count},
@@ -392,6 +393,59 @@ STUDY_RESOURCE_MODELS = {
 	"video": ("VIDEO", "video"),
 	"lecture": ("CLASSROOM", "classsession"),
 }
+
+# StudyTime content-type -> grouped source kind for the per-source rollup.
+STUDY_SOURCE_KIND = {
+	("API", "document"): "document",
+	("VIDEO", "video"): "video",
+	("CLASSROOM", "classsession"): "lecture",
+}
+
+
+def _source_study_time(user):
+	"""Study seconds rolled up per source (document / book / video / lecture).
+
+	Book chapters are grouped under their parent Book (a book is a Document with
+	kind='book'; chapters have kind='chapter' + parent).
+	"""
+	rows = StudyTime.objects.filter(user=user).exclude(content_type__isnull=True)
+	per = {}
+
+	def ensure(kind, sid, title):
+		key = (kind, sid)
+		if key not in per:
+			per[key] = {"id": sid, "type": kind, "title": title, "seconds": 0}
+		return per[key]
+
+	cts = rows.values_list("content_type_id", flat=True).distinct()
+	for ct_id in cts:
+		ct = ContentType.objects.get(pk=ct_id)
+		kind = STUDY_SOURCE_KIND.get((ct.app_label, ct.model))
+		if kind is None:
+			continue
+		model = ct.model_class()
+		ids = list(rows.filter(content_type_id=ct_id).values_list("object_id", flat=True).distinct())
+		objs = model.objects.in_bulk(ids)
+		for st in rows.filter(content_type_id=ct_id):
+			obj = objs.get(st.object_id)
+			if obj is None:
+				continue
+			title = getattr(obj, "title", "") or "Untitled"
+			if kind == "document":
+				k = getattr(obj, "kind", "document")
+				if k == "book":
+					entry = ensure("book", obj.id, title)
+				elif k == "chapter" and getattr(obj, "parent", None) is not None:
+					parent = obj.parent
+					entry = ensure("book", parent.id, getattr(parent, "title", "") or title)
+				else:
+					entry = ensure("document", obj.id, title)
+			else:
+				entry = ensure(kind, obj.id, title)
+			entry["seconds"] += st.seconds
+
+	out = sorted(per.values(), key=lambda x: -x["seconds"])
+	return out
 
 
 FEYNMAN_ITEM_MODELS = {
