@@ -60,7 +60,7 @@
 .timeline-actions button { background:none; border:none; cursor:pointer; color:var(--color-text-mid); transition:.3s; }
 .timeline-actions button:hover { color:var(--color-blue); }
 
-.two-column { display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:30px; }
+.two-column { display:grid; grid-template-columns:minmax(0, 960px); justify-content:center; gap:20px; margin-bottom:30px; }
 .stats-card { height:100%; }
 .stats-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
 .stats-tabs { display:flex; gap:10px; }
