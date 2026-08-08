@@ -114,6 +114,7 @@ const QuizView = ({ documentId, focus = false, autoStart = false, onStart, onExi
         setFeedback(null);
         setFinished(false);
         setScore(0);
+    }
   };
 
   // Focus Mode: when rendered inside the quiz popup, begin immediately.
