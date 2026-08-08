@@ -110,7 +110,7 @@
 .stats-card,
 .access-card,
 .timeline-item {
-  border:1px dashed color-mix(in srgb, var(--color-blue) 32%, transparent);
+  border:2px dashed var(--color-navy);
   border-radius:22px;
   box-shadow:0 20px 44px -22px rgba(15,23,42,.22), 0 2px 6px rgba(15,23,42,.04);
   background:var(--color-white);
