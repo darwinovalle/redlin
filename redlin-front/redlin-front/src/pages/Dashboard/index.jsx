@@ -15,6 +15,7 @@ import LockIcon from '@mui/icons-material/Lock';
 // import { FlashcardProvider } from '../../context/FlashcardContext'; // MVP: Flashcards hidden
 import { documentService } from '../../services/api';
 import { useStudySession } from '../../hooks/useStudySession';
+import StudyTimerBadge from '../../components/common/StudyTimerBadge';
 import PdfViewer from '../../components/PdfViewer/PdfViewer';
 import { useAuth } from '../../context/AuthContext';
 import './dashboard.css';
@@ -93,7 +94,7 @@ const Dashboard = () => {
 
   // Auto-record study time for the whole document page (reading the PDF +
   // MCQs/Cloze/Feynman), since the Dashboard doesn't use the shared StudyPanel.
-  useStudySession({ model: 'document', itemId: selectedDocumentId });
+  const studyElapsed = useStudySession({ model: 'document', itemId: selectedDocumentId });
 
   useEffect(() => {
     let cancelled = false;
@@ -180,6 +181,7 @@ const Dashboard = () => {
             </Typography>
           )}
         </Box>
+        <Box sx={{ ml: 'auto' }}><StudyTimerBadge seconds={studyElapsed} /></Box>
       </Box>
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', gap: 0, p: 0, m: 0, overflow: 'hidden' }}>
         {/* PDF Viewer reverted to original styling */}

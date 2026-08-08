@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 import { classroomService } from '../../services/api/classroom';
 import { srService } from '../../services/api/sr';
+import { useStudySection } from '../../hooks/useStudySession';
 import useWhisperDictation from '../Feynman/useWhisperDictation';
 import ListeningIndicator from '../Feynman/ListeningIndicator';
 
@@ -31,6 +32,8 @@ const Metric = ({ label, value, color }) => (
 );
 
 const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 'en', focus = false, autoStart = false, onStart }) => {
+  // Section timer: attribute Feynman practice time to this lecture source.
+  useStudySection({ model: 'lecture', itemId: sessionId, method: 'FEYNMAN' });
   const [prompts, setPrompts] = useState(Array.isArray(initialPrompts) ? initialPrompts : []);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);

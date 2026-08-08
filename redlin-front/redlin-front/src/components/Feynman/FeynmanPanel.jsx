@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Box, Typography, Button, Divider, Stack } from '@mui/material';
 import { feynmanService } from '../../services/api/feynman.jsx';
 import { srService } from '../../services/api/sr';
+import { useStudySection } from '../../hooks/useStudySession';
 import FocusToggle from '../common/FocusToggle';
 import FeynmanAttemptForm from './FeynmanAttemptForm';
 import AIFeedback from './AIFeedback';
@@ -9,6 +10,8 @@ import Timer from './Timer';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 
 const FeynmanPanel = ({ documentId, focus = false, autoStart = false, onStart, onFocusChange }) => {
+  // Section timer: attribute Feynman practice time to this document source.
+  useStudySection({ model: 'document', itemId: documentId, method: 'FEYNMAN' });
   const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);

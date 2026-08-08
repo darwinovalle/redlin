@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { srService } from '../../services/api/sr';
+import { useStudySection } from '../../hooks/useStudySession';
 import {
   Alert,
   Box,
@@ -26,7 +27,9 @@ const shuffle = (arr) => {
 
 const UNANSWERED_SEGMENT_COLOR = 'color-mix(in srgb, var(--color-white) 18%, transparent)';
 
-const ClassroomQuiz = ({ mcqs, focus = false, autoStart = false, onStart, onExit }) => {
+const ClassroomQuiz = ({ mcqs, focus = false, autoStart = false, onStart, onExit, sessionId }) => {
+  // Section timer: attribute MCQ practice time to this lecture source.
+  useStudySection({ model: 'lecture', itemId: sessionId, method: 'MCQ' });
   const [questions, setQuestions] = useState([]);
   const [active, setActive] = useState(false);
   const [idx, setIdx] = useState(0);

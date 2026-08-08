@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Button, Card, CardActionArea, FormControlLabel, Radio, RadioGroup, Stack, CircularProgress, Alert } from '@mui/material';
 import FocusToggle from '../common/FocusToggle';
 import { srService } from '../../services/api/sr';
+import { useStudySection } from '../../hooks/useStudySession';
 
 // Accepts mcqs array [{question, correct_answer, option_1, option_2, option_3}]
 const shuffle = (arr) => {
@@ -12,7 +13,9 @@ const shuffle = (arr) => {
 
 const UNANSWERED_SEGMENT_COLOR = 'color-mix(in srgb, var(--color-white) 18%, transparent)';
 
-const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, onFocusChange, onStart, autoStart = false }) => {
+const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, onFocusChange, onStart, autoStart = false, videoId }) => {
+  // Section timer: attribute MCQ practice time to this video source.
+  useStudySection({ model: 'video', itemId: videoId, method: 'MCQ' });
   const [questions, setQuestions] = useState([]);
   const [active, setActive] = useState(false);
   const [idx, setIdx] = useState(0);

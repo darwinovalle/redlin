@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Box, Button, Stack, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 import { srService } from '../../services/api/sr';
+import { useStudySection } from '../../hooks/useStudySession';
 import ClassroomClozeCard from './ClassroomClozeCard';
 
 const shuffle = (arr) => {
@@ -13,7 +14,9 @@ const shuffle = (arr) => {
   return next;
 };
 
-const ClassroomClozePanel = ({ clozes, focus = false, autoStart = false, onStart }) => {
+const ClassroomClozePanel = ({ clozes, focus = false, autoStart = false, onStart, sessionId }) => {
+  // Section timer: attribute Cloze practice time to this lecture source.
+  useStudySection({ model: 'lecture', itemId: sessionId, method: 'CLOZE' });
   const [practiceClozes, setPracticeClozes] = useState([]);
   const [started, setStarted] = useState(false);
   const [sessionKey, setSessionKey] = useState(Date.now());

@@ -28,6 +28,13 @@ const MethodPercent = ({ label, value }) => (
   </Box>
 );
 
+const MiniTime = ({ label, seconds }) => (
+  <Box sx={{ textAlign: 'center' }}>
+    <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 50%, transparent)', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.3, display: 'block' }}>{label}</Typography>
+    <Typography sx={{ fontSize: 14, fontWeight: 700, color: (seconds || 0) > 0 ? 'var(--color-white)' : 'color-mix(in srgb, var(--color-white) 35%, transparent)' }}>{fmtTime(seconds || 0)}</Typography>
+  </Box>
+);
+
 const MetricView = ({ label, value }) => (
   <Box sx={{ textAlign: 'center' }}>
     <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 55%, transparent)', textTransform: 'uppercase', letterSpacing: 0.4 }}>{label}</Typography>
@@ -185,10 +192,12 @@ const Stats = () => {
               <Box key={`t-${s.type}-${s.id}`} sx={{ p: 2.5, borderRadius: 3, border: '1px solid color-mix(in srgb, var(--color-white) 12%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)', display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                 <Chip size="small" label={s.type === 'document' ? 'Document' : s.type === 'book' ? 'Book' : s.type === 'video' ? 'Video' : 'Lecture'} sx={{ color: 'var(--color-teal)', bgcolor: 'color-mix(in srgb, var(--color-teal) 16%, transparent)', fontSize: 11 }} />
                 <Typography sx={{ flex: 1, fontWeight: 700, fontSize: 15, minWidth: 0 }}>{s.title}</Typography>
-                <Typography sx={{ color: 'var(--color-white)', fontWeight: 700, fontSize: 15 }}>{fmtTime(s.seconds)}</Typography>
-                {(s.feynman_seconds || 0) > 0 && (
-                  <Chip size="small" label={`Feynman ${fmtTime(s.feynman_seconds)}`} sx={{ color: 'var(--color-purple)', bgcolor: 'color-mix(in srgb, var(--color-purple) 16%, transparent)', fontSize: 11 }} />
-                )}
+                <Box sx={{ display: 'flex', gap: 1.75, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                  <MiniTime label="Overall" seconds={s.seconds} />
+                  <MiniTime label="MCQ" seconds={s.methods?.MCQ || 0} />
+                  <MiniTime label="Feynman" seconds={s.methods?.FEYNMAN || 0} />
+                  <MiniTime label="Cloze" seconds={s.methods?.CLOZE || 0} />
+                </Box>
               </Box>
             ))}
           </Box>

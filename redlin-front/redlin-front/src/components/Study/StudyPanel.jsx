@@ -1,5 +1,6 @@
 import React, { useEffect, lazy, Suspense, useState } from 'react';
 import { useStudySession } from '../../hooks/useStudySession';
+import StudyTimerBadge from '../common/StudyTimerBadge';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Tabs from '@mui/material/Tabs';
@@ -37,8 +38,8 @@ const StudyPanel = ({ documentId, title = '' }) => {
   const [focusSession, setFocusSession] = useState(null);
   const [focusKey, setFocusKey] = useState(0);
 
-  // Auto-record study time while this panel stays open.
-  useStudySession({ model: 'document', itemId: documentId });
+  // Auto-record study time while this panel stays open, and show a live counter.
+  const studyElapsed = useStudySession({ model: 'document', itemId: documentId });
 
   useEffect(() => {
     try { localStorage.setItem('study:focusMode', focusMode ? '1' : '0'); } catch {}
@@ -55,6 +56,7 @@ const StudyPanel = ({ documentId, title = '' }) => {
           <Tab label="CLOZE" />
           <Tab label="FEYNMAN" />
         </Tabs>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', pb: 1 }}><StudyTimerBadge seconds={studyElapsed} /></Box>
         <div className="study-divider" aria-hidden="true" />
       </div>
 

@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { documentService } from '../../services/api';
 import { srService } from '../../services/api/sr';
+import { useStudySection } from '../../hooks/useStudySession';
 import FocusToggle from '../common/FocusToggle';
 
 const shuffleArray = (array) => {
@@ -43,6 +44,8 @@ const QuizView = ({ documentId, focus = false, autoStart = false, onStart, onExi
   const correctAudioRef = useRef(null);
   const wrongAudioRef = useRef(null);
   const startedAtRef = useRef(null);
+  // Section timer: attribute MCQ practice time to this document source.
+  useStudySection({ model: 'document', itemId: documentId, method: 'MCQ' });
 
   useEffect(() => {
     if (!documentId) {

@@ -450,10 +450,16 @@ def _source_study_time(user):
 	def ensure(kind, sid, title=None):
 		key = (kind, sid)
 		if key not in per:
-			per[key] = {"id": sid, "type": kind, "title": title or "Untitled", "seconds": 0, "feynman_seconds": 0}
+			per[key] = {
+				"id": sid, "type": kind, "title": title or "Untitled",
+				"seconds": 0, "feynman_seconds": 0,
+				"methods": {"MCQ": 0, "CLOZE": 0, "FEYNMAN": 0},
+			}
 		elif title:
 			per[key]["title"] = title
 		return per[key]
+
+	SECTION_METHODS = ("MCQ", "CLOZE", "FEYNMAN")
 
 	cts = rows.values_list("content_type_id", flat=True).distinct()
 	for ct_id in cts:
@@ -481,6 +487,9 @@ def _source_study_time(user):
 			else:
 				entry = ensure(kind, obj.id, title)
 			entry["seconds"] += st.seconds
+			m = (st.method or "").upper()
+			if m in SECTION_METHODS:
+				entry["methods"][m] += st.seconds
 
 	# Merge Feynman sessions time into the same per-source map.
 	for key, info in _feynman_seconds_by_source(user).items():
