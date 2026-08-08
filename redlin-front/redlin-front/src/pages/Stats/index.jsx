@@ -187,7 +187,7 @@ const Stats = () => {
                 <Typography sx={{ flex: 1, fontWeight: 700, fontSize: 15, minWidth: 0 }}>{s.title}</Typography>
                 <Typography sx={{ color: 'var(--color-white)', fontWeight: 700, fontSize: 15 }}>{fmtTime(s.seconds)}</Typography>
                 {(s.feynman_seconds || 0) > 0 && (
-                  <Chip size="small" label={`Feynman ${fmtTime(s.feynman_seconds)}`} sx={{ color: 'var(--color-purple, #A855F7)', bgcolor: 'color-mix(in srgb, #A855F7 16%, transparent)', fontSize: 11 }} />
+                  <Chip size="small" label={`Feynman ${fmtTime(s.feynman_seconds)}`} sx={{ color: 'var(--color-purple)', bgcolor: 'color-mix(in srgb, var(--color-purple) 16%, transparent)', fontSize: 11 }} />
                 )}
               </Box>
             ))}
