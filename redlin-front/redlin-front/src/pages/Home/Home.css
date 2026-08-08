@@ -29,19 +29,19 @@
 .progress-section { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:30px; }
 .card { background:var(--color-white); border-radius:12px; box-shadow:0 4px 12px color-mix(in srgb, var(--color-black) 5%, transparent); padding:20px; height:100%; }
 .progress-card { padding:0; overflow:hidden; }
-.progress-card-header { padding:12px 16px; border-bottom:1px solid var(--color-surface-neutral); }
-.progress-card-content { padding:12px 16px; }
-.calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.progress-card-header { padding:8px 14px; border-bottom:1px solid var(--color-surface-neutral); }
+.progress-card-content { padding:12px 12px; }
+.calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
 .calendar-day { display:flex; flex-direction:column; align-items:center; }
-.day-label { font-size:12px; color:var(--color-text-mid); margin-bottom:6px; }
+.day-label { font-size:11px; color:var(--color-text-mid); margin-bottom:4px; }
 .day-circle { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; background:var(--color-cloud); color:var(--color-text-mid); transition:.3s; }
 .day-circle.active { background:transparent; color:var(--color-blue); border:2px solid var(--color-blue); }
 .day-circle.completed { background:var(--color-teal-tint); color:var(--color-teal); }
 .goal-progress { display:flex; flex-direction:column; align-items:center; }
 .circular-progress { width:120px; height:120px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:20px 0; position:relative; }
-.circular-progress:before { content:''; position:absolute; width:68px; height:68px; border-radius:50%; background:var(--color-white); }
-.progress-value { position:relative; z-index:1; font-size:20px; font-weight:700; color:var(--color-text); }
-.goal-text { font-size:14px; color:var(--color-text-mid); text-align:center; margin-bottom:8px; }
+.circular-progress:before { content:''; position:absolute; width:56px; height:56px; border-radius:50%; background:var(--color-white); }
+.progress-value { position:relative; z-index:1; font-size:17px; font-weight:700; color:var(--color-text); }
+.goal-text { font-size:13px; color:var(--color-text-mid); text-align:center; margin-bottom:6px; }
 .goal-label { font-size:14px; color:var(--color-teal); font-weight:500; }
 
 .section { margin-bottom:30px; }
@@ -135,7 +135,7 @@
 .milestone-label { font-size:13px; color:var(--color-white); }
 
 .day-label { font-size:12.5px; }
-.day-circle { width:32px; height:32px; font-size:14px; }
+.day-circle { width:26px; height:26px; font-size:13px; }
 
 /* Upcoming sessions: two-column gallery + real thumbnail on the left */
 .upcoming-section .timeline { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
@@ -163,7 +163,7 @@
 .stats-tab.active { background:var(--color-teal); color:var(--color-white); }
 
 .access-card:hover, .timeline-item:hover { transform:translateY(-4px); box-shadow:0 26px 50px -24px rgba(15,23,42,.28); }
-.circular-progress { width:96px; height:96px; margin:6px 0; }
+.circular-progress { width:78px; height:78px; margin:2px 0; }
 
 @media (max-width:900px){
   .upcoming-section .timeline { grid-template-columns:1fr; }
