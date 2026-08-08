@@ -190,7 +190,7 @@ from django.db.models import Sum  # noqa: E402
 from django.utils import timezone  # noqa: E402
 from django.contrib.contenttypes.models import ContentType  # noqa: E402
 
-from .models import Topic as TopicModel, Card as CardModel, StudyTime, CoreAttempt, CoreLearningProgress, CoreStudySession, Reminder  # noqa: E402
+from .models import Topic as TopicModel, Card as CardModel, StudyTime, CoreAttempt, CoreLearningProgress, CoreStudySession, Reminder, CoreXpAccount, CoreXpAward  # noqa: E402
 from .serializers import StudyTimeSerializer  # noqa: E402
 
 
@@ -609,6 +609,15 @@ def study_view(request):
 			content_type_id=ct_id if ct_id else None,
 			object_id=oid if oid is not None else None,
 		)
+		# XP for study time: 100 XP per hour (~1 XP per 36 s). Kept modest so quiz
+		# answers stay the primary XP source. The frontend commits per-chunk
+		# deltas, so each studied second is awarded at most once.
+		gained = (seconds * 100) // 3600
+		if gained > 0:
+			xp, _ = CoreXpAccount.objects.get_or_create(user=request.user)
+			xp.add_xp(gained)
+			CoreXpAward.objects.create(user=request.user, amount=gained, reason="STUDY_TIME")
+			xp.save()
 		return Response(StudyTimeSerializer(st).data, status=201)
 	return Response(_stats_payload(request.user, request))
 
