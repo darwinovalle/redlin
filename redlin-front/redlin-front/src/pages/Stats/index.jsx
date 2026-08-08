@@ -120,10 +120,10 @@ const Stats = () => {
 
       {/* Toppline cards */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2, mb: 4 }}>
-        <StatCard icon={<LocalFireDepartmentIcon sx={{ color: '#F59E0B' }} />} tint="#F59E0B" label="Streak" value={`${stats.streak.current} day${stats.streak.current === 1 ? '' : 's'}`} sub={stats.streak.today_active ? 'Active today' : 'Study today to keep it'} />
-        <StatCard icon={<EmojiEventsIcon sx={{ color: '#F59E0B' }} />} tint="#F59E0B" label="Longest streak" value={`${stats.streak.longest}`} sub={`Level ${stats.xp.level}`} />
+        <StatCard icon={<LocalFireDepartmentIcon sx={{ color: 'var(--color-amber)' }} />} tint="var(--color-amber)" label="Streak" value={`${stats.streak.current} day${stats.streak.current === 1 ? '' : 's'}`} sub={stats.streak.today_active ? 'Active today' : 'Study today to keep it'} />
+        <StatCard icon={<EmojiEventsIcon sx={{ color: 'var(--color-amber)' }} />} tint="var(--color-amber)" label="Longest streak" value={`${stats.streak.longest}`} sub={`Level ${stats.xp.level}`} />
         <StatCard icon={<ScheduleIcon sx={{ color: 'var(--color-teal)' }} />} tint="var(--color-teal)" label="Study time" value={fmtTime(stats.study?.total_seconds || 0)} sub="across all subjects" />
-        <StatCard icon={<SelfImprovementIcon sx={{ color: '#38BDF8' }} />} tint="#38BDF8" label="X.P." value={stats.xp.level} sub={`${stats.xp.total} total XP`} />
+        <StatCard icon={<SelfImprovementIcon sx={{ color: 'var(--color-blue)' }} />} tint="var(--color-blue)" label="X.P." value={stats.xp.level} sub={`${stats.xp.total} total XP`} />
       </Box>
 
       {/* Feynman practice */}
