@@ -116,10 +116,12 @@
 .stats-card,
 .access-card,
 .timeline-item {
-  border:1.5px dashed rgba(148,163,184,0.55);
+  border:1.5px solid transparent;
   border-radius:22px;
   box-shadow:0 20px 44px -22px rgba(15,23,42,.22), 0 2px 6px rgba(15,23,42,.04);
-  background:var(--color-white);
+  background:
+    linear-gradient(#FFFFFF, #FFFFFF) padding-box,
+    linear-gradient(135deg, var(--color-teal-deep), var(--color-blue-deep)) border-box;
 }
 .progress-card { padding:0; }
 .card, .stats-card { padding:22px; }
