@@ -160,6 +160,8 @@ const Home = () => {
   const [stats, setStats] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [journey, setJourney] = useState([]);
+  // Some list services return DRF-paginated {results:[...]}; unwrap to a plain array.
+  const unwrap = (d) => (Array.isArray(d) ? d : (d?.results || []));
   const streak = stats?.streak?.current || 0;
   const dailyGoal = 1;
 
@@ -181,10 +183,11 @@ const Home = () => {
     let cancelled = false;
     (async () => {
       const out = [];
-      try { const d = await documentService.getUserDocuments(user?.id); out.push(...(Array.isArray(d) ? d : []).map((x) => ({ kind: 'document', id: x.id, title: x.title, thumb: documentService.getBookCoverUrl(x.id) }))); } catch {}
-      try { const b = await documentService.listBooks(); out.push(...(Array.isArray(b) ? b : []).map((x) => ({ kind: 'book', id: x.id, title: x.title, thumb: documentService.getBookCoverUrl(x.id) }))); } catch {}
-      try { const v = await videoService.listVideos(); out.push(...(Array.isArray(v) ? v : []).map((x) => ({ kind: 'video', id: x.id, title: x.title || x.video_id || 'Video', thumb: x.video_id ? `https://img.youtube.com/vi/${x.video_id}/hqdefault.jpg` : '' }))); } catch {}
-      try { const l = await classroomService.listSessions(); out.push(...(Array.isArray(l) ? l : []).map((x) => ({ kind: 'lecture', id: x.id, title: x.title, thumb: x.cover_image_url || '' }))); } catch {}
+      try { const d = await documentService.getUserDocuments(user?.id); out.push(...unwrap(d).map((x) => ({ kind: 'document', id: x.id, title: x.title, thumb: documentService.getBookCoverUrl(x.id) }))); } catch {}
+      try { const b = await documentService.listBooks(); out.push(...unwrap(b).map((x) => ({ kind: 'book', id: x.id, title: x.title, thumb: documentService.getBookCoverUrl(x.id) }))); } catch {}
+      try { const v = await videoService.listVideos(); out.push(...unwrap(v).map((x) => ({ kind: 'video', id: x.id, title: x.title || x.video_id || 'Video', thumb: x.video_id ? `https://img.youtube.com/vi/${x.video_id}/hqdefault.jpg` : '' }))); } catch {}
+      try { const l = await classroomService.listSessions(); out.push(...unwrap(l).map((x) => ({ kind: 'lecture', id: x.id, title: x.title, thumb: x.cover_image_url || '' }))); } catch {}
+      if (!cancelled) setSessions(out.slice(0, 20));
       if (!cancelled) setSessions(out.slice(0, 6));
       try { const tp = await topicsService.listTopics(); if (!cancelled) setJourney(mapJourney(tp)); } catch {}
     })();
