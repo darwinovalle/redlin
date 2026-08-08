@@ -182,10 +182,13 @@ const Stats = () => {
         ) : (
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2 }}>
             {stats.study_sources.map((s) => (
-              <Box key={`t-${s.type}-${s.id}`} sx={{ p: 2.5, borderRadius: 3, border: '1px solid color-mix(in srgb, var(--color-white) 12%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box key={`t-${s.type}-${s.id}`} sx={{ p: 2.5, borderRadius: 3, border: '1px solid color-mix(in srgb, var(--color-white) 12%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)', display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                 <Chip size="small" label={s.type === 'document' ? 'Document' : s.type === 'book' ? 'Book' : s.type === 'video' ? 'Video' : 'Lecture'} sx={{ color: 'var(--color-teal)', bgcolor: 'color-mix(in srgb, var(--color-teal) 16%, transparent)', fontSize: 11 }} />
                 <Typography sx={{ flex: 1, fontWeight: 700, fontSize: 15, minWidth: 0 }}>{s.title}</Typography>
                 <Typography sx={{ color: 'var(--color-white)', fontWeight: 700, fontSize: 15 }}>{fmtTime(s.seconds)}</Typography>
+                {(s.feynman_seconds || 0) > 0 && (
+                  <Chip size="small" label={`Feynman ${fmtTime(s.feynman_seconds)}`} sx={{ color: 'var(--color-purple, #A855F7)', bgcolor: 'color-mix(in srgb, #A855F7 16%, transparent)', fontSize: 11 }} />
+                )}
               </Box>
             ))}
           </Box>

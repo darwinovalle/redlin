@@ -14,6 +14,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import LockIcon from '@mui/icons-material/Lock';
 // import { FlashcardProvider } from '../../context/FlashcardContext'; // MVP: Flashcards hidden
 import { documentService } from '../../services/api';
+import { useStudySession } from '../../hooks/useStudySession';
 import PdfViewer from '../../components/PdfViewer/PdfViewer';
 import { useAuth } from '../../context/AuthContext';
 import './dashboard.css';
@@ -89,6 +90,10 @@ const Dashboard = () => {
   });
   const [focusSession, setFocusSession] = useState(null); // 'quiz' | 'cloze' | 'feynman' | null
   const [focusKey, setFocusKey] = useState(0);
+
+  // Auto-record study time for the whole document page (reading the PDF +
+  // MCQs/Cloze/Feynman), since the Dashboard doesn't use the shared StudyPanel.
+  useStudySession({ model: 'document', itemId: selectedDocumentId });
 
   useEffect(() => {
     let cancelled = false;

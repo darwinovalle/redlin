@@ -402,8 +402,44 @@ STUDY_SOURCE_KIND = {
 }
 
 
+def _source_of_qi(item):
+	"""Given a quiz item (MCQ/Cloze/Feynman), return its source (kind, id, title)."""
+	for attr, kind in (("document", "document"), ("video", "video"), ("class_session", "lecture")):
+		if hasattr(item, attr):
+			ref = getattr(item, attr)
+			if ref is not None:
+				return kind, ref.id, getattr(ref, "title", "") or "Untitled"
+	return None
+
+
+def _feynman_seconds_by_source(user):
+	"""Feynman session seconds attributed to their source via the session's items."""
+	from collections import defaultdict
+	from CORE.services.srs import resolve_target
+
+	lookup = {}
+	for s in CoreStudySession.objects.filter(user=user, method="FEYNMAN"):
+		if not (s.ended_at and s.started_at):
+			continue
+		seconds = int((s.ended_at - s.started_at).total_seconds())
+		att = CoreAttempt.objects.filter(user=user, session=s, method="FEYNMAN").select_related("content_type").first()
+		if att is None:
+			continue
+		item = resolve_target(att.content_type_id, att.object_id)
+		src = _source_of_qi(item) if item is not None else None
+		if src is None:
+			continue
+		key = (src[0], src[1])
+		cur = lookup.get(key)
+		if cur is None:
+			lookup[key] = {"title": src[2], "seconds": 0}
+		lookup[key]["seconds"] += seconds
+	return lookup
+
+
 def _source_study_time(user):
-	"""Study seconds rolled up per source (document / book / video / lecture).
+	"""Study seconds rolled up per source (document / book / video / lecture),
+	including the part spent on Feynman sessions (`feynman_seconds`).
 
 	Book chapters are grouped under their parent Book (a book is a Document with
 	kind='book'; chapters have kind='chapter' + parent).
@@ -411,10 +447,12 @@ def _source_study_time(user):
 	rows = StudyTime.objects.filter(user=user).exclude(content_type__isnull=True)
 	per = {}
 
-	def ensure(kind, sid, title):
+	def ensure(kind, sid, title=None):
 		key = (kind, sid)
 		if key not in per:
-			per[key] = {"id": sid, "type": kind, "title": title, "seconds": 0}
+			per[key] = {"id": sid, "type": kind, "title": title or "Untitled", "seconds": 0, "feynman_seconds": 0}
+		elif title:
+			per[key]["title"] = title
 		return per[key]
 
 	cts = rows.values_list("content_type_id", flat=True).distinct()
@@ -444,7 +482,12 @@ def _source_study_time(user):
 				entry = ensure(kind, obj.id, title)
 			entry["seconds"] += st.seconds
 
-	out = sorted(per.values(), key=lambda x: -x["seconds"])
+	# Merge Feynman sessions time into the same per-source map.
+	for key, info in _feynman_seconds_by_source(user).items():
+		entry = ensure(key[0], key[1], info["title"])
+		entry["feynman_seconds"] += info["seconds"]
+
+	out = sorted(per.values(), key=lambda x: -(x["seconds"] + x["feynman_seconds"]))
 	return out
 
 
