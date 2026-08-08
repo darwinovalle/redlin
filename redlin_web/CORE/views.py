@@ -342,6 +342,7 @@ def _stats_payload(user):
 			"current": xp.current_streak,
 			"longest": xp.longest_streak,
 			"today_active": xp.last_active_date == today,
+			"last_active_date": xp.last_active_date.isoformat() if xp.last_active_date else None,
 		},
 		"xp": {"total": xp.xp_total, "level": xp.level},
 		"overall": {

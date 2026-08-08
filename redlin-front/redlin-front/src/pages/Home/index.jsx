@@ -123,16 +123,32 @@ const Home = () => {
       label: (() => { try { return new Date(`${d.started_at__date}T00:00:00`).toLocaleDateString('en', { weekday: 'short' }); } catch { return ''; } })(),
       seconds: d.seconds || 0,
     }));
-    if (!days.length) return [{ label: '—', pct: 2 }];
+    if (!days.length) return ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((label) => ({ label, pct: 2 }));
     const max = Math.max(1, ...days.map((d) => d.seconds));
     return days.map((d) => ({ ...d, pct: d.seconds > 0 ? Math.max(6, Math.round((d.seconds / max) * 100)) : 2 }));
   }, [stats]);
 
   // Build calendar week (Mon-Sun) simple representation 1..7 with active today index
-  const weekdays = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']; // display labels; the calendar's first day is Monday
   const todayIndex = ((new Date().getDay() + 6) % 7); // convert Sunday(0) -> 6
 
   const percent = Math.min(100, (done / dailyGoal) * 100);
+
+  // Which visible days are part of the current streak (fire markers).
+  const streakEndDate = stats?.streak?.last_active_date ? new Date(`${stats.streak.last_active_date}T00:00:00`) : new Date();
+  const streakDaysSet = new Set();
+  for (let i = 0; i < (stats?.streak?.current || 0); i += 1) {
+    const d = new Date(streakEndDate);
+    d.setDate(d.getDate() - i);
+    streakDaysSet.add(d.toDateString());
+  }
+  const monday = new Date();
+  monday.setDate(monday.getDate() - todayIndex);
+  const dayFire = weekdays.map((_, idx) => {
+    const d = new Date(monday);
+    d.setDate(d.getDate() + idx);
+    return streakDaysSet.has(d.toDateString());
+  });
 
   return (
     <div className="home-main-content" ref={mainContentRef}>
@@ -144,10 +160,10 @@ const Home = () => {
         <div className="welcome">
           <div className="user-avatar">{(user?.username || '?').charAt(0).toUpperCase()}</div>
           <div className="welcome-text">
-            <h2>Bienvenido{user?.username ? ',' : ''} {user?.username || ''}</h2>
+            <h2>Welcome{user?.username ? ',' : ''} {user?.username || ''}</h2>
             <div className="streak">
               <i className="ri-fire-fill" />
-              <span>Tu racha actual: {streak} {streak === 1 ? 'día' : 'días'}</span>
+              <span>Current streak: {streak} {streak === 1 ? 'day' : 'days'}</span>
             </div>
           </div>
         </div>
@@ -177,17 +193,18 @@ const Home = () => {
       {/* Progress Section */}
       <div className="progress-section" ref={progressSectionRef}>
         <div className="card progress-card">
-          <div className="progress-card-header"><h3>Progreso diario</h3></div>
+          <div className="progress-card-header"><h3>Daily progress</h3></div>
           <div className="progress-card-content">
             <div className="calendar">
               {weekdays.map((d, idx) => {
                 const dayNum = idx + 1;
                 const active = idx === todayIndex;
                 const completed = idx < todayIndex; // naive representation
+                const fire = dayFire[idx];
                 return (
                   <div key={d} className="calendar-day">
                     <div className="day-label">{d}</div>
-                    <div className={`day-circle ${active ? 'active' : ''} ${completed ? 'completed' : ''}`}>{dayNum}</div>
+                    <div className={`day-circle ${active ? 'active' : ''} ${completed ? 'completed' : ''}`}>{fire ? '🔥' : dayNum}</div>
                   </div>
                 );
               })}
@@ -195,14 +212,14 @@ const Home = () => {
           </div>
         </div>
         <div className="card progress-card">
-          <div className="progress-card-header"><h3>Meta diaria</h3></div>
+          <div className="progress-card-header"><h3>Daily goal</h3></div>
           <div className="progress-card-content">
             <div className="goal-progress">
               <div className="circular-progress" style={{ background: `conic-gradient(var(--color-teal) 0% ${percent}%, var(--color-cloud) ${percent}%, var(--color-cloud) 100%)` }}>
                 <div className="progress-value">{done}/{dailyGoal}</div>
               </div>
-              <div className="goal-text">{done >= dailyGoal ? 'Has completado tu meta diaria' : 'Progreso hacia tu meta'}</div>
-              <div className="goal-label">{dailyGoal} pregunta{dailyGoal!==1?'s':''}</div>
+              <div className="goal-text">{done >= dailyGoal ? 'You completed your daily goal' : 'Progress toward your goal'}</div>
+              <div className="goal-label">{dailyGoal} question{dailyGoal!==1?'s':''}</div>
             </div>
           </div>
         </div>
