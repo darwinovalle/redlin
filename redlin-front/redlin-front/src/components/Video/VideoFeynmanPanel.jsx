@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Box, Typography, Button, Divider, Stack } from '@mui/material';
 import { feynmanService } from '../../services/api/feynman.jsx';
+import { srService } from '../../services/api/sr';
 import FeynmanAttemptForm from '../Feynman/FeynmanAttemptForm';
 import AIFeedback from '../Feynman/AIFeedback';
 import Timer from '../Feynman/Timer';
@@ -25,6 +26,8 @@ const VideoFeynmanPanel = ({ videoId, title = 'Feynman Session', focus = false, 
   const autoSubmittingRef = useRef(false);
   const justAdvancedRef = useRef(false); // guard against immediate onExpire after Next
   const evalIndexRef = useRef(null); // ensure applying result to right question
+  const sessionStartedAtRef = useRef(null);
+  const sessionSentRef = useRef(false);
 
   const loadAll = useCallback(async () => {
     if (!videoId) { setPrompts([]); return; }
@@ -76,6 +79,8 @@ const VideoFeynmanPanel = ({ videoId, title = 'Feynman Session', focus = false, 
   };
 
   const startSession = () => {
+    sessionStartedAtRef.current = Date.now();
+    sessionSentRef.current = false;
     setSessionActive(true);
     setSessionFinished(false);
     setResults([]);
@@ -93,6 +98,21 @@ const VideoFeynmanPanel = ({ videoId, title = 'Feynman Session', focus = false, 
     if (questionDone) return; // don't reset after submission
     setCountdownRemaining(COUNTDOWN);
   }, [currentIndex, sessionActive, sessionFinished, questionDone]);
+
+  // When a session completes, send time + average score to the SR/stats engine.
+  useEffect(() => {
+    if (!sessionFinished || !results.length) return;
+    if (sessionSentRef.current) return;
+    sessionSentRef.current = true;
+    const elapsed = Math.round((Date.now() - (sessionStartedAtRef.current || Date.now())) / 1000);
+    const avg = results.length ? Math.round(results.reduce((a, r) => a + (r.score || 0), 0) / results.length) : 0;
+    srService.saveFeynmanSession({
+      model: 'video_feynman',
+      seconds: elapsed,
+      average: avg,
+      scores: results.map((r) => ({ item_id: r.feynman, score: r.score })),
+    }).then(() => {}).catch(() => {});
+  }, [sessionFinished, results]);
 
   // Focus Mode: when rendered inside the focus dialog, begin immediately.
   useEffect(() => {
@@ -160,14 +180,19 @@ const VideoFeynmanPanel = ({ videoId, title = 'Feynman Session', focus = false, 
   }
 
   const current = prompts[currentIndex];
+  const elapsedSec = Math.round((Date.now() - (sessionStartedAtRef.current || Date.now())) / 1000);
+  const avgScore = results.length ? Math.round(results.reduce((a, r) => a + (r.score || 0), 0) / results.length) : 0;
 
   return (
     <Box sx={{ p: 2, height: '100%', position: 'relative', overflowY: 'auto', color: 'var(--color-white)' }}>
       {sessionFinished ? (
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, color: 'var(--color-white)' }}>Session Summary</Typography>
-          <Typography variant="body2" sx={{ mb: 3, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+          <Typography variant="body2" sx={{ mb: 0.5, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
             You completed {results.length} / {prompts.length} questions.
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, color: 'var(--color-teal)', fontWeight: 700 }}>
+            Time: {Math.floor(Math.max(0, elapsedSec) / 60)}m {Math.max(0, elapsedSec) % 60}s · Avg score: {avgScore}
           </Typography>
           <Divider sx={{ mb: 2, borderColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' }} />
           {results.map(r => (
