@@ -14,6 +14,15 @@ const fmtStudy = (s) => {
   return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
 };
 
+const kindIcon = (k) => (k === 'video' ? 'ri-video-line' : k === 'book' ? 'ri-book-line' : k === 'lecture' ? 'ri-mic-line' : 'ri-file-text-line');
+
+// Thumbnail that falls back to a type icon when the image is missing/broken.
+const SmartThumb = ({ src, kind, alt }) => {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) return <div className="thumb-fallback"><i className={kindIcon(kind)} /></div>;
+  return <img src={src} alt={alt || ''} loading="lazy" onError={() => setFailed(true)} />;
+};
+
 // Lightweight SVG area chart: study seconds per day.
 const StudyChart = ({ days }) => {
   const W = 640, H = 190, PAD_L = 46, PAD_B = 26, PAD_T = 12;
@@ -337,16 +346,7 @@ const Home = () => {
             </div>
           ) : sessions.map((item) => (
             <div key={`${item.kind}-${item.id}`} className="timeline-item" onClick={() => navigate(sessionUrl(item))} style={{ cursor: 'pointer' }}>
-              <div className="timeline-date">
-                {item.thumb ? (
-                  <img src={item.thumb} alt={item.title} />
-                ) : (
-                  <>
-                    <div className="date-day">{item.kind === 'video' ? '🎬' : item.kind === 'lecture' ? '🎙️' : item.kind === 'book' ? '📚' : '📄'}</div>
-                    <div className="date-month">{item.kind}</div>
-                  </>
-                )}
-              </div>
+              <div className="timeline-date"><SmartThumb src={item.thumb} kind={item.kind} alt={item.title} /></div>
               <div className="timeline-content">
                 <div className="timeline-info"><h4>{item.title}</h4><p>Open study session</p></div>
               </div>
@@ -386,9 +386,7 @@ const Home = () => {
             </div>
           ) : quickSources.map((q) => (
             <div key={`${q.type}-${q.id}`} className="access-card" onClick={() => navigate(sessionUrl({ kind: q.type, id: q.id, title: q.title }))} style={{ cursor: 'pointer' }}>
-              <div className="access-thumbnail">
-                {thumbOf[`${q.type}:${q.id}`] ? <img src={thumbOf[`${q.type}:${q.id}`]} alt={q.title} /> : <i className={q.type === 'video' ? 'ri-video-line' : q.type === 'book' ? 'ri-book-line' : q.type === 'lecture' ? 'ri-mic-line' : 'ri-file-text-line'} />}
-              </div>
+              <div className="access-thumbnail"><SmartThumb src={thumbOf[`${q.type}:${q.id}`]} kind={q.type} alt={q.title} /></div>
               <div className="access-content">
                 <h4>{q.title}</h4>
                 <p><i className="ri-time-line" /> {fmtStudy(q.seconds)} studied</p>
