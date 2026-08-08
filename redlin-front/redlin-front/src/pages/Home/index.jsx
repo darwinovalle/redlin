@@ -16,11 +16,40 @@ const fmtStudy = (s) => {
 
 const kindIcon = (k) => (k === 'video' ? 'ri-video-line' : k === 'book' ? 'ri-book-line' : k === 'lecture' ? 'ri-mic-line' : 'ri-file-text-line');
 
-// Thumbnail that falls back to a type icon when the image is missing/broken.
+// Cache of auth-fetched cover object URLs (like Books' PdfCover).
+const docCoverCache = new Map();
+
+// Renders the real cover/thumbnail: document & book covers are served by the
+// backend behind auth (/documents/{id}/cover/), so fetch them with the token
+// (same as Books' PdfCover); videos/lectures use their plain public URLs.
 const SmartThumb = ({ src, kind, alt }) => {
-  const [failed, setFailed] = useState(false);
-  if (!src || failed) return <div className="thumb-fallback"><i className={kindIcon(kind)} /></div>;
-  return <img src={src} alt={alt || ''} loading="lazy" onError={() => setFailed(true)} />;
+  const [imgSrc, setImgSrc] = useState(null);
+  const [state, setState] = useState('idle'); // idle | loading | err
+  useEffect(() => {
+    if (!src) { setState('err'); return undefined; }
+    setState('loading'); setImgSrc(null);
+    if (!String(src).includes('/cover/')) { setImgSrc(src); setState('ready'); return undefined; }
+    const hit = docCoverCache.get(src);
+    if (hit !== undefined) { setImgSrc(hit); setState('ready'); return undefined; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const accessR = (() => { try { return JSON.parse(localStorage.getItem('auth') || '{}').access; } catch { return null; } })();
+        const res = await fetch(src, { headers: accessR ? { Authorization: `Bearer ${accessR}` } : {} });
+        if (!res.ok) throw new Error('cover fetch failed');
+        const blob = await res.blob();
+        const obj = URL.createObjectURL(blob);
+        docCoverCache.set(src, obj);
+        if (!cancelled) { setImgSrc(obj); setState('ready'); }
+      } catch { if (!cancelled) setState('err'); }
+    })();
+    return () => { cancelled = true; };
+  }, [src]);
+
+  if (state === 'ready' && imgSrc) {
+    return <img src={imgSrc} alt={alt || ''} loading="lazy" onError={() => setState('err')} />;
+  }
+  return <div className="thumb-fallback"><i className={kindIcon(kind)} /></div>;
 };
 
 // Lightweight SVG area chart: study seconds per day.
