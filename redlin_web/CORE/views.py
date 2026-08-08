@@ -493,6 +493,10 @@ def _source_study_time(user):
 					entry = ensure("document", obj.id, title)
 			else:
 				entry = ensure(kind, obj.id, title)
+				if kind == "video":
+					entry["video_id"] = getattr(obj, "video_id", "") or ""
+				elif kind == "lecture":
+					entry["cover_image_url"] = getattr(obj, "cover_image_url", "") or ""
 			entry["seconds"] += st.seconds
 			m = (st.method or "").upper()
 			if m in SECTION_METHODS:

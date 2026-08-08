@@ -244,6 +244,13 @@ const Home = () => {
   const slugify = (str) => (str || '').toString().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-');
   const sessionUrl = (s) => (s.kind === 'video' ? `/videos/${s.id}` : s.kind === 'lecture' ? `/classroom/${s.id}` : s.kind === 'book' ? `/books/${s.id}` : `/documents/${slugify(s.title)}`);
   const quickSources = (stats?.study_sources || []).slice(0, 5);
+  // Straight source->thumbnail, no cross-matching: the backend sends video_id /
+  // cover_image_url per source; documents/books use the PDF-cover endpoint.
+  const quickThumb = (q) => {
+    if (q.type === 'video') return q.video_id ? `https://img.youtube.com/vi/${q.video_id}/hqdefault.jpg` : '';
+    if (q.type === 'lecture') return q.cover_image_url || '';
+    return documentService.getBookCoverUrl(q.id);
+  };
   const thumbOf = useMemo(() => {
     const m = {};
     for (const s of sessions) m[`${s.kind}:${s.id}`] = s.thumb;
@@ -418,7 +425,7 @@ const Home = () => {
             </div>
           ) : quickSources.map((q) => (
             <div key={`${q.type}-${q.id}`} className="access-card" onClick={() => navigate(sessionUrl({ kind: q.type, id: q.id, title: q.title }))} style={{ cursor: 'pointer' }}>
-              <div className="access-thumbnail"><SmartThumb src={thumbOf[`${q.type}:${q.id}`]} kind={q.type} alt={q.title} /></div>
+              <div className="access-thumbnail"><SmartThumb src={quickThumb(q)} kind={q.type} alt={q.title} /></div>
               <div className="access-content">
                 <h4>{q.title}</h4>
                 <p><i className="ri-time-line" /> {fmtStudy(q.seconds)} studied</p>
