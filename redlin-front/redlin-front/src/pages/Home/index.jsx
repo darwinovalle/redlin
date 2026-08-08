@@ -156,7 +156,6 @@ const Home = () => {
   const upcomingSectionRef = useRef(null);
   const statsCardRef = useRef(null);
   const quickAccessRef = useRef(null);
-  const achievementsRef = useRef(null);
 
   const animationRefs = {
     mainContentRef,
@@ -165,8 +164,7 @@ const Home = () => {
     progressSectionRef,
     upcomingSectionRef,
     statsCardRef,
-    quickAccessRef,
-    achievementsRef
+    quickAccessRef
   };
 
   useHomeAnimations(animationRefs);
@@ -382,26 +380,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Achievements */}
-      <div className="gradient-bg" ref={achievementsRef}>
-        <div className="section-header">
-          <h3 className="section-title">Your Achievements</h3>
-          <div className="section-action">View All</div>
-        </div>
-        <div className="achievements-wrap">
-          {achievementsSeed.map(a => {
-            const title = typeof a.title === 'function' ? a.title(streak) : a.title;
-            return (
-              <div key={title} className="achievement-card">
-                <div className="achievement-icon" style={{ color: a.color }}><i className={a.icon} /></div>
-                <h4>{title}</h4>
-                <p>{a.desc}</p>
-              </div>
-            );
-          })}
-        </div>
       </div>
-    </div>
   );
 };
 
