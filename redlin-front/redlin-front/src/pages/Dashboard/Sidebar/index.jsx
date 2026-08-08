@@ -23,7 +23,6 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import AddIcon from '@mui/icons-material/Add';
 import SchoolIcon from '@mui/icons-material/School';
 import MicIcon from '@mui/icons-material/Mic';
 import { useState, useEffect } from 'react';
@@ -31,7 +30,6 @@ import { useAuth } from '../../../context/AuthContext';
 import { documentService } from '../../../services/api';
 import { videoService } from '../../../services/api/video';
 import { classroomService } from '../../../services/api/classroom';
-import AddSpaceModal from '../../../components/common/AddSpaceModal';
 import NotificationBell from '../../../components/common/NotificationBell';
 import { csvService } from '../../../services/api/csv';
 import LoaderOverlay from '../../../components/common/LoaderOverlay';
@@ -65,7 +63,6 @@ const NavItem = styled('button')(() => ({
   display: 'flex', alignItems: 'center', width: '100%', padding: '14px 24px', color: 'color-mix(in srgb, var(--color-white) 80%, transparent)', fontSize: 16, cursor: 'pointer', position: 'relative', transition: 'background .25s,color .25s', userSelect: 'none', background: 'none', border: 'none', textAlign: 'left', fontFamily: 'inherit', lineHeight: 'inherit', '&:hover': { backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', color: 'var(--color-white)' }, '&.active': { backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', color: 'var(--color-white)' }, '&:focus-visible': { outline: '2px solid var(--color-teal)', outlineOffset: '-2px' }
 }));
 const SectionTitle = styled('div')(() => ({ padding: '0 24px', margin: '16px 0 8px', fontSize: 12, textTransform: 'uppercase', color: 'color-mix(in srgb, var(--color-white) 50%, transparent)', letterSpacing: 1 }));
-const AddSpaceButton = styled('button')(() => ({ width: '82%', margin: '8px 24px', padding: '10px 16px', backgroundColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)', border: '1px dashed color-mix(in srgb, var(--color-white) 30%, transparent)', borderRadius: 6, color: 'var(--color-white)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, cursor: 'pointer', transition: 'background .25s', fontFamily: 'inherit', '&:hover': { backgroundColor: 'color-mix(in srgb, var(--color-white) 15%, transparent)' }, '&:focus-visible': { outline: '2px solid var(--color-teal)', outlineOffset: '-2px' } }));
 const ItemIcon = styled('span')(() => ({ display: 'inline-flex', marginRight: 16, fontSize: 20, alignItems: 'center', justifyContent: 'center' }));
 // Small status dot shown at the left of each sidebar item, next to its icon.
 // Green = completed; any other/unknown status shows as red.
@@ -171,7 +168,6 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [videos,setVideos]=useState([]);
   const [loadingVideos,setLoadingVideos]=useState(false);
   const [videoError,setVideoError]=useState(null);
-  const [creatingVideo,setCreatingVideo]=useState(false);
   const [classroomSessions,setClassroomSessions]=useState([]);
   const [loadingClassroomSessions,setLoadingClassroomSessions]=useState(false);
   const [classroomError,setClassroomError]=useState(null);
@@ -182,7 +178,6 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const [videosOpen,setVideosOpen]=useState(false);
   const [statsOpen,setStatsOpen]=useState(false);
   const sidebarStateHydratedRef = React.useRef(false);
-  const [openSampleModal,setOpenSampleModal]=useState(false);
   const [renameState,setRenameState]=useState({open:false,doc:null,saving:false});
   const [renameSheetState,setRenameSheetState]=useState({open:false,imp:null,saving:false});
   const [renameVideoState,setRenameVideoState]=useState({open:false,video:null,saving:false});
@@ -224,7 +219,6 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
         setLoadingClassroomSessions(false);                                                                                                                   
       }                                                                                                                                                       
     }; 
-  const uploadFile=async(file)=>{ if(!file||!user?.id) return; setLoading(true); setError(null); try{ await documentService.uploadDocument(file,user.id); await fetchUserDocuments(); setSuccessAlertOpen(true);}catch(e){ setError(e?.error||'Upload failed'); } finally { setLoading(false);} };
   const openConfirm=({title,message,onConfirm})=> setConfirmState({open:true,title,message,onConfirm,confirming:false});
   const closeConfirm=()=> setConfirmState({open:false,title:'',message:'',onConfirm:null,confirming:false});
   const runConfirm=async()=>{ if(!confirmState.onConfirm) return; try{ setConfirmState(s=>({...s,confirming:true})); await confirmState.onConfirm(); closeConfirm(); }catch{ closeConfirm(); alert('Failed to delete'); } };
@@ -296,22 +290,6 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const openRenameSheet=(imp)=> setRenameSheetState({open:true,imp,saving:false});
   const closeRenameSheet=()=> setRenameSheetState({open:false,imp:null,saving:false});
   const submitRenameSheet=async(newName)=>{ if(!renameSheetState.imp) return; try{ setRenameSheetState(s=>({...s,saving:true})); await csvService.renameImport(renameSheetState.imp.id,newName); setCsvImports(d=>d.map(i=>i.id===renameSheetState.imp.id?{...i,filename:newName}:i)); closeRenameSheet(); }catch(e){ setError(e?.error||'Rename failed'); setRenameSheetState(s=>({...s,saving:false})); } };
-  const handleCreateVideo=async({url,languages})=>{ if(!url) return; setCreatingVideo(true); try{ const v=await videoService.createVideo({url,languages}); setVideos(prev=>[v,...prev]); setOpenSampleModal(false); navigate(`/videos/${v.id}`);}catch(e){ alert(e?.response?.data?.error||'Failed to add video'); } finally { setCreatingVideo(false);} };
-  const handleCreateClassroom=async({title,language})=>{
-    const trimmedTitle = (title || '').trim();
-    if(!trimmedTitle) return;
-    try{
-      const session = await classroomService.createSession({ title: trimmedTitle, language: language || 'es' });
-      await fetchClassroomSessions();
-      setClassroomOpen(true);
-      setOpenSampleModal(false);
-      if(session?.id){
-        navigate(`/classroom/${session.id}?captureHelp=1`);
-      }
-    }catch(e){
-      alert(e?.response?.data?.error || e?.message || 'Failed to create lecture');
-    }
-  };
   const sidebarContent = (
     <>
         <div style={{ padding: '0 24px 24px', borderBottom: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', marginBottom: 24 }}>
@@ -383,10 +361,6 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
               <span style={{ flex:1 }}>Stats</span>
             </NavItem>
           </div>
-          <AddSpaceButton type="button" onClick={()=>setOpenSampleModal(true)}>
-            <AddIcon sx={{ fontSize:18, mr:1 }} />
-            <span>Add Space</span>
-          </AddSpaceButton>
           <SectionTitle>Settings</SectionTitle>
           {/* TODO: Re-enable when SaaS/Stripe launches — see MVP scope.
           <NavItem type="button" onClick={()=>navigate('/pricing')}><ItemIcon><WorkspacePremiumIcon sx={{ fontSize:20 }}/></ItemIcon><span>Upgrade Plan</span></NavItem> */}
@@ -438,17 +412,6 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
         </>
       )}
 
-      <AddSpaceModal
-        open={openSampleModal}
-        onClose={()=>setOpenSampleModal(false)}
-        onImportDocument={async(file)=>{ await uploadFile(file); setOpenSampleModal(false); }}
-        onImportSheet={async(file)=>{ try{ const res=await csvService.uploadCSV(file); setOpenSampleModal(false); const name=(file?.name||'csv').replace(/\.[^/.]+$/, ''); const slug=slugify(name); navigate(`/csv/${slug}?importId=${res?.import?.id||''}`);}catch(e){ console.error('CSV import failed',e); alert('CSV import failed'); } }}
-        onCreateClassroom={handleCreateClassroom}
-        onCreateTutorial={()=>{ console.log('Create tutorial'); setOpenSampleModal(false);} }
-        onCreateKanban={()=>{ console.log('Create kanban'); setOpenSampleModal(false);} }
-        onCreateVideo={handleCreateVideo}
-        creatingVideo={creatingVideo}
-      />
       <RenameDialog open={renameState.open} initialValue={renameState.doc?.title || ''} onClose={closeRename} onSubmit={submitRename} submitting={renameState.saving} />
       <RenameDialog open={renameSheetState.open} initialValue={(renameSheetState.imp?.filename || '').replace(/\.[^/.]+$/, '')} onClose={closeRenameSheet} onSubmit={submitRenameSheet} submitting={renameSheetState.saving} title="Rename Sheet" label="Sheet name" />
       <RenameDialog open={renameVideoState.open} initialValue={renameVideoState.video?.title || ''} onClose={closeRenameVideo} onSubmit={submitRenameVideo} submitting={renameVideoState.saving} title="Rename video" label="Video title" />
