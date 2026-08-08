@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from CORE.services import srs
 from CORE.models import CoreLearningProgress, CoreAttempt, CoreXpAward
-from API.models import Document, User
+from API.models import Document, Feynman, User
 
 
 @pytest.mark.django_db
@@ -106,3 +106,32 @@ def test_record_attempt_full_loop():
     assert progress.interval == 3 and progress.status == "learning"
     assert u.xp_account.xp_total == 20
     assert CoreXpAward.objects.filter(user=u).count() == 1
+
+
+# ----- Feynman score -> SM-2 (Feynman is in the schedule now) -----
+
+def test_quality_from_feynman_score():
+    assert srs.quality_from_score(100) == 5
+    assert srs.quality_from_score(90) == 4
+    assert srs.quality_from_score(75) == 3
+    assert srs.quality_from_score(70) == 3
+    assert srs.quality_from_score(45) == 1
+    assert srs.quality_from_score(30) == 1
+    assert srs.quality_from_score(0) == 0
+
+
+@pytest.mark.django_db
+def test_feynman_attempt_advances_schedule():
+    u = User.objects.create()
+    d = Document.objects.create(user=u, title="Feynman doc")
+    f = Feynman.objects.create(document=d, prompt="Explain X")
+    ct = ContentType.objects.get_for_model(Feynman)
+    res = srs.record_attempt(
+        user=u, method="FEYNMAN", content_type_id=ct.id, object_id=f.id,
+        correct=True, ai_score=85, quality=srs.quality_from_score(85),
+    )
+    assert res["passed"] is True
+    assert res["quality"] == 4
+    assert res["interval_days"] == 3
+    progress = CoreLearningProgress.objects.get(user=u, content_type=ct, object_id=f.id)
+    assert progress.status == "learning" and progress.next_review_at is not None

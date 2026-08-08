@@ -544,6 +544,7 @@ def feynman_session_view(request):
 
 	model = data.get("model") or "feynman"
 	if model in FEYNMAN_ITEM_MODELS:
+		from CORE.services.srs import record_attempt, quality_from_score
 		app_label, model_name = FEYNMAN_ITEM_MODELS[model]
 		ct = ContentType.objects.get(app_label=app_label, model=model_name)
 		for s in scores:
@@ -555,10 +556,12 @@ def feynman_session_view(request):
 				ct.get_object_for_this_type(pk=oid)
 			except Exception:
 				continue
-			CoreAttempt.objects.create(
-				user=request.user, session=sess, method="FEYNMAN",
-				content_type=ct, object_id=oid,
-				ai_score=score, correct=(score or 0) >= threshold,
+			# Advance the SM-2 schedule for this Feynman prompt (same lifecycle as
+			# MCQ/Cloze), using its AI score to drive the schedule.
+			record_attempt(
+				user=request.user, method="FEYNMAN", content_type_id=ct.id,
+				object_id=oid, correct=(score or 0) >= threshold, ai_score=score,
+				quality=quality_from_score(score),
 			)
 
 	return Response({

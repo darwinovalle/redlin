@@ -25,6 +25,22 @@ def quality_from_attempt(correct: bool, latency_ms=None) -> int:
     return q
 
 
+def quality_from_score(score) -> int:
+    """Map a Feynman AI score (0-100) to SM-2 quality so pass (~>=70) -> >=3."""
+    score = float(score or 0)
+    if score >= 95:
+        return 5
+    if score >= 80:
+        return 4
+    if score >= 70:
+        return 3
+    if score >= 50:
+        return 2
+    if score >= 30:
+        return 1
+    return 0
+
+
 def next_interval(current_interval, passed: bool) -> int:
     """Move along the configured ladder (3 -> 8 -> 15 -> 30 days).
 
@@ -40,13 +56,15 @@ def next_interval(current_interval, passed: bool) -> int:
     return INTERVAL_LADDER[-1]
 
 
-def apply_progress(progress, correct: bool, latency_ms=None, now=None):
+def apply_progress(progress, correct: bool, latency_ms=None, now=None, quality=None):
     """Advance a CoreLearningProgress row from one answer.
 
-    Mutates and returns the row per our SM-2-ish ladder. Caller must .save().
+    `quality` (0-5) overrides the automatic mapping (used by Feynman, which has
+    its own AI score). Mutates and returns the row; caller must .save().
     """
     now = now or timezone.now()
-    quality = quality_from_attempt(correct, latency_ms)
+    if quality is None:
+        quality = quality_from_attempt(correct, latency_ms)
     passed = quality >= 3
 
     progress.times_shown += 1
@@ -109,7 +127,8 @@ def resolve_target(content_type_id, object_id):
 
 
 def record_attempt(*, user, method, content_type_id, object_id, correct,
-                   latency_ms=None, raw_answer=None, ai_score=None, now=None):
+                   latency_ms=None, raw_answer=None, ai_score=None, now=None,
+                   quality=None):
     """Persist one answer and advance the whole loop (schedule + streak + XP).
 
     Creates/updates the per-item CoreLearningProgress, writes a CoreAttempt,
@@ -120,7 +139,7 @@ def record_attempt(*, user, method, content_type_id, object_id, correct,
     progress, _ = CoreLearningProgress.objects.get_or_create(
         user=user, content_type_id=content_type_id, object_id=object_id
     )
-    progress, passed, quality = apply_progress(progress, correct, latency_ms, now)
+    progress, passed, quality = apply_progress(progress, correct, latency_ms, now, quality)
     progress.save()
 
     attempt = CoreAttempt.objects.create(
