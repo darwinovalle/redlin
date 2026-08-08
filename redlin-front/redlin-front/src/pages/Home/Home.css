@@ -101,9 +101,9 @@
 /* ============ Visual refresh (Apple-like, light, dotted borders) ============ */
 .home-main-content {
   background:
-    radial-gradient(circle, color-mix(in srgb, var(--color-text) 10%, transparent) 1px, transparent 1.3px),
+    radial-gradient(circle, #CBD5E1 1px, transparent 1.5px),
     #F6F8FB;
-  background-size: 24px 24px;
+  background-size: 22px 22px;
   padding:36px 44px;
 }
 .header { margin-bottom:34px; background:#F6F8FB; }
@@ -116,7 +116,7 @@
 .stats-card,
 .access-card,
 .timeline-item {
-  border:1.5px dashed color-mix(in srgb, var(--color-text) 45%, transparent);
+  border:1.5px dashed #94A3B8;
   border-radius:22px;
   box-shadow:0 20px 44px -22px rgba(15,23,42,.22), 0 2px 6px rgba(15,23,42,.04);
   background:var(--color-white);
