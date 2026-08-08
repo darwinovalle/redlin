@@ -16,32 +16,37 @@ const fmtStudy = (s) => {
 
 // Lightweight SVG area chart: study seconds per day.
 const StudyChart = ({ days }) => {
-  const W = 620, H = 180, PAD = 26;
-  const max = Math.max(1, ...days.map((d) => d.seconds));
+  const W = 640, H = 190, PAD_L = 46, PAD_B = 26, PAD_T = 12;
+  const innerW = W - PAD_L - 16;
+  const innerH = H - PAD_T - PAD_B;
+  const maxSec = Math.max(1, ...days.map((d) => d.seconds));
+  const maxMin = Math.max(1, Math.round((maxSec / 60) * 10) / 10);
   const pts = days.map((d, i) => {
-    const x = PAD + (i * (W - PAD * 2)) / Math.max(1, days.length - 1);
-    const y = H - PAD - (d.seconds / max) * (H - PAD * 2);
+    const x = PAD_L + (i * innerW) / Math.max(1, days.length - 1);
+    const y = H - PAD_B - (d.seconds / maxSec) * innerH;
     return [x, y];
   });
   const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ');
-  const areaPath = `${line} L${pts[pts.length - 1][0].toFixed(1)} ${H - PAD} L${pts[0][0].toFixed(1)} ${H - PAD} Z`;
+  const areaPath = `${line} L${(PAD_L + innerW).toFixed(1)} ${H - PAD_B} L${pts[0][0].toFixed(1)} ${H - PAD_B} Z`;
+  const ticks = [0, 0.5, 1].map((g) => ({ value: maxMin * g, y: H - PAD_B - g * innerH }));
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
       <defs>
         <linearGradient id="homeAreaFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--color-teal)" stopOpacity="0.45" />
-          <stop offset="100%" stopColor="var(--color-teal)" stopOpacity="0.03" />
+          <stop offset="0%" stopColor="var(--color-teal)" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="var(--color-teal)" stopOpacity="0.05" />
         </linearGradient>
       </defs>
-      {[0.25, 0.5, 0.75].map((g) => (
-        <line key={g} x1={PAD} x2={W - PAD} y1={H - PAD - (g * (H - PAD * 2))} y2={H - PAD - (g * (H - PAD * 2))} stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+      {ticks.map((t) => (
+        <g key={t.y}>
+          <line x1={PAD_L} x2={PAD_L + innerW} y1={t.y} y2={t.y} stroke="rgba(15,23,42,0.09)" strokeWidth="1" strokeDasharray="3 3" />
+          <text x={PAD_L - 8} y={t.y + 4} textAnchor="end" style={{ fontSize: 11, fill: '#94A3B8' }}>{Math.round(t.value)}m</text>
+        </g>
       ))}
       <path d={areaPath} fill="url(#homeAreaFill)" />
-      <path d={line} fill="none" stroke="var(--color-teal)" strokeWidth="2.5" strokeLinejoin="round" />
-      {pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="3" fill="var(--color-teal)" />)}
-      {days.map((d, i) => (
-        <text key={i} x={pts[i][0]} y={H - 8} textAnchor="middle" style={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}>{d.label}</text>
-      ))}
+      <path d={line} fill="none" stroke="var(--color-teal)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+      {pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="3.5" fill="var(--color-teal)" />)}
+      {days.map((dd, i) => <text key={i} x={pts[i][0]} y={H - 8} textAnchor="middle" style={{ fontSize: 11, fill: '#94A3B8', fontWeight: 600 }}>{dd.label}</text>)}
     </svg>
   );
 };
@@ -138,10 +143,10 @@ const Home = () => {
     let cancelled = false;
     (async () => {
       const out = [];
-      try { const d = await documentService.getUserDocuments(user?.id); out.push(...(Array.isArray(d) ? d : []).map((x) => ({ kind: 'document', id: x.id, title: x.title }))); } catch {}
-      try { const b = await documentService.listBooks(); out.push(...(Array.isArray(b) ? b : []).map((x) => ({ kind: 'book', id: x.id, title: x.title }))); } catch {}
-      try { const v = await videoService.listVideos(); out.push(...(Array.isArray(v) ? v : []).map((x) => ({ kind: 'video', id: x.id, title: x.title || x.video_id || 'Video' }))); } catch {}
-      try { const l = await classroomService.listSessions(); out.push(...(Array.isArray(l) ? l : []).map((x) => ({ kind: 'lecture', id: x.id, title: x.title }))); } catch {}
+      try { const d = await documentService.getUserDocuments(user?.id); out.push(...(Array.isArray(d) ? d : []).map((x) => ({ kind: 'document', id: x.id, title: x.title, thumb: documentService.getBookCoverUrl(x.id) }))); } catch {}
+      try { const b = await documentService.listBooks(); out.push(...(Array.isArray(b) ? b : []).map((x) => ({ kind: 'book', id: x.id, title: x.title, thumb: documentService.getBookCoverUrl(x.id) }))); } catch {}
+      try { const v = await videoService.listVideos(); out.push(...(Array.isArray(v) ? v : []).map((x) => ({ kind: 'video', id: x.id, title: x.title || x.video_id || 'Video', thumb: x.video_id ? `https://img.youtube.com/vi/${x.video_id}/hqdefault.jpg` : '' }))); } catch {}
+      try { const l = await classroomService.listSessions(); out.push(...(Array.isArray(l) ? l : []).map((x) => ({ kind: 'lecture', id: x.id, title: x.title, thumb: x.cover_image_url || '' }))); } catch {}
       if (!cancelled) setSessions(out.slice(0, 6));
       try { const tp = await topicsService.listTopics(); if (!cancelled) setJourney(mapJourney(tp)); } catch {}
     })();
@@ -198,6 +203,11 @@ const Home = () => {
   const slugify = (str) => (str || '').toString().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-');
   const sessionUrl = (s) => (s.kind === 'video' ? `/videos/${s.id}` : s.kind === 'lecture' ? `/classroom/${s.id}` : s.kind === 'book' ? `/books/${s.id}` : `/documents/${slugify(s.title)}`);
   const quickSources = (stats?.study_sources || []).slice(0, 5);
+  const thumbOf = useMemo(() => {
+    const m = {};
+    for (const s of sessions) m[`${s.kind}:${s.id}`] = s.thumb;
+    return m;
+  }, [sessions]);
   const chartDays = useMemo(() => {
     const byDay = {};
     for (const d of (stats?.study?.per_day || [])) byDay[d.started_at__date] = d.seconds || 0;
@@ -328,8 +338,14 @@ const Home = () => {
           ) : sessions.map((item) => (
             <div key={`${item.kind}-${item.id}`} className="timeline-item" onClick={() => navigate(sessionUrl(item))} style={{ cursor: 'pointer' }}>
               <div className="timeline-date">
-                <div className="date-day">{item.kind === 'video' ? '🎬' : item.kind === 'lecture' ? '🎙️' : item.kind === 'book' ? '📚' : '📄'}</div>
-                <div className="date-month">{item.kind}</div>
+                {item.thumb ? (
+                  <img src={item.thumb} alt={item.title} />
+                ) : (
+                  <>
+                    <div className="date-day">{item.kind === 'video' ? '🎬' : item.kind === 'lecture' ? '🎙️' : item.kind === 'book' ? '📚' : '📄'}</div>
+                    <div className="date-month">{item.kind}</div>
+                  </>
+                )}
               </div>
               <div className="timeline-content">
                 <div className="timeline-info"><h4>{item.title}</h4><p>Open study session</p></div>
@@ -370,7 +386,9 @@ const Home = () => {
             </div>
           ) : quickSources.map((q) => (
             <div key={`${q.type}-${q.id}`} className="access-card" onClick={() => navigate(sessionUrl({ kind: q.type, id: q.id, title: q.title }))} style={{ cursor: 'pointer' }}>
-              <div className="access-thumbnail"><i className={q.type === 'video' ? 'ri-video-line' : q.type === 'book' ? 'ri-book-line' : q.type === 'lecture' ? 'ri-mic-line' : 'ri-file-text-line'} /></div>
+              <div className="access-thumbnail">
+                {thumbOf[`${q.type}:${q.id}`] ? <img src={thumbOf[`${q.type}:${q.id}`]} alt={q.title} /> : <i className={q.type === 'video' ? 'ri-video-line' : q.type === 'book' ? 'ri-book-line' : q.type === 'lecture' ? 'ri-mic-line' : 'ri-file-text-line'} />}
+              </div>
               <div className="access-content">
                 <h4>{q.title}</h4>
                 <p><i className="ri-time-line" /> {fmtStudy(q.seconds)} studied</p>
