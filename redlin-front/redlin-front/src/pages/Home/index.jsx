@@ -6,6 +6,7 @@ import { srService } from '../../services/api/sr';
 import { documentService } from '../../services/api';
 import { videoService } from '../../services/api/video';
 import { classroomService } from '../../services/api/classroom';
+import { topicsService } from '../../services/api/topics';
 import './Home.css';
 
 const fmtStudy = (s) => {
@@ -115,8 +116,22 @@ const Home = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [sessions, setSessions] = useState([]);
+  const [journey, setJourney] = useState([]);
   const streak = stats?.streak?.current || 0;
   const dailyGoal = 1;
+
+  // Map kanban subjects to journey milestones (pending / current / completed).
+  const mapJourney = (topics) => (Array.isArray(topics) ? topics : []).map((t) => {
+    const cols = t?.board?.columns || [];
+    const total = cols.reduce((n, c) => n + (c.cards || []).length, 0);
+    const mastered = cols.length ? (cols[cols.length - 1].cards || []).length : 0;
+    let status = 'pending';
+    if (total > 0) {
+      if (mastered === total) status = 'completed';
+      else if (cols.slice(0, Math.max(1, cols.length - 1)).some((c) => (c.cards || []).length > 0)) status = 'current';
+    }
+    return { id: t.id, title: t.name, total, mastered, status };
+  });
 
   // Load the user's real study resources for "Upcoming Sessions".
   useEffect(() => {
@@ -128,6 +143,7 @@ const Home = () => {
       try { const v = await videoService.listVideos(); out.push(...(Array.isArray(v) ? v : []).map((x) => ({ kind: 'video', id: x.id, title: x.title || x.video_id || 'Video' }))); } catch {}
       try { const l = await classroomService.listSessions(); out.push(...(Array.isArray(l) ? l : []).map((x) => ({ kind: 'lecture', id: x.id, title: x.title }))); } catch {}
       if (!cancelled) setSessions(out.slice(0, 6));
+      try { const tp = await topicsService.listTopics(); if (!cancelled) setJourney(mapJourney(tp)); } catch {}
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -247,12 +263,17 @@ const Home = () => {
           <div className="path-title">Your Learning Journey</div>
           <div className="section-action">View Details</div>
         </div>
-        <p>Track your progress through the AI fundamentals course</p>
+        <p>Your study subjects, from planning to mastered — click one to open its board.</p>
         <div className="path-timeline">
-          {milestonesSeed.map(m => (
-            <div key={m.label} className={`milestone ${m.status}`}> 
+          {journey.length === 0 ? (
+            <div className="milestone pending">
               <div className="milestone-dot" />
-              <div className="milestone-label" title={m.label}>{m.label}</div>
+              <div className="milestone-label" title="No subjects yet">Create your first subject</div>
+            </div>
+          ) : journey.map(m => (
+            <div key={m.id} className={`milestone ${m.status}`} onClick={() => navigate(`/subjects/${m.id}`)} role="button" title={`${m.title} · ${m.mastered}/${m.total} mastered`}>
+              <div className="milestone-dot" />
+              <div className="milestone-label">{m.title}</div>
             </div>
           ))}
         </div>
