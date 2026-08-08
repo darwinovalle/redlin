@@ -293,7 +293,7 @@ const Home = () => {
                 return (
                   <div key={d} className="calendar-day">
                     <div className="day-label">{d}</div>
-                    <div className={`day-circle ${active ? 'active' : ''} ${completed ? 'completed' : ''}`}>{fire ? '🔥' : dayNum}</div>
+                    <div className={`day-circle ${active ? 'active' : ''} ${completed ? 'completed' : ''}`}>{fire ? <i className="ri-fire-line" style={{ color: 'var(--color-purple)', fontStyle: 'normal', fontSize: 12 }} /> : dayNum}</div>
                   </div>
                 );
               })}
