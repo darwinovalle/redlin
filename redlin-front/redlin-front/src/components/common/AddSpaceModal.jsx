@@ -44,7 +44,7 @@ const AddSpaceModal = ({
   const [selected, setSelected] = useState('document'); // 'document' | 'sheet' | 'video' | 'kanban' | 'classroom'
   const [videoUrl, setVideoUrl] = useState('');
   const [videoLangs, setVideoLangs] = useState(''); // comma separated languages
-  const [classroomTitle, setClassroomTitle] = useState('Classroom Session');
+  const [classroomTitle, setClassroomTitle] = useState('Lecture Session');
   const [classroomLanguage, setClassroomLanguage] = useState('es');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
@@ -54,9 +54,9 @@ const AddSpaceModal = ({
       { key: 'document', label: 'Import Document', icon: <InsertDriveFileIcon fontSize="small" /> },
   { key: 'sheet', label: 'Import Sheet', icon: <DescriptionIcon fontSize="small" /> },
   { key: 'video', label: 'Add YouTube Video', icon: <OndemandVideoIcon fontSize="small" /> },
-      { key: 'classroom', label: 'Create Classroom Space', icon: <MicIcon fontSize="small" /> },
+      { key: 'classroom', label: 'Create Lecture', icon: <MicIcon fontSize="small" /> },
       // { key: 'tutorial', label: 'Create Tutorial', icon: <MenuBookIcon fontSize="small" /> },
-      { key: 'kanban', label: 'Create Kanban Task', icon: <ViewKanbanIcon fontSize="small" /> },
+      { key: 'kanban', label: 'Create Subject', icon: <ViewKanbanIcon fontSize="small" /> },
     ],
     []
   );
@@ -339,14 +339,14 @@ const AddSpaceModal = ({
 
             {selected === 'classroom' && (
               <Box sx={{ maxWidth: 520, width: '100%' }}>
-                <Typography variant="h6" sx={{ mb: 1.5, color: 'var(--color-white)' }}>Create a Classroom Space</Typography>
+                <Typography variant="h6" sx={{ mb: 1.5, color: 'var(--color-white)' }}>Create a Lecture</Typography>
                 <Typography variant="body2" color="var(--color-text-muted-on-dark)" sx={{ mb: 2 }}>
-                  Start a dedicated space for a live class recording. After you stop, you can process the transcription.
+                  Start a dedicated recording for a live lecture. After you stop, you can process the transcription.
                 </Typography>
                 <Box component="form" onSubmit={(e) => { e.preventDefault(); onCreateClassroom?.({ title: classroomTitle.trim(), language: classroomLanguage.trim() || 'es' }); }}>
                   <input
                     type="text"
-                    placeholder="Classroom title"
+                    placeholder="Lecture title"
                     value={classroomTitle}
                     onChange={(e) => setClassroomTitle(e.target.value)}
                     style={{
@@ -381,7 +381,7 @@ const AddSpaceModal = ({
                     onClick={() => onCreateClassroom?.({ title: classroomTitle.trim(), language: classroomLanguage.trim() || 'es' })}
                     disabled={!classroomTitle.trim()}
                   >
-                    Create Classroom
+                    Create Lecture
                   </Button>
                 </Box>
               </Box>
@@ -389,9 +389,9 @@ const AddSpaceModal = ({
 
             {selected === 'kanban' && (
               <Box sx={{ textAlign: 'center', maxWidth: 520 }}>
-                <Typography variant="h6" sx={{ mb: 1.5, color: 'var(--color-white)' }}>Create Kanban Task</Typography>
+                <Typography variant="h6" sx={{ mb: 1.5, color: 'var(--color-white)' }}>Create Subject</Typography>
                 <Typography variant="body2" color="var(--color-text-muted-on-dark)" sx={{ mb: 2 }}>
-                  Start a new kanban task space.
+                  Start a new subject board to track your study material.
                 </Typography>
                 <Button variant="contained" onClick={onCreateKanban}>Create</Button>
               </Box>

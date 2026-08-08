@@ -198,7 +198,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             setManualTranscript(data.transcript_text);
           }
         } catch (err) {
-          setError(err?.response?.data?.detail || err?.message || 'Failed to load classroom session');
+          setError(err?.response?.data?.detail || err?.message || 'Failed to load lecture');
         } finally {
           setLoading(false);
         }
@@ -225,7 +225,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             if (!ignore) setResults(full);                                                                                                                    
           }                                                                                                                                                   
         } catch (err) {                                                                                                                                       
-          if (!ignore) setError(err?.response?.data?.detail || err?.message || 'Failed to load classroom session');                                           
+          if (!ignore) setError(err?.response?.data?.detail || err?.message || 'Failed to load lecture');                                           
         } finally {                                                                                                                                           
           if (!ignore) setLoading(false);                                                                                                                     
         }                                                                                                                                                     
@@ -551,7 +551,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
         <Box sx={{ width: '100%', display: 'grid', placeItems: 'center', minHeight: '100vh' }}>                                                               
           <Stack alignItems="center" spacing={2}>                                                                                                             
             <CircularProgress />                                                                                                                              
-            <Typography variant="body2">Loading classroom space...</Typography>                                                                               
+            <Typography variant="body2">Loading lecture...</Typography>                                                                               
           </Stack>                                                                                                                                            
         </Box>                                                                                                                                                
       );                                                                                                                                                      

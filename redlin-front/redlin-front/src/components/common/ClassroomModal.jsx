@@ -37,7 +37,7 @@ const ClassroomModal = ({ open, onClose, onImported }) => {
       onClose();
     } catch (e) {
       console.error('Create classroom failed', e);
-      setError(e?.response?.data?.detail || e?.message || 'Failed to create classroom space.');
+      setError(e?.response?.data?.detail || e?.message || 'Failed to create lecture.');
       setCreating(false);
     }
   };
@@ -60,14 +60,14 @@ const ClassroomModal = ({ open, onClose, onImported }) => {
         <Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 52, height: 52, borderRadius: '14px', background: 'color-mix(in srgb, var(--color-teal) 16%, transparent)', mb: 1.25 }}>
           <MicIcon sx={{ fontSize: 26, color: 'var(--color-teal)' }} />
         </Box>
-        <Typography variant="h5" sx={{ mb: 0.5, letterSpacing: 0.2, color: 'var(--color-white)' }}>Create a Classroom Space</Typography>
+        <Typography variant="h5" sx={{ mb: 0.5, letterSpacing: 0.2, color: 'var(--color-white)' }}>Create a Lecture</Typography>
         <Typography variant="body2" sx={{ mb: 2, color: 'color-mix(in srgb, var(--color-white) 66%, transparent)' }}>
           Give it a title and, optionally, a cover image for its card. A default logo shows if none is set.
         </Typography>
 
         <TextField
           fullWidth
-          label="Space title"
+          label="Lecture title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           disabled={creating}
@@ -104,7 +104,7 @@ const ClassroomModal = ({ open, onClose, onImported }) => {
           disabled={creating || !title.trim()}
           sx={{ borderRadius: '999px', py: 1.15, background: 'var(--color-teal)', color: 'var(--color-navy-deep)', fontWeight: 700, textTransform: 'none', boxShadow: '0 10px 28px color-mix(in srgb, var(--color-teal) 30%, transparent)', '&:hover': { background: 'var(--color-teal-pale)' }, '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 8%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' } }}
         >
-          {creating ? 'Creating…' : 'Create space'}
+          {creating ? 'Creating…' : 'Create lecture'}
         </Button>
 
         {error && !creating && (
@@ -114,8 +114,8 @@ const ClassroomModal = ({ open, onClose, onImported }) => {
         {creating && (
           <Box sx={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, background: 'color-mix(in srgb, var(--color-navy-800) 96%, transparent)', backdropFilter: 'blur(3px)', borderRadius: '20px' }}>
             <img src={GearSvg} alt="Loading" width={64} height={64} />
-            <Typography variant="body1" sx={{ color: 'var(--color-white)', fontWeight: 600 }}>Creating your space…</Typography>
-            <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>Preparing the classroom space</Typography>
+            <Typography variant="body1" sx={{ color: 'var(--color-white)', fontWeight: 600 }}>Creating your lecture…</Typography>
+            <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 60%, transparent)' }}>Preparing the lecture</Typography>
             <CircularProgress size={20} sx={{ color: 'var(--color-teal)', mt: 1 }} />
           </Box>
         )}

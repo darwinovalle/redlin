@@ -219,7 +219,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
         setClassroomSessions(sessions);                                                                                                                       
       } catch (e) {                                                                                                                                           
         console.error("Sidebar fetch error:", e);                                                                                                             
-        setClassroomError(e?.message || 'Could not load classroom spaces');                                                                                   
+        setClassroomError(e?.message || 'Could not load lectures');                                                                                   
       } finally {                                                                                                                                             
         setLoadingClassroomSessions(false);                                                                                                                   
       }                                                                                                                                                       
@@ -237,7 +237,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const openRenameClass=(s)=> setRenameClassState({open:true,session:s,saving:false});
   const closeRenameClass=()=> setRenameClassState({open:false,session:null,saving:false});
   const submitRenameClass=async(newTitle)=>{ if(!renameClassState.session) return; try{ setRenameClassState(s=>({...s,saving:true})); await classroomService.renameSession(renameClassState.session.id,newTitle); setClassroomSessions(d=>d.map(x=>x.id===renameClassState.session.id?{...x,title:newTitle}:x)); closeRenameClass(); }catch(e){ setError(e?.error||'Rename failed'); setRenameClassState(s=>({...s,saving:false})); } };
-  const handleDeleteClass=(s)=> openConfirm({ title:'Delete classroom space?', message:`Are you sure you want to delete "${s.title}"? This cannot be undone.`, onConfirm:async()=>{ await classroomService.deleteSession(s.id); setClassroomSessions(d=>d.filter(x=>x.id!==s.id)); if(currentClassroomSessionId && String(s.id)===currentClassroomSessionId) navigate('/home'); } });
+  const handleDeleteClass=(s)=> openConfirm({ title:'Delete lecture?', message:`Are you sure you want to delete "${s.title}"? This cannot be undone.`, onConfirm:async()=>{ await classroomService.deleteSession(s.id); setClassroomSessions(d=>d.filter(x=>x.id!==s.id)); if(currentClassroomSessionId && String(s.id)===currentClassroomSessionId) navigate('/home'); } });
   useEffect(() => {
     sidebarStateHydratedRef.current = false;
 
@@ -309,7 +309,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
         navigate(`/classroom/${session.id}?captureHelp=1`);
       }
     }catch(e){
-      alert(e?.response?.data?.error || e?.message || 'Failed to create classroom space');
+      alert(e?.response?.data?.error || e?.message || 'Failed to create lecture');
     }
   };
   const sidebarContent = (
@@ -331,7 +331,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             </NavItem>
             <NavItem type="button" onClick={()=>navigate('/classroom')} className={isClassroom?'active':''}>
               <ItemIcon><SchoolIcon sx={{ fontSize:20 }} /></ItemIcon>
-              <span style={{ flex:1 }}>Classroom Spaces</span>
+              <span style={{ flex:1 }}>Lectures</span>
             </NavItem>
             <NavItem type="button" onClick={()=>navigate('/documents')} className={isDocuments?'active':''}>
               <ItemIcon><FolderIcon sx={{ fontSize:20 }} /></ItemIcon>
@@ -374,7 +374,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
           <div className="nav-section">
             <NavItem type="button" onClick={()=>navigate('/subjects')} className={isSubjects?'active':''}>
               <ItemIcon><ViewKanbanIcon sx={{ fontSize:20 }}/></ItemIcon>
-              <span style={{ flex:1 }}>Kanban Tasks</span>
+              <span style={{ flex:1 }}>Subjects</span>
             </NavItem>
           </div>
           <div className="nav-section">
@@ -452,7 +452,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
       <RenameDialog open={renameState.open} initialValue={renameState.doc?.title || ''} onClose={closeRename} onSubmit={submitRename} submitting={renameState.saving} />
       <RenameDialog open={renameSheetState.open} initialValue={(renameSheetState.imp?.filename || '').replace(/\.[^/.]+$/, '')} onClose={closeRenameSheet} onSubmit={submitRenameSheet} submitting={renameSheetState.saving} title="Rename Sheet" label="Sheet name" />
       <RenameDialog open={renameVideoState.open} initialValue={renameVideoState.video?.title || ''} onClose={closeRenameVideo} onSubmit={submitRenameVideo} submitting={renameVideoState.saving} title="Rename video" label="Video title" />
-      <RenameDialog open={renameClassState.open} initialValue={renameClassState.session?.title || ''} onClose={closeRenameClass} onSubmit={submitRenameClass} submitting={renameClassState.saving} title="Rename classroom space" label="Session title" />
+      <RenameDialog open={renameClassState.open} initialValue={renameClassState.session?.title || ''} onClose={closeRenameClass} onSubmit={submitRenameClass} submitting={renameClassState.saving} title="Rename lecture" label="Lecture title" />
       <ConfirmDialog
         open={confirmState.open}
         title={confirmState.title}
