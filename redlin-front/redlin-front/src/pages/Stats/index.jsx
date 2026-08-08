@@ -28,6 +28,13 @@ const MethodPercent = ({ label, value }) => (
   </Box>
 );
 
+const MetricView = ({ label, value }) => (
+  <Box sx={{ textAlign: 'center' }}>
+    <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 55%, transparent)', textTransform: 'uppercase', letterSpacing: 0.4 }}>{label}</Typography>
+    <Typography sx={{ fontSize: 22, fontWeight: 800, color: 'var(--color-teal)' }}>{value}</Typography>
+  </Box>
+);
+
 const StatCard = ({ icon, tint, label, value, sub }) => (
   <Box sx={{ p: 2.5, borderRadius: 3, border: '1px solid color-mix(in srgb, var(--color-white) 12%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)' }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -117,6 +124,22 @@ const Stats = () => {
         <StatCard icon={<EmojiEventsIcon sx={{ color: '#F59E0B' }} />} tint="#F59E0B" label="Longest streak" value={`${stats.streak.longest}`} sub={`Level ${stats.xp.level}`} />
         <StatCard icon={<ScheduleIcon sx={{ color: 'var(--color-teal)' }} />} tint="var(--color-teal)" label="Study time" value={fmtTime(stats.study?.total_seconds || 0)} sub="across all subjects" />
         <StatCard icon={<SelfImprovementIcon sx={{ color: '#38BDF8' }} />} tint="#38BDF8" label="X.P." value={stats.xp.level} sub={`${stats.xp.total} total XP`} />
+      </Box>
+
+      {/* Feynman practice */}
+      <Box sx={{ p: 3, borderRadius: 3, mb: 4, border: '1px solid color-mix(in srgb, var(--color-teal) 30%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)' }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Feynman practice</Typography>
+        {!stats.feynman || stats.feynman.sessions === 0 ? (
+          <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 55%, transparent)', fontStyle: 'italic' }}>
+            No Feynman sessions recorded yet. Practice a Feynman prompt on any document, video or lecture.
+          </Typography>
+        ) : (
+          <Box sx={{ display: 'flex', gap: { xs: 3, sm: 6 }, flexWrap: 'wrap' }}>
+            <MetricView label="Sessions" value={stats.feynman.sessions} />
+            <MetricView label="Total time" value={fmtTime(stats.feynman.total_seconds || 0)} />
+            <MetricView label="Average score" value={`${stats.feynman.avg_score}%`} />
+          </Box>
+        )}
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3, mb: 4 }}>
