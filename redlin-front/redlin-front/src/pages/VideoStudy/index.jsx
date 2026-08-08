@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useStudySession } from '../../hooks/useStudySession';
 import { videoService } from '../../services/api/video';
 import { Box, Typography, CircularProgress, IconButton, TextField } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -40,6 +41,8 @@ const VideoStudy = () => {
   const [data, setData] = useState(null); // { video, summary, mcqs }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Auto-record study time while this video study page stays open.
+  useStudySession({ model: 'video', itemId: videoId });
   // Study notes below the player, auto-saved to this browser for the video.
   const [notes, setNotes] = useState(() => {
     try { return localStorage.getItem(`videos:notes:${videoId}`) || ''; } catch { return ''; }

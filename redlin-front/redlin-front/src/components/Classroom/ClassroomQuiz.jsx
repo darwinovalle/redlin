@@ -37,6 +37,7 @@ const ClassroomQuiz = ({ mcqs, focus = false, autoStart = false, onStart, onExit
   const correctAudioRef = useRef(null);
   const wrongAudioRef = useRef(null);
   const timeoutRef = useRef(null);
+  const startedAtRef = useRef(null);
 
   const resetRun = () => {
     if (timeoutRef.current) {
@@ -93,6 +94,9 @@ const ClassroomQuiz = ({ mcqs, focus = false, autoStart = false, onStart, onExit
   useEffect(() => {
     if (autoStart && questions.length) setActive(true);
   }, [autoStart, questions]);
+
+  // Start the clock the moment the quiz becomes active.
+  useEffect(() => { if (active && !startedAtRef.current) startedAtRef.current = Date.now(); }, [active]);
 
   if (!mcqs) {
     return (
@@ -183,13 +187,18 @@ const ClassroomQuiz = ({ mcqs, focus = false, autoStart = false, onStart, onExit
   };
 
   if (finished) {
+    const elapsedSec = startedAtRef.current ? Math.round((Date.now() - startedAtRef.current) / 1000) : 0;
+    const pct = questions.length ? Math.round((score / questions.length) * 100) : 0;
     return (
       <Box sx={{ p: 3, textAlign: 'center', maxWidth: 760, mx: 'auto' }}>
         <Typography variant="h5" sx={{ mb: 2, fontWeight: 700, color: 'var(--color-white)' }}>
           Results
         </Typography>
-        <Typography variant="body1" sx={{ mb: 3, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
-          Score: {score} / {questions.length}
+        <Typography variant="body1" sx={{ mb: 0.5, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+          Time: {Math.floor(elapsedSec / 60)}m {elapsedSec % 60}s
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 3, color: 'var(--color-teal)', fontWeight: 700 }}>
+          {pct}% · {score} / {questions.length} correct
         </Typography>
         <Button
           variant="contained"

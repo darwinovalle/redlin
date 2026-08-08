@@ -371,6 +371,13 @@ def attempt_view(request):
 	return Response(result, status=201)
 
 
+STUDY_RESOURCE_MODELS = {
+	"document": ("API", "document"),
+	"video": ("VIDEO", "video"),
+	"lecture": ("CLASSROOM", "classsession"),
+}
+
+
 @api_view(["POST", "GET"])
 def study_view(request):
 	"""POST: registra tiempo de estudio. GET: retorna analytics completos."""
@@ -382,10 +389,17 @@ def study_view(request):
 			seconds = max(0, min(int(data.get("seconds") or 0), 86400))
 		except (TypeError, ValueError):
 			seconds = 0
+		ct_id, oid = data.get("content_type_id"), data.get("object_id")
+		model_slug = data.get("model")
+		if model_slug and model_slug in STUDY_RESOURCE_MODELS:
+			app_label, model_name = STUDY_RESOURCE_MODELS[model_slug]
+			ct_id = ContentType.objects.get(app_label=app_label, model=model_name).id
+			oid = data.get("item_id") or oid
 		st = StudyTime.objects.create(
 			user=request.user, topic=topic, card=card,
-			method=str(data.get("method") or ""), seconds=seconds,
-			object_id=data.get("object_id"),
+			method=str(data.get("method") or "STUDY"), seconds=seconds,
+			content_type_id=ct_id if ct_id else None,
+			object_id=oid if oid is not None else None,
 		)
 		return Response(StudyTimeSerializer(st).data, status=201)
 	return Response(_stats_payload(request.user))

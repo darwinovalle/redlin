@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
   import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+  import { useStudySession } from '../../hooks/useStudySession';
   import CaptureAudioModal from '../../components/Classroom/CaptureAudioModal';                                                                                                  
   import Box from '@mui/material/Box';                                                                                                                        
   import Button from '@mui/material/Button';                                                                                                                  
@@ -82,8 +83,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
     }                                                                                                                                                         
   };                                                                                                                                                          
                                                                                                                                                               
-  const Classroom = () => {                                                                                                                                   
-    const { sessionId } = useParams();                                                                                                                        
+  const Classroom = () => {
+    const { sessionId } = useParams();
+    // Auto-record study time while this lecture study page stays open.
+    useStudySession({ model: 'lecture', itemId: sessionId });                                                                                                                        
     const navigate = useNavigate();                                                                                                                           
     const [session, setSession] = useState(null);
     const [results, setResults] = useState(null);

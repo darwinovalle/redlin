@@ -1,4 +1,5 @@
 import React, { useEffect, lazy, Suspense, useState } from 'react';
+import { useStudySession } from '../../hooks/useStudySession';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Tabs from '@mui/material/Tabs';
@@ -35,6 +36,9 @@ const StudyPanel = ({ documentId, title = '' }) => {
   });
   const [focusSession, setFocusSession] = useState(null);
   const [focusKey, setFocusKey] = useState(0);
+
+  // Auto-record study time while this panel stays open.
+  useStudySession({ model: 'document', itemId: documentId });
 
   useEffect(() => {
     try { localStorage.setItem('study:focusMode', focusMode ? '1' : '0'); } catch {}

@@ -42,6 +42,7 @@ const QuizView = ({ documentId, focus = false, autoStart = false, onStart, onExi
   // Audio refs
   const correctAudioRef = useRef(null);
   const wrongAudioRef = useRef(null);
+  const startedAtRef = useRef(null);
 
   useEffect(() => {
     if (!documentId) {
@@ -106,16 +107,16 @@ const QuizView = ({ documentId, focus = false, autoStart = false, onStart, onExi
 
   const startQuizHandler = () => {
     if (quizQuestions.length > 0) {
+        startedAtRef.current = Date.now();
         setCurrentQuestionIndex(0);
         setUserAnswers({});
         setIsQuizActive(true);
         setFeedback(null);
         setFinished(false);
         setScore(0);
-    }
   };
 
-  // Focus Mode: when rendered inside the focus popup, begin immediately.
+  // Focus Mode: when rendered inside the quiz popup, begin immediately.
   useEffect(() => {
     if (autoStart && quizQuestions.length) startQuizHandler();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -182,13 +183,16 @@ const QuizView = ({ documentId, focus = false, autoStart = false, onStart, onExi
 
   const totalQuestions = quizQuestions.length;
   const currentCard = quizQuestions[currentQuestionIndex];
+  const elapsedSec = startedAtRef.current ? Math.round((Date.now() - startedAtRef.current) / 1000) : 0;
+  const pct = totalQuestions ? Math.round((score / totalQuestions) * 100) : 0;
 
   // Results screen
   if (finished) {
     return (
       <Box sx={{ p:3, textAlign:'center', maxWidth:760, mx:'auto' }}>
         <Typography variant="h5" sx={{ mb:2, fontWeight:700, color:'var(--color-white)' }}>Results</Typography>
-        <Typography variant="body1" sx={{ mb:3, color:'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Score: {score} / {totalQuestions}</Typography>
+        <Typography variant="body1" sx={{ mb:0.5, color:'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Time: {Math.floor(elapsedSec / 60)}m {elapsedSec % 60}s</Typography>
+        <Typography variant="body1" sx={{ mb:3, color:'var(--color-teal)', fontWeight:700 }}>{pct}% · {score} / {totalQuestions} correct</Typography>
         <Button
           variant="contained"
           onClick={() => { endQuizHandler(); onExit?.(); }}
