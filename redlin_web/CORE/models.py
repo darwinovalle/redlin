@@ -271,6 +271,36 @@ class StudyTime(models.Model):
 		return f"StudyTime(user={self.user_id}, topic={self.topic_id}, {self.seconds}s)"
 
 
+class Reminder(models.Model):
+	"""Notificación de recordatorio para el usuario (p.ej. ítems SR vencidos).
+
+	La tarea Celery diaria escanea CoreLearningProgress vencidos y crea una
+	Reminder resumen por usuario; el frontend la muestra en una campana/popup.
+	"""
+	KIND_REVIEW = "review_due"
+	KIND_CHOICES = [
+		(KIND_REVIEW, "Review due"),
+	]
+
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reminders")
+	kind = models.CharField(max_length=20, choices=KIND_CHOICES, default=KIND_REVIEW)
+	subject = models.CharField(max_length=255)
+	topic = models.ForeignKey("Topic", on_delete=models.CASCADE, null=True, blank=True, related_name="reminders")
+	payload = models.JSONField(default=dict, blank=True)
+	read_at = models.DateTimeField(null=True, blank=True)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ["-created_at"]
+		indexes = [
+			models.Index(fields=["user", "created_at"]),
+			models.Index(fields=["user", "read_at"]),
+		]
+
+	def __str__(self):
+		return f"Reminder({self.kind}) user={self.user_id} {self.subject}"
+
+
 class CardResource(models.Model):
 	"""Enlace genérico entre un Card y un material existente.
 

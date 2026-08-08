@@ -32,6 +32,7 @@ import { documentService } from '../../../services/api';
 import { videoService } from '../../../services/api/video';
 import { classroomService } from '../../../services/api/classroom';
 import AddSpaceModal from '../../../components/common/AddSpaceModal';
+import NotificationBell from '../../../components/common/NotificationBell';
 import { csvService } from '../../../services/api/csv';
 import LoaderOverlay from '../../../components/common/LoaderOverlay';
 import SuccessAlert from '../../../components/common/SuccessAlert';
@@ -319,6 +320,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
               <i className="ri-brain-line" style={{ fontSize:22, color:'var(--color-white)' }} />
             </div>
             <span style={{ fontSize:24, fontWeight:700, background:'linear-gradient(90deg,var(--color-white),var(--color-text-muted-on-dark))', WebkitBackgroundClip:'text', backgroundClip:'text', color:'transparent' }}>Redlin</span>
+            <Box sx={{ marginLeft: 'auto' }}><NotificationBell /></Box>
           </div>
         </div>
         <div style={{ flex:1, overflowY:'auto' }}>

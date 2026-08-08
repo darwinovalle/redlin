@@ -26,6 +26,18 @@ export const srService = {
     return resp.data;
   },
 
+  // GET /api/reminders/ -> { count, unread, items } (the notification bell)
+  getReminders: async () => {
+    const resp = await api.get('/reminders/');
+    return resp.data;
+  },
+
+  // POST /api/reminders/{id}/read/ -> mark a reminder as read
+  markReminderRead: async (id) => {
+    const resp = await api.post(`/reminders/${id}/read/`);
+    return resp.data;
+  },
+
   // POST /api/study/feynman/ { model, seconds, average, scores:[{item_id, score}] }
   saveFeynmanSession: async (payload) => {
     const resp = await api.post('/study/feynman/', payload || {});
