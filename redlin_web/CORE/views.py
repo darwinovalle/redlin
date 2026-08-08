@@ -190,7 +190,7 @@ from django.db.models import Sum  # noqa: E402
 from django.utils import timezone  # noqa: E402
 from django.contrib.contenttypes.models import ContentType  # noqa: E402
 
-from .models import Topic as TopicModel, Card as CardModel, StudyTime, CoreAttempt, CoreLearningProgress  # noqa: E402
+from .models import Topic as TopicModel, Card as CardModel, StudyTime, CoreAttempt, CoreLearningProgress, CoreStudySession  # noqa: E402
 from .serializers import StudyTimeSerializer  # noqa: E402
 
 
@@ -232,6 +232,21 @@ SOURCE_PARENT = {
 	("CLASSROOM", "classsessioncloze"): ("class_session", "lecture"),
 	("CLASSROOM", "classsessionfeynman"): ("class_session", "lecture"),
 }
+
+
+def _feynman_summary(user):
+	"""Feynman session metrics: sessions, total time, average score."""
+	sessions = list(CoreStudySession.objects.filter(user=user, method="FEYNMAN"))
+	total_seconds = sum(
+		int((s.ended_at - s.started_at).total_seconds())
+		for s in sessions if s.ended_at and s.started_at
+	)
+	avg = round(sum(s.percent for s in sessions) / len(sessions), 1) if sessions else 0
+	return {
+		"sessions": len(sessions),
+		"total_seconds": total_seconds,
+		"avg_score": avg,
+	}
 
 
 def _source_stats(user):
@@ -336,6 +351,7 @@ def _stats_payload(user):
 		},
 		"study": {"total_seconds": study_total, "per_topic": per_topic, "per_day": per_day},
 		"per_source": _source_stats(user),
+		"feynman": _feynman_summary(user),
 		"due": {"count": due_count},
 	}
 
@@ -376,6 +392,77 @@ STUDY_RESOURCE_MODELS = {
 	"video": ("VIDEO", "video"),
 	"lecture": ("CLASSROOM", "classsession"),
 }
+
+
+FEYNMAN_ITEM_MODELS = {
+	"feynman": ("API", "feynman"),
+	"video_feynman": ("VIDEO", "videofeynman"),
+	"class_feynman": ("CLASSROOM", "classsessionfeynman"),
+}
+
+
+@api_view(["POST"])
+def feynman_session_view(request):
+	"""Guardar una sesión Feynman: tiempo + promedio de score (sin SM-2).
+
+	Crea un CoreStudySession (método FEYNMAN) con duración y % promedio, y una
+	CoreAttempt por prompt (ai_score + correct umbral) para alimentar stats por
+	fuente. NO toca CoreLearningProgress (Feynman tiene su propia evaluación).
+	"""
+	from datetime import timedelta
+
+	data = request.data
+	try:
+		seconds = max(0, min(int(data.get("seconds") or 0), 86400))
+	except (TypeError, ValueError):
+		seconds = 0
+	try:
+		average = round(float(data.get("average") or 0), 1)
+	except (TypeError, ValueError):
+		average = 0.0
+	threshold = 70
+	scores = data.get("scores") or []
+	items = len(scores)
+	correct = sum(1 for s in scores if (s.get("score") or 0) >= threshold)
+	now = timezone.now()
+
+	sess = CoreStudySession.objects.create(
+		user=request.user, mode="overall", method="FEYNMAN",
+		items_count=items, correct_count=correct,
+		percent=average, passed=average >= threshold,
+	)
+	# started_at is auto_now_add, so backdate via update to reflect true duration.
+	CoreStudySession.objects.filter(pk=sess.id).update(
+		started_at=now - timedelta(seconds=seconds), ended_at=now
+	)
+
+	model = data.get("model") or "feynman"
+	if model in FEYNMAN_ITEM_MODELS:
+		app_label, model_name = FEYNMAN_ITEM_MODELS[model]
+		ct = ContentType.objects.get(app_label=app_label, model=model_name)
+		for s in scores:
+			oid = s.get("item_id")
+			score = s.get("score")
+			if oid is None:
+				continue
+			try:
+				ct.get_object_for_this_type(pk=oid)
+			except Exception:
+				continue
+			CoreAttempt.objects.create(
+				user=request.user, session=sess, method="FEYNMAN",
+				content_type=ct, object_id=oid,
+				ai_score=score, correct=(score or 0) >= threshold,
+			)
+
+	return Response({
+		"session_id": sess.id,
+		"seconds": seconds,
+		"average": average,
+		"items": items,
+		"correct": correct,
+		"passed": sess.passed,
+	}, status=201)
 
 
 @api_view(["POST", "GET"])

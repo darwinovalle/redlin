@@ -25,6 +25,12 @@ export const srService = {
     const resp = await api.get('/reminders/due/');
     return resp.data;
   },
+
+  // POST /api/study/feynman/ { model, seconds, average, scores:[{item_id, score}] }
+  saveFeynmanSession: async (payload) => {
+    const resp = await api.post('/study/feynman/', payload || {});
+    return resp.data;
+  },
 };
 
 export default srService;

@@ -10,6 +10,7 @@ from .views import (
     study_view,
     stats_view,
     reminders_due_view,
+    feynman_session_view,
 )
 
 router = DefaultRouter()
@@ -24,4 +25,5 @@ urlpatterns = router.urls + [
     path('study/', study_view, name='study'),
     path('stats/', stats_view, name='stats'),
     path('reminders/due/', reminders_due_view, name='reminders-due'),
+    path('study/feynman/', feynman_session_view, name='feynman-session'),
 ]
