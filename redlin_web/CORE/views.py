@@ -333,6 +333,10 @@ def _stats_payload(user):
 	due_count = CoreLearningProgress.objects.filter(
 		user=user, next_review_at__lte=timezone.now()
 	).count()
+	today = timezone.localdate()
+	today_attempts = CoreAttempt.objects.filter(user=user, started_at__date=today).count()
+	today_study = StudyTime.objects.filter(user=user, started_at__date=today).aggregate(t=Sum("seconds"))["t"] or 0
+	daily_avg = round(study_total / len(per_day), 1) if per_day else 0
 	return {
 		"streak": {
 			"current": xp.current_streak,
@@ -354,6 +358,8 @@ def _stats_payload(user):
 		"per_source": _source_stats(user),
 		"feynman": _feynman_summary(user),
 		"due": {"count": due_count},
+		"today": {"attempts": today_attempts, "study_seconds": today_study},
+		"averages": {"daily_study_seconds": daily_avg},
 	}
 
 

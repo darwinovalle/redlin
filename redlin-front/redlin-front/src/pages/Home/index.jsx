@@ -1,7 +1,13 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useHomeAnimations } from '../../hooks/useHomeAnimations';
+import { srService } from '../../services/api/sr';
 import './Home.css';
+
+const fmtStudy = (s) => {
+  const m = Math.round((s || 0) / 60);
+  return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
+};
 
 // Local streak hook (unchanged core logic)
 function useDailyStreak(userId) {
@@ -70,10 +76,8 @@ const achievementsSeed = [
 
 const Home = () => {
   const { user } = useAuth();
-  const streak = useDailyStreak(user?.id);
-
-  const goalKey = useMemo(() => `goal:${user?.id}:today`, [user?.id]);
-  const [done, setDone] = useState(0);
+  const [stats, setStats] = useState(null);
+  const streak = stats?.streak?.current || 0;
   const dailyGoal = 1;
 
   const mainContentRef = useRef(null);
@@ -98,21 +102,31 @@ const Home = () => {
 
   useHomeAnimations(animationRefs);
 
+  // Real dashboard data from the SR/stats engine.
   useEffect(() => {
-    if (!user) return;
-    try {
-      const raw = localStorage.getItem(goalKey);
-      const today = new Date();
-      const todayISO = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-      const data = raw ? JSON.parse(raw) : { date: todayISO, count: 0 };
-      if (data.date !== todayISO) {
-        localStorage.setItem(goalKey, JSON.stringify({ date: todayISO, count: 0 }));
-        setDone(0);
-      } else {
-        setDone(data.count || 0);
-      }
-    } catch {}
-  }, [goalKey, user]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const s = await srService.getStats();
+        if (!cancelled) setStats(s);
+      } catch { /* keep the page usable if the API is busy */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const done = stats?.today?.attempts ?? 0;
+
+  // Weekly study-time bars from real per-day study seconds.
+  const chartData = useMemo(() => {
+    const perDay = stats?.study?.per_day || [];
+    const days = perDay.slice(-7).map((d) => ({
+      label: (() => { try { return new Date(`${d.started_at__date}T00:00:00`).toLocaleDateString('en', { weekday: 'short' }); } catch { return ''; } })(),
+      seconds: d.seconds || 0,
+    }));
+    if (!days.length) return [{ label: '—', pct: 2 }];
+    const max = Math.max(1, ...days.map((d) => d.seconds));
+    return days.map((d) => ({ ...d, pct: d.seconds > 0 ? Math.max(6, Math.round((d.seconds / max) * 100)) : 2 }));
+  }, [stats]);
 
   // Build calendar week (Mon-Sun) simple representation 1..7 with active today index
   const weekdays = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
@@ -233,15 +247,15 @@ const Home = () => {
             </div>
           </div>
           <div className="stats-chart">
-            {[40,65,85,55,70,30,20].map((h,i) => (
+            {chartData.map((b,i) => (
               <div key={i} className="chart-bar">
-                <div className="bar" style={{ height: `${h}%` }} />
-                <div className="bar-label">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]}</div>
+                <div className="bar" style={{ height: `${b.pct}%` }} />
+                <div className="bar-label">{b.label || ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]}</div>
               </div>
             ))}
           </div>
           <div style={{marginTop:20, textAlign:'center', color:'var(--color-text-mid)', fontSize:14}}>
-            <p>Average study time: 1.5 hours/day</p>
+            <p>Average study time: {fmtStudy(stats?.averages?.daily_study_seconds || 0)}/day</p>
           </div>
         </div>
       </div>
