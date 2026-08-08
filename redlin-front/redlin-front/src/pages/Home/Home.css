@@ -101,7 +101,7 @@
 /* ============ Visual refresh (Apple-like, light, dotted borders) ============ */
 .home-main-content {
   background:
-    radial-gradient(circle, #CBD5E1 1px, transparent 1.5px),
+    radial-gradient(circle, color-mix(in srgb, var(--color-navy) 30%, transparent) 1px, transparent 1.5px),
     #F6F8FB;
   background-size: 22px 22px;
   padding:36px 44px;
@@ -116,7 +116,7 @@
 .stats-card,
 .access-card,
 .timeline-item {
-  border:1.5px dashed #94A3B8;
+  border:1.5px dashed rgba(148,163,184,0.55);
   border-radius:22px;
   box-shadow:0 20px 44px -22px rgba(15,23,42,.22), 0 2px 6px rgba(15,23,42,.04);
   background:var(--color-white);
