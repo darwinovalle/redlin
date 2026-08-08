@@ -33,6 +33,11 @@ ALLOWED_HOSTS = ['*']
 
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 
+# Session idle timeout: after this many seconds of no real user activity the
+# access token is rejected with code=session_expired and the app forces a
+# re-login. Set to 1800 (30 min) for the self-hosted MVP.
+SESSION_IDLE_TIMEOUT_SECONDS = int(os.getenv('SESSION_IDLE_TIMEOUT_SECONDS', '1800'))
+
 
 def _compute_default_fernet_key() -> str:
     """Derive a stable Fernet key from SECRET_KEY (or the LLM_ENCRYPTION_KEY env var).

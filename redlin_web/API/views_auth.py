@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
@@ -129,3 +130,24 @@ def whoami(request):
     except ApiError as api_error:
         return error_response(api_error)
     return Response(identity)
+
+
+@extend_schema(
+    responses={200: {"type": "object", "properties": {"ok": {"type": "boolean"}}}},
+    tags=["auth"],
+)
+@api_view(["POST"])
+def activity(request):
+    """Record real user activity (idle-session heartbeat).
+
+    Authenticated by default. Only this endpoint refreshes ``last_active_at``,
+    so background polling never resets the idle timer. Writes are throttled to
+    at most one DB update per 60 seconds.
+    """
+    user = request.user
+    now = timezone.now()
+    last = getattr(user, "last_active_at", None)
+    if last is None or (now - last).total_seconds() > 60:
+        user.last_active_at = now
+        user.save(update_fields=["last_active_at"])
+    return Response({"ok": True})

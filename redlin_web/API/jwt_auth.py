@@ -2,6 +2,7 @@ import datetime
 import time
 import jwt
 from django.conf import settings
+from django.utils import timezone
 from rest_framework import authentication, exceptions
 from .models import User
 
@@ -52,6 +53,12 @@ def decode_token(token: str, expected_type: str = 'access'):
 class JWTAuthentication(authentication.BaseAuthentication):
     keyword = 'Bearer'
 
+    def authenticate_header(self, request):
+        # Advertise WWW-Authenticate: Bearer so DRF returns 401 (not 403) for
+        # token/session failures. Without this, AuthenticationFailed is coerced
+        # to 403 and the frontend's silent token-refresh never triggers.
+        return self.keyword
+
     def authenticate(self, request):
         auth = authentication.get_authorization_header(request).split()
         if not auth:
@@ -72,4 +79,20 @@ class JWTAuthentication(authentication.BaseAuthentication):
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             raise exceptions.AuthenticationFailed('User not found')
+
+        # Idle session timeout: the token may still be valid, but if the user has
+        # had no real activity for SESSION_IDLE_TIMEOUT_SECONDS, reject the
+        # request. The frontend sends heartbeats only on real interaction, so
+        # background polling (e.g. the reminder bell) never keeps this alive.
+        last_active = getattr(user, 'last_active_at', None)
+        if last_active is not None:
+            idle_seconds = (timezone.now() - last_active).total_seconds()
+            if idle_seconds > settings.SESSION_IDLE_TIMEOUT_SECONDS:
+                # Pass a dict so DRF 3.15 renders the machine-readable code key
+                # in the response body (a bare string drops it from the JSON).
+                raise exceptions.AuthenticationFailed({
+                    'detail': 'Session expired. Please log in again.',
+                    'code': 'session_expired',
+                })
+
         return (user, None)

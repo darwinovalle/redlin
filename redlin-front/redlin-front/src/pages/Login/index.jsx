@@ -3,6 +3,13 @@ import { authService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNeuralNetworkAnimation } from '../../hooks/useNeuralNetworkAnimation';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import TimerOffIcon from '@mui/icons-material/TimerOff';
 import './Login.css';
 
 const Login = () => {
@@ -14,6 +21,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const networkRef = useRef(null);
 
   useNeuralNetworkAnimation(networkRef);
@@ -25,6 +33,17 @@ const Login = () => {
       setIdentifier(remembered);
       setRemember(true);
     }
+  }, []);
+
+  // The idle watchdog sets this flag before redirecting here after a 30-min
+  // inactive session; show a clear "please log in again" popup.
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('redlin_session_expired')) {
+        sessionStorage.removeItem('redlin_session_expired');
+        setSessionExpired(true);
+      }
+    } catch {}
   }, []);
 
   const togglePassword = () => setShowPassword(p => !p);
@@ -139,6 +158,25 @@ const Login = () => {
           </form>
         </div>
       </div>
+      <Dialog open={sessionExpired} onClose={() => setSessionExpired(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, fontWeight: 700 }}>
+          <TimerOffIcon sx={{ color: 'var(--color-teal)' }} /> Session expired
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Your session ended because you were inactive for a while. Please log in again to continue.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setSessionExpired(false)}
+            variant="contained"
+            sx={{ textTransform: 'none', fontWeight: 700, backgroundColor: 'var(--color-teal)', '&:hover': { backgroundColor: 'var(--color-teal-deep)' } }}
+          >
+            Log in again
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
