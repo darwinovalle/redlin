@@ -361,13 +361,13 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
               <span style={{ flex:1 }}>Stats</span>
             </NavItem>
           </div>
-          <SectionTitle>Settings</SectionTitle>
-          {/* TODO: Re-enable when SaaS/Stripe launches — see MVP scope.
-          <NavItem type="button" onClick={()=>navigate('/pricing')}><ItemIcon><WorkspacePremiumIcon sx={{ fontSize:20 }}/></ItemIcon><span>Upgrade Plan</span></NavItem> */}
-
-          <NavItem type="button" onClick={()=>onOpenSettings?.()}><ItemIcon><SettingsIcon sx={{ fontSize:20 }}/></ItemIcon><span>API Settings</span></NavItem>
-          <NavItem type="button" onClick={onLogout}><ItemIcon><LogoutIcon sx={{ fontSize:20 }}/></ItemIcon><span>Logout</span></NavItem>
         </div>
+        <SectionTitle>Settings</SectionTitle>
+        {/* TODO: Re-enable when SaaS/Stripe launches — see MVP scope.
+        <NavItem type="button" onClick={()=>navigate('/pricing')}><ItemIcon><WorkspacePremiumIcon sx={{ fontSize:20 }}/></ItemIcon><span>Upgrade Plan</span></NavItem> */}
+
+        <NavItem type="button" onClick={()=>onOpenSettings?.()}><ItemIcon><SettingsIcon sx={{ fontSize:20 }}/></ItemIcon><span>API Settings</span></NavItem>
+        <NavItem type="button" onClick={onLogout}><ItemIcon><LogoutIcon sx={{ fontSize:20 }}/></ItemIcon><span>Logout</span></NavItem>
         <UserProfile>
           <Avatar>{(user?.username || user?.email || 'U?').slice(0,2).toUpperCase()}</Avatar>
           <div style={{ flex:1 }}>
