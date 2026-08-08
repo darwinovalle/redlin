@@ -311,7 +311,7 @@ def _source_stats(user):
 	return out
 
 
-def _stats_payload(user):
+def _stats_payload(user, request=None):
 	xp = user.xp_account
 	today = timezone.localdate()
 	attempts_total = CoreAttempt.objects.filter(user=user).count()
@@ -355,7 +355,7 @@ def _stats_payload(user):
 			for m in ("MCQ", "CLOZE", "FEYNMAN", "MIXED")
 		},
 		"study": {"total_seconds": study_total, "per_topic": per_topic, "per_day": per_day},
-		"study_sources": _source_study_time(user),
+		"study_sources": _source_study_time(user, request),
 		"per_source": _source_stats(user),
 		"feynman": _feynman_summary(user),
 		"due": {"count": due_count},
@@ -444,9 +444,9 @@ def _feynman_seconds_by_source(user):
 	return lookup
 
 
-def _source_study_time(user):
-	"""Study seconds rolled up per source (document / book / video / lecture),
-	including the part spent on Feynman sessions (`feynman_seconds`).
+def _source_study_time(user, request=None):
+	"""Study seconds rolled up to their source (document / book / video /
+	lecture), including the part spent on Feynman sessions (`feynman_seconds`).
 
 	Book chapters are grouped under their parent Book (a book is a Document with
 	kind='book'; chapters have kind='chapter' + parent).
@@ -495,8 +495,9 @@ def _source_study_time(user):
 				entry = ensure(kind, obj.id, title)
 				if kind == "video":
 					entry["video_id"] = getattr(obj, "video_id", "") or ""
-				elif kind == "lecture":
-					entry["cover_image_url"] = getattr(obj, "cover_image_url", "") or ""
+				elif kind == "lecture" and getattr(obj, "cover_image", None):
+					cover_url = obj.cover_image.url
+					entry["cover_image_url"] = request.build_absolute_uri(cover_url) if request else cover_url
 			entry["seconds"] += st.seconds
 			m = (st.method or "").upper()
 			if m in SECTION_METHODS:
@@ -609,12 +610,12 @@ def study_view(request):
 			object_id=oid if oid is not None else None,
 		)
 		return Response(StudyTimeSerializer(st).data, status=201)
-	return Response(_stats_payload(request.user))
+	return Response(_stats_payload(request.user, request))
 
 
 @api_view(["GET"])
 def stats_view(request):
-	return Response(_stats_payload(request.user))
+	return Response(_stats_payload(request.user, request))
 
 
 @api_view(["GET"])
