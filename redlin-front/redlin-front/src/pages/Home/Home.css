@@ -99,8 +99,14 @@
 }
 
 /* ============ Visual refresh (Apple-like, light, dotted borders) ============ */
-.home-main-content { background:#F6F8FB; padding:36px 44px; }
-.header { margin-bottom:34px; }
+.home-main-content {
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--color-text) 10%, transparent) 1px, transparent 1.3px),
+    #F6F8FB;
+  background-size: 24px 24px;
+  padding:36px 44px;
+}
+.header { margin-bottom:34px; background:#F6F8FB; }
 .welcome-text h2 { font-size:30px; font-weight:700; letter-spacing:-0.02em; }
 .user-avatar { width:56px; height:56px; font-size:22px; box-shadow:0 10px 22px color-mix(in srgb, var(--color-purple) 30%, transparent); }
 .streak { font-size:15px; }
@@ -110,7 +116,7 @@
 .stats-card,
 .access-card,
 .timeline-item {
-  border:1.5px dashed var(--color-text-mid);
+  border:1.5px dashed color-mix(in srgb, var(--color-text) 45%, transparent);
   border-radius:22px;
   box-shadow:0 20px 44px -22px rgba(15,23,42,.22), 0 2px 6px rgba(15,23,42,.04);
   background:var(--color-white);
