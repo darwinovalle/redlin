@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useHomeAnimations } from '../../hooks/useHomeAnimations';
 import { srService } from '../../services/api/sr';
 import { documentService } from '../../services/api';
 import { videoService } from '../../services/api/video';
@@ -203,18 +202,6 @@ const Home = () => {
   const statsCardRef = useRef(null);
   const quickAccessRef = useRef(null);
 
-  const animationRefs = {
-    mainContentRef,
-    welcomeRef,
-    learningPathRef,
-    progressSectionRef,
-    upcomingSectionRef,
-    statsCardRef,
-    quickAccessRef
-  };
-
-  useHomeAnimations(animationRefs);
-
   // Real dashboard data from the SR/stats engine.
   useEffect(() => {
     let cancelled = false;
@@ -317,7 +304,6 @@ const Home = () => {
       <div className="learning-path" ref={learningPathRef}>
         <div className="path-header">
           <div className="path-title">Your Learning Journey</div>
-          <div className="section-action">View Details</div>
         </div>
         <p>Your study subjects, from planning to mastered — click one to open its board.</p>
         <div className="path-timeline">
@@ -374,7 +360,6 @@ const Home = () => {
       <div className="section upcoming-section" ref={upcomingSectionRef}>
         <div className="section-header">
           <h3 className="section-title">Upcoming Sessions</h3>
-          <div className="section-action">View All</div>
         </div>
         <div className="timeline">
           {sessions.length === 0 ? (
@@ -415,7 +400,6 @@ const Home = () => {
       <div className="section quick-access" ref={quickAccessRef}>
         <div className="section-header">
           <h3 className="section-title">Quick Access</h3>
-          <div className="section-action">View All</div>
         </div>
         <div className="access-cards">
           {quickSources.length === 0 ? (
