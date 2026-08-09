@@ -31,7 +31,7 @@ export const useGsapAnimations = ({
             }
 
             gsap.to(navbar, {
-                backgroundColor: window.scrollY > 50 ? 'rgba(26, 42, 58, 0.95)' : 'rgba(26, 42, 58, 0.8)',
+                backgroundColor: 'rgb(7, 20, 31)', // navy-deep, solid
                 borderBottomColor: window.scrollY > 50 ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.06)',
                 duration: 0.35,
                 overwrite: 'auto'

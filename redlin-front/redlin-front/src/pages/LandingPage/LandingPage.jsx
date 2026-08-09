@@ -57,7 +57,7 @@ const LandingPage = () => {
                     <a href="#features" className="nav-link-landing magnetic-target-landing">Features</a>
                     <a href="#benefits" className="nav-link-landing magnetic-target-landing">Benefits</a>
                     <a href="#how-it-works" className="nav-link-landing magnetic-target-landing">How It Works</a>
-                    <a href="#pricing" className="nav-link-landing magnetic-target-landing">Self-Host</a>
+                    {/* <a href="#pricing" className="nav-link-landing magnetic-target-landing">Self-Host</a> */}
                 </div>
                 
                 <div className="auth-buttons-landing">
@@ -308,7 +308,8 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* Pricing Section */}
+            {/* Pricing Section (commented out) */}
+            {/*
             <section className="pricing-landing" id="pricing" ref={pricingRef}>
                 <h2 className="section-title-landing">Self-Host It Free</h2>
                 <div className="pricing-container-landing">
@@ -337,8 +338,10 @@ const LandingPage = () => {
                     </div>
                 </div>
             </section>
+            */}
 
-            {/* Final CTA Section */}
+            {/* Final CTA Section (commented out) */}
+            {/*
             <section className="final-cta-landing" ref={finalCtaRef}>
                 <div className="final-cta-content-landing">
                     <h2 className="final-cta-title-landing">Ready to Transform Your Learning?</h2>
@@ -349,6 +352,7 @@ const LandingPage = () => {
                     </form>
                 </div>
             </section>
+            */}
 
             </main>
 
