@@ -7,6 +7,9 @@ import { videoService } from '../../services/api/video';
 import { classroomService } from '../../services/api/classroom';
 import { topicsService } from '../../services/api/topics';
 import NotificationBell from '../../components/common/NotificationBell';
+import StudyTimeChart from '../../components/common/StudyTimeChart';
+import ReviewCalendar from '../../components/common/ReviewCalendar';
+import { lastWeekDays, monthWeekBuckets } from '../../utils/studyDays';
 import './Home.css';
 
 const fmtStudy = (s) => {
@@ -50,43 +53,6 @@ const SmartThumb = ({ src, kind, alt }) => {
     return <img src={imgSrc} alt={alt || ''} loading="lazy" onError={() => setState('err')} />;
   }
   return <div className="thumb-fallback"><i className={kindIcon(kind)} /></div>;
-};
-
-// Lightweight SVG area chart: study seconds per day.
-const StudyChart = ({ days }) => {
-  const W = 640, H = 190, PAD_L = 46, PAD_B = 26, PAD_T = 12;
-  const innerW = W - PAD_L - 16;
-  const innerH = H - PAD_T - PAD_B;
-  const maxSec = Math.max(1, ...days.map((d) => d.seconds));
-  const maxMin = Math.max(1, Math.round((maxSec / 60) * 10) / 10);
-  const pts = days.map((d, i) => {
-    const x = PAD_L + (i * innerW) / Math.max(1, days.length - 1);
-    const y = H - PAD_B - (d.seconds / maxSec) * innerH;
-    return [x, y];
-  });
-  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ');
-  const areaPath = `${line} L${(PAD_L + innerW).toFixed(1)} ${H - PAD_B} L${pts[0][0].toFixed(1)} ${H - PAD_B} Z`;
-  const ticks = [0, 0.5, 1].map((g) => ({ value: maxMin * g, y: H - PAD_B - g * innerH }));
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-      <defs>
-        <linearGradient id="homeAreaFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--color-teal)" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="var(--color-teal)" stopOpacity="0.05" />
-        </linearGradient>
-      </defs>
-      {ticks.map((t) => (
-        <g key={t.y}>
-          <line x1={PAD_L} x2={PAD_L + innerW} y1={t.y} y2={t.y} stroke="rgba(15,23,42,0.09)" strokeWidth="1" strokeDasharray="3 3" />
-          <text x={PAD_L - 8} y={t.y + 4} textAnchor="end" style={{ fontSize: 11, fill: '#94A3B8' }}>{Math.round(t.value)}m</text>
-        </g>
-      ))}
-      <path d={areaPath} fill="url(#homeAreaFill)" />
-      <path d={line} fill="none" stroke="var(--color-teal)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-      {pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="3.5" fill="var(--color-teal)" />)}
-      {days.map((dd, i) => <text key={i} x={pts[i][0]} y={H - 8} textAnchor="middle" style={{ fontSize: 11, fill: '#94A3B8', fontWeight: 600 }}>{dd.label}</text>)}
-    </svg>
-  );
 };
 
 // Local streak hook (unchanged core logic)
@@ -244,17 +210,13 @@ const Home = () => {
     for (const s of sessions) m[`${s.kind}:${s.id}`] = s.thumb;
     return m;
   }, [sessions]);
-  const chartDays = useMemo(() => {
-    const byDay = {};
-    for (const d of (stats?.study?.per_day || [])) byDay[d.started_at__date] = d.seconds || 0;
-    const out = [];
-    const today = new Date();
-    for (let i = 13; i >= 0; i -= 1) {
-      const dd = new Date(today); dd.setDate(dd.getDate() - i);
-      out.push({ label: dd.toLocaleDateString('en', { weekday: 'short' }), seconds: byDay[dd.toISOString().slice(0, 10)] || 0 });
-    }
-    return out;
-  }, [stats]);
+  const [chartRange, setChartRange] = useState('week'); // 'week' | 'month'
+  const chartDays = useMemo(
+    () => (chartRange === 'month'
+      ? monthWeekBuckets(stats?.study?.per_day)
+      : lastWeekDays(stats?.study?.per_day, 7)),
+    [stats, chartRange]
+  );
 
   // Build calendar week (Mon-Sun) simple representation 1..7 with active today index
   const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']; // display labels; the calendar's first day is Monday
@@ -297,7 +259,7 @@ const Home = () => {
         </div>
         <div className="header-actions">
           <NotificationBell tone="light" />
-          <div className="action-btn"><i className="ri-calendar-line" /></div>
+          <ReviewCalendar />
         </div>
       </div>
 
@@ -386,11 +348,11 @@ const Home = () => {
           <div className="stats-header">
             <h3>Learning Stats</h3>
             <div className="stats-tabs">
-              <div className="stats-tab active">Week</div>
-              <div className="stats-tab">Month</div>
+              <div className={`stats-tab ${chartRange === 'week' ? 'active' : ''}`} onClick={() => setChartRange('week')}>Week</div>
+              <div className={`stats-tab ${chartRange === 'month' ? 'active' : ''}`} onClick={() => setChartRange('month')}>Month</div>
             </div>
           </div>
-          <StudyChart days={chartDays} />
+          <StudyTimeChart days={chartDays} />
           <div style={{marginTop:20, textAlign:'center', color:'var(--color-text-mid)', fontSize:14}}>
             <p>Average study time: {fmtStudy(stats?.averages?.daily_study_seconds || 0)}/day</p>
           </div>

@@ -56,6 +56,13 @@ function useResourceLibrary(userId) {
   return { docs, books, videos, sessions };
 }
 
+// Compact duration label (e.g. "45s", "12m") for per-resource study time.
+const fmtSecs = (s) => {
+  const secs = s || 0;
+  const m = Math.floor(secs / 60);
+  return m >= 1 ? `${m}m` : `${secs}s`;
+};
+
 const Board = () => {
   const { topicId } = useParams();
   const navigate = useNavigate();
@@ -72,6 +79,36 @@ const Board = () => {
   const [elapsed, setElapsed] = useState(0);
   const startAtRef = useRef(null);
   const lib = useResourceLibrary(user?.id);
+
+  // Per-resource studied seconds (from /api/stats study_sources) so cards can
+  // show how long each attached material has been studied.
+  const [sourceSeconds, setSourceSeconds] = useState({});
+  useEffect(() => {
+    let active = true;
+    srService.getStats().then((s) => {
+      const m = {};
+      for (const src of (s?.study_sources || [])) m[`${src.type}:${src.id}`] = src.seconds || 0;
+      if (active) setSourceSeconds(m);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  const libIdSets = useMemo(() => ({
+    book: new Set((lib.books || []).map((b) => b.id)),
+    video: new Set((lib.videos || []).map((v) => v.id)),
+    lecture: new Set((lib.sessions || []).map((s) => s.id)),
+  }), [lib]);
+
+  // Resolve a card resource to its study-source type + id and return seconds.
+  const secsOf = useCallback((r) => {
+    const id = r?.resource?.id ?? r?.object_id;
+    if (!id) return 0;
+    let type = 'document';
+    if (r?.resource?.kind === 'book' || libIdSets.book.has(id)) type = 'book';
+    else if (libIdSets.video.has(id)) type = 'video';
+    else if (libIdSets.lecture.has(id)) type = 'lecture';
+    return sourceSeconds[`${type}:${id}`] || 0;
+  }, [libIdSets, sourceSeconds]);
 
   useEffect(() => {
     if (!ticking) return undefined;
@@ -209,6 +246,7 @@ const Board = () => {
             <ColumnShell
               key={col.id}
               col={col}
+              secsOf={secsOf}
               onAddCard={() => { setCardCol(col.id); setOpenCard(true); }}
               onDeleteColumn={() => deleteColumn(col)}
               onDeleteCard={deleteCard}
@@ -219,7 +257,7 @@ const Board = () => {
             <Typography sx={{ fontWeight: 600 }}>Add column</Typography>
           </Box>
         </Box>
-        <DragOverlay dropAnimation={null}>{activeCard ? <OverlayCard card={activeCard} /> : null}</DragOverlay>
+        <DragOverlay dropAnimation={null}>{activeCard ? <OverlayCard card={activeCard} secsOf={secsOf} /> : null}</DragOverlay>
       </DndContext>
 
       {openCard && (
@@ -235,7 +273,7 @@ const Board = () => {
   );
 };
 
-const ColumnShell = ({ col, onAddCard, onDeleteColumn, onDeleteCard }) => {
+const ColumnShell = ({ col, secsOf, onAddCard, onDeleteColumn, onDeleteCard }) => {
   const { setNodeRef, isOver } = useDroppable({ id: String(col.id) });
   return (
     <Box
@@ -255,7 +293,7 @@ const ColumnShell = ({ col, onAddCard, onDeleteColumn, onDeleteCard }) => {
       </Box>
       <Box sx={{ px: 1.5, pb: 1.5, display: 'flex', flexDirection: 'column', gap: 1, overflowY: 'auto', flex: 1 }}>
         {(col.cards || []).map((card) => (
-          <Draggable key={card.id} card={card} onDelete={() => onDeleteCard(card)} />
+          <Draggable key={card.id} card={card} onDelete={() => onDeleteCard(card)} secsOf={secsOf} />
         ))}
         {(col.cards || []).length === 0 && (
           <Typography sx={{ px: 1, py: 2, textAlign: 'center', fontSize: 13, fontStyle: 'italic', color: 'color-mix(in srgb, var(--color-white) 45%, transparent)' }}>Drop study material here</Typography>
@@ -265,29 +303,40 @@ const ColumnShell = ({ col, onAddCard, onDeleteColumn, onDeleteCard }) => {
   );
 };
 
-const CardView = ({ card, onDelete }) => (
-  <>
-    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
-      <Typography sx={{ fontSize: 14, fontWeight: 600, flex: 1, minWidth: 0 }}>{card.title}</Typography>
-      {onDelete && (
-        <IconButton size="small" aria-label="Delete card" onPointerDown={(e) => e.stopPropagation()} onClick={onDelete} sx={{ p: 0.25, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)', '&:hover': { color: 'var(--color-danger-soft)' } }}>
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      )}
-    </Box>
-    {(card.resources || []).length > 0 && (
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-        {(card.resources || []).map((r) => (
-          <Chip key={`${r.content_type}-${r.object_id}`} size="small" label={r.resource?.title || 'material'} sx={{ fontSize: 11, bgcolor: 'color-mix(in srgb, var(--color-teal) 16%, transparent)', color: 'var(--color-white)' }} />
-        ))}
+const CardView = ({ card, onDelete, secsOf }) => {
+  const resources = card.resources || [];
+  const totalSecs = resources.reduce((acc, r) => acc + (secsOf ? secsOf(r) : 0), 0);
+  return (
+    <>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+        <Typography sx={{ fontSize: 14, fontWeight: 600, flex: 1, minWidth: 0 }}>{card.title}</Typography>
+        {onDelete && (
+          <IconButton size="small" aria-label="Delete card" onPointerDown={(e) => e.stopPropagation()} onClick={onDelete} sx={{ p: 0.25, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)', '&:hover': { color: 'var(--color-danger-soft)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
       </Box>
-    )}
-  </>
-);
+      {resources.length > 0 && (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+          {resources.map((r) => {
+            const secs = secsOf ? secsOf(r) : 0;
+            const label = `${r.resource?.title || 'material'}${secs ? ` · ${fmtSecs(secs)}` : ''}`;
+            return <Chip key={`${r.content_type}-${r.object_id}`} size="small" label={label} sx={{ fontSize: 11, bgcolor: 'color-mix(in srgb, var(--color-teal) 16%, transparent)', color: 'var(--color-white)' }} />;
+          })}
+        </Box>
+      )}
+      {totalSecs > 0 && (
+        <Typography sx={{ fontSize: 11, fontWeight: 700, color: 'color-mix(in srgb, var(--color-white) 58%, transparent)', mt: 0.75 }}>
+          Studied {fmtSecs(totalSecs)}
+        </Typography>
+      )}
+    </>
+  );
+};
 
 // In-column card: draggable but NOT translated — the moving copy lives in the
 // DragOverlay, so this card stays put and is never clipped by overflow:hidden.
-const Draggable = ({ card, onDelete }) => {
+const Draggable = ({ card, onDelete, secsOf }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: String(card.id) });
   return (
     <Box
@@ -303,19 +352,19 @@ const Draggable = ({ card, onDelete }) => {
         '&:hover': { borderColor: 'color-mix(in srgb, var(--color-teal) 45%, transparent)' },
       }}
     >
-      <CardView card={card} onDelete={onDelete} />
+      <CardView card={card} onDelete={onDelete} secsOf={secsOf} />
     </Box>
   );
 };
 
 // Floating copy shown while dragging — rendered on top, never clipped/overlapped.
-const OverlayCard = ({ card }) => (
+const OverlayCard = ({ card, secsOf }) => (
   <Box sx={{
     p: 1.5, borderRadius: 2, minWidth: 248, maxWidth: 248, cursor: 'grabbing',
     bgcolor: 'var(--color-navy-700)', boxShadow: '0 18px 40px rgba(0,0,0,0.45)',
     border: '1px solid color-mix(in srgb, var(--color-teal) 55%, transparent)',
   }}>
-    <CardView card={card} />
+    <CardView card={card} secsOf={secsOf} />
   </Box>
 );
 

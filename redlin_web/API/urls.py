@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
-from .views_auth import login, register, refresh_token, whoami, activity
+from .views_auth import login, register, refresh_token, whoami, activity, set_timezone
 from .views_documents import UserViewSet, DocumentViewSet, get_user_documents
 from .views_learning import SummaryViewSet, FlashcardViewSet, MCQViewSet, ClozeViewSet, FeynmanViewSet
 from .views_settings import llm_settings
@@ -21,6 +21,7 @@ urlpatterns = [
     path('auth/refresh/', refresh_token, name='token-refresh'),
     path('auth/whoami/', whoami, name='whoami'),
     path('auth/activity/', activity, name='auth-activity'),
+    path('auth/timezone/', set_timezone, name='auth-timezone'),
     path('settings/llm/', llm_settings, name='llm-settings'),
     path('', include(router.urls)),
 ]

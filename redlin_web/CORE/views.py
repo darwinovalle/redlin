@@ -191,6 +191,7 @@ from django.utils import timezone  # noqa: E402
 from django.contrib.contenttypes.models import ContentType  # noqa: E402
 
 from .models import Topic as TopicModel, Card as CardModel, StudyTime, CoreAttempt, CoreLearningProgress, CoreStudySession, Reminder, CoreXpAccount, CoreXpAward  # noqa: E402
+from .services.timezone import local_day_bounds, user_now, user_zone  # noqa: E402
 from .serializers import StudyTimeSerializer  # noqa: E402
 
 
@@ -313,7 +314,7 @@ def _source_stats(user):
 
 def _stats_payload(user, request=None):
 	xp = user.xp_account
-	today = timezone.localdate()
+	today = user_now(user).date()
 	attempts_total = CoreAttempt.objects.filter(user=user).count()
 	attempts_ok = CoreAttempt.objects.filter(user=user, correct=True).count()
 	study_total = StudyTime.objects.filter(user=user).aggregate(t=Sum("seconds"))["t"] or 0
@@ -333,9 +334,13 @@ def _stats_payload(user, request=None):
 	due_count = CoreLearningProgress.objects.filter(
 		user=user, next_review_at__lte=timezone.now()
 	).count()
-	today = timezone.localdate()
-	today_attempts = CoreAttempt.objects.filter(user=user, started_at__date=today).count()
-	today_study = StudyTime.objects.filter(user=user, started_at__date=today).aggregate(t=Sum("seconds"))["t"] or 0
+	day_start, day_end, today = local_day_bounds(user)
+	today_attempts = CoreAttempt.objects.filter(
+		user=user, started_at__gte=day_start, started_at__lt=day_end
+	).count()
+	today_study = StudyTime.objects.filter(
+		user=user, started_at__gte=day_start, started_at__lt=day_end
+	).aggregate(t=Sum("seconds"))["t"] or 0
 	daily_avg = round(study_total / len(per_day), 1) if per_day else 0
 	return {
 		"streak": {
@@ -656,6 +661,59 @@ def reminders_due_view(request):
 			"interval_days": p.interval, "due_at": p.next_review_at,
 		})
 	return Response({"count": len(items), "items": items})
+
+
+@api_view(["GET"])
+def reminders_calendar_view(request):
+	"""Upcoming SM-2 review dates by day (for the Home calendar popup).
+
+	Overdue items are folded into "today" so the current month shows what needs
+	to be practiced now; future items keep their scheduled review date. Only the
+	next 90 days are returned, alongside a short "upcoming" sample list.
+	"""
+	from CORE.services.srs import resolve_target
+
+	now = timezone.now()
+	zone = user_zone(request.user)
+	today = user_now(request.user).date()
+	horizon = today + timezone.timedelta(days=90)
+
+	rows = CoreLearningProgress.objects.filter(
+		user=request.user, next_review_at__isnull=False
+	).order_by("next_review_at")
+
+	by_day = {}
+	upcoming = []
+	for p in rows:
+		review_dt = max(p.next_review_at, now)
+		day = review_dt.astimezone(zone).date()
+		if day > horizon:
+			continue
+		key = day.isoformat()
+		by_day[key] = by_day.get(key, 0) + 1
+		target = resolve_target(p.content_type_id, p.object_id)
+		if target is None:
+			continue
+		question = (
+			getattr(target, "question", None)
+			or getattr(target, "text_with_blank", None)
+			or getattr(target, "prompt", None)
+			or str(target)
+		)
+		model = p.content_type.model if p.content_type_id else ""
+		method = "FEYNMAN" if "feynman" in model else ("CLOZE" if "cloze" in model else "MCQ")
+		upcoming.append({
+			"date": key,
+			"method": method,
+			"question": question,
+			"interval_days": p.interval,
+		})
+
+	return Response({
+		"count": len(by_day),
+		"days": [{"date": d, "count": by_day[d]} for d in sorted(by_day)],
+		"upcoming": upcoming[:8],
+	})
 
 
 def _reminder_payload(r):

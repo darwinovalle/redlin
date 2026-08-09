@@ -16,6 +16,9 @@ class User(models.Model):
     # Last real user activity (drives the 30-min idle session timeout). Only
     # updated by login and POST /api/auth/activity/, never by background polls.
     last_active_at = models.DateTimeField(null=True, blank=True)
+    # IANA timezone collected from the browser (Intl.DateTimeFormat). Used for
+    # the user's local day boundaries (streak, reminders, calendar); UTC default.
+    timezone = models.CharField(max_length=64, default="UTC")
 
     def __str__(self):
         return self.username

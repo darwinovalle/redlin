@@ -1,5 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { srService } from '../../services/api/sr';
+import StudyTimeChart from '../../components/common/StudyTimeChart';
+import { lastWeekDays, monthWeekBuckets } from '../../utils/studyDays';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -58,6 +60,19 @@ const Stats = () => {
   const [due, setDue] = useState({ items: [], count: 0 });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [chartRange, setChartRange] = useState('week'); // 'week' | 'month'
+
+  // Series for the study-activity plot: last 7 days (week) or the current
+  // month grouped into calendar weeks (month).
+  const statsDays = useMemo(
+    () => (chartRange === 'month'
+      ? monthWeekBuckets(stats?.study?.per_day)
+      : lastWeekDays(stats?.study?.per_day, 7)),
+    [stats, chartRange]
+  );
+
+  const weekSeconds = (stats?.study?.per_day || []).slice(-7).reduce((a, d) => a + (d.seconds || 0), 0);
+  const monthSeconds = (stats?.study?.per_day || []).slice(-30).reduce((a, d) => a + (d.seconds || 0), 0);
 
   const load = useCallback(async () => {
     setError(null);
@@ -103,6 +118,17 @@ const Stats = () => {
   };
 
   if (!stats) {
+    // A failed load shouldn't hang on an infinite spinner — surface the error
+    // with a retry instead.
+    if (error) {
+      return (
+        <Box sx={{ minHeight: '100vh', width: '100%', background: 'var(--color-navy-deep)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, p: 3, color: 'var(--color-white)' }}>
+          <Typography sx={{ fontWeight: 800 }}>Couldn&apos;t load your stats</Typography>
+          <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 60%, transparent)', textAlign: 'center', maxWidth: 380 }}>{error}</Typography>
+          <Button onClick={load} sx={{ borderRadius: 999, px: 3, color: 'var(--color-teal)', border: '1px solid color-mix(in srgb, var(--color-teal) 45%, transparent)', textTransform: 'none', fontWeight: 700 }}>Try again</Button>
+        </Box>
+      );
+    }
     return <Box sx={{ minHeight: '100vh', width: '100%', background: 'var(--color-navy-deep)', display: 'grid', placeItems: 'center' }}><CircularProgress sx={{ color: 'var(--color-teal)' }} /></Box>;
   }
 
@@ -131,6 +157,23 @@ const Stats = () => {
         <StatCard icon={<EmojiEventsIcon sx={{ color: 'var(--color-amber)' }} />} tint="var(--color-amber)" label="Longest streak" value={`${stats.streak.longest}`} sub={`Level ${stats.xp.level}`} />
         <StatCard icon={<ScheduleIcon sx={{ color: 'var(--color-teal)' }} />} tint="var(--color-teal)" label="Study time" value={fmtTime(stats.study?.total_seconds || 0)} sub="across all subjects" />
         <StatCard icon={<SelfImprovementIcon sx={{ color: 'var(--color-blue)' }} />} tint="var(--color-blue)" label="X.P." value={stats.xp.level} sub={`${stats.xp.total} total XP`} />
+      </Box>
+
+      {/* Study activity (week/month time-series plot) */}
+      <Box sx={{ p: 3, borderRadius: 3, mb: 4, border: '1px solid color-mix(in srgb, var(--color-white) 12%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>Study activity</Typography>
+          <Box sx={{ display: 'flex', gap: 0.5, p: 0.25, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' }}>
+            {['week', 'month'].map((r) => (
+              <Box key={r} onClick={() => setChartRange(r)} sx={{ px: 1.5, py: 0.5, borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: 'pointer', userSelect: 'none', color: chartRange === r ? 'var(--color-navy-deep)' : 'color-mix(in srgb, var(--color-white) 60%, transparent)', bgcolor: chartRange === r ? 'var(--color-teal)' : 'transparent' }}>{r === 'week' ? 'Week' : 'Month'}</Box>
+            ))}
+          </Box>
+        </Box>
+        <StudyTimeChart days={statsDays} tone="dark" />
+        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', display: 'flex', justifyContent: 'center', gap: 6 }}>
+          <MetricView label="This week" value={fmtTime(weekSeconds)} />
+          <MetricView label="This month" value={fmtTime(monthSeconds)} />
+        </Box>
       </Box>
 
       {/* Feynman practice */}

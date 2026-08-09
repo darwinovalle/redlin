@@ -26,6 +26,12 @@ export const srService = {
     return resp.data;
   },
 
+  // GET /api/reminders/calendar/ -> { days:[{date,count}], upcoming:[{date,method,question,interval_days}] }
+  getReviewCalendar: async () => {
+    const resp = await api.get('/reminders/calendar/');
+    return resp.data;
+  },
+
   // GET /api/reminders/ -> { count, unread, items } (the notification bell)
   getReminders: async () => {
     const resp = await api.get('/reminders/');

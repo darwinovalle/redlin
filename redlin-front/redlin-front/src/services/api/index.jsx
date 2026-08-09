@@ -276,6 +276,17 @@ export const authService = {
     } catch (error) {
       throw error.response?.data || { error: 'Activity failed' };
     }
+  },
+
+  // Send the browser's IANA timezone once so reminders/streak/calendar use the
+  // user's local day boundaries instead of UTC.
+  setTimezone: async (tz) => {
+    try {
+      const response = await api.post('/auth/timezone/', { timezone: tz || 'UTC' });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Timezone update failed' };
+    }
   }
 };
 

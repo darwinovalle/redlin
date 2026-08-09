@@ -254,9 +254,12 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 
 CELERY_BEAT_SCHEDULE = {
-    'generate-daily-review-reminders': {
+    # Hourly scan keeps the persistent "N items due" reminder fresh quickly
+    # after any downtime and lands near each user's local day boundary. The
+    # reminder itself is wait-for-user-timezone aware in the task.
+    'generate-review-reminders': {
         'task': 'CORE.tasks.generate_reminders',
-        'schedule': crontab(hour=8, minute=15),
+        'schedule': crontab(minute=17),
     },
 }
 
