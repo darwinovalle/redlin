@@ -1,3 +1,5 @@
+from zoneinfo import ZoneInfo
+
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import OpenApiResponse, extend_schema
@@ -151,3 +153,32 @@ def activity(request):
         user.last_active_at = now
         user.save(update_fields=["last_active_at"])
     return Response({"ok": True})
+
+
+@extend_schema(
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {"timezone": {"type": "string", "example": "America/Bogota"}},
+            "required": ["timezone"],
+        }
+    },
+    responses={
+        200: {"type": "object", "properties": {"ok": {"type": "boolean"}, "timezone": {"type": "string"}}},
+        400: {"description": "Invalid IANA timezone"},
+    },
+    tags=["auth"],
+)
+@api_view(["POST"])
+def set_timezone(request):
+    """Store the user's IANA timezone (sent from the browser on app start)."""
+    tz = str(request.data.get("timezone") or "").strip()
+    try:
+        ZoneInfo(tz)
+    except Exception:
+        return Response({"error": "invalid timezone"}, status=status.HTTP_400_BAD_REQUEST)
+    user = request.user
+    if getattr(user, "timezone", "UTC") != tz:
+        user.timezone = tz
+        user.save(update_fields=["timezone"])
+    return Response({"ok": True, "timezone": tz})

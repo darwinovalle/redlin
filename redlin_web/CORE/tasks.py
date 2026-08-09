@@ -34,32 +34,42 @@ def _method_for_progress(p):
 
 @shared_task(bind=True, name="CORE.tasks.generate_reminders")
 def generate_reminders(self):
-    """Daily scan: for each user, surface one 'due for review' reminder when SR
-    items are overdue. One summary Reminder per user per day (unread)."""
+    """Persistent review reminders.
+
+    For every user with overdue SR items, keep exactly ONE unread review
+    reminder, refreshed as the "N due" text/payload each run. It is not reset
+    per day, so if the app (or its worker) was down for a while the next scan
+    — or simply opening the app — still surfaces the pending work. It is
+    cleared only once the user has no overdue items.
+    """
     from collections import Counter
     from CORE.models import CoreLearningProgress, Reminder
     from API.models import User
 
     now = timezone.now()
     made = 0
+    cleared = 0
     for user in User.objects.all():
-        due = CoreLearningProgress.objects.filter(user=user, next_review_at__lte=now).select_related("content_type")
+        due = CoreLearningProgress.objects.filter(user=user, next_review_at__lte=now)
         total = due.count()
+        unread = Reminder.objects.filter(user=user, kind=Reminder.KIND_REVIEW, read_at__isnull=True)
         if total == 0:
+            # Nothing outstanding — dismiss any lingering unread review reminder.
+            cleared += unread.update(read_at=now)
             continue
+
         methods = Counter(_method_for_progress(p) for p in due)
-        # Replace any unread reminder from today for this user with the fresh one.
-        today = timezone.localdate()
-        Reminder.objects.filter(
-            user=user, kind=Reminder.KIND_REVIEW, read_at__isnull=True,
-            created_at__date=today,
-        ).delete()
-        Reminder.objects.create(
-            user=user,
-            kind=Reminder.KIND_REVIEW,
-            subject=f"You have {total} review item{'s' if total != 1 else ''} due",
-            payload={"count": total, "methods": dict(methods)},
-        )
+        subject = f"You have {total} review item{'s' if total != 1 else ''} due"
+        payload = {"count": total, "methods": dict(methods)}
+
+        keep = unread.order_by("-created_at").first()
+        if keep is None:
+            Reminder.objects.create(user=user, kind=Reminder.KIND_REVIEW, subject=subject, payload=payload)
+        else:
+            unread.exclude(pk=keep.pk).update(read_at=now)  # coalesce stragglers
+            keep.subject = subject
+            keep.payload = payload
+            keep.save(update_fields=["subject", "payload"])
         made += 1
         logger.info("[generate_reminders] user=%s due=%s", user.id, total)
-    return {"reminders_created": made}
+    return {"reminders_created": made, "reminders_cleared": cleared}

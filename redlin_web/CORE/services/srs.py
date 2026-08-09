@@ -9,6 +9,8 @@ advances" loop is one transactional step.
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 
+from CORE.services.timezone import user_now
+
 
 INTERVAL_LADDER = [3, 8, 15, 30]
 
@@ -158,7 +160,7 @@ def record_attempt(*, user, method, content_type_id, object_id, correct,
     gained = 20 if correct else 8
     xp.add_xp(gained)
     CoreXpAward.objects.create(user=user, amount=gained, reason=f"{method} {'correct' if correct else 'attempt'}")
-    current, longest = update_streak(xp)
+    current, longest = update_streak(xp, today=user_now(user).date())
     xp.save()
 
     return {

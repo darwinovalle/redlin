@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { authService } from '../../services/api';
 
 export const AuthContext = createContext(null);
 
@@ -9,6 +10,19 @@ export const AuthProvider = ({ children }) => {
       return stored ? JSON.parse(stored) : null;
     } catch { return null; }
   });
+
+  // Report the browser timezone once per change so reminders/streak/calendar
+  // use the user's local day boundaries. Requires auth; failures are ignored.
+  useEffect(() => {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      if (localStorage.getItem('redlin_tz') !== tz) {
+        authService.setTimezone(tz)
+          .then(() => { localStorage.setItem('redlin_tz', tz); })
+          .catch(() => {});
+      }
+    } catch {}
+  }, []);
 
   const login = useCallback((userData) => {
     setUser(userData);
