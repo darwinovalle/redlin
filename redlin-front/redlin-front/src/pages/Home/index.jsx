@@ -9,6 +9,7 @@ import { topicsService } from '../../services/api/topics';
 import NotificationBell from '../../components/common/NotificationBell';
 import StudyTimeChart from '../../components/common/StudyTimeChart';
 import ReviewCalendar from '../../components/common/ReviewCalendar';
+import { lastWeekDays, monthWeekBuckets } from '../../utils/studyDays';
 import './Home.css';
 
 const fmtStudy = (s) => {
@@ -210,21 +211,12 @@ const Home = () => {
     return m;
   }, [sessions]);
   const [chartRange, setChartRange] = useState('week'); // 'week' | 'month'
-  const chartDays = useMemo(() => {
-    const byDay = {};
-    for (const d of (stats?.study?.per_day || [])) byDay[d.started_at__date] = d.seconds || 0;
-    const n = chartRange === 'month' ? 30 : 7;
-    const out = [];
-    const today = new Date();
-    for (let i = n - 1; i >= 0; i -= 1) {
-      const dd = new Date(today); dd.setDate(dd.getDate() - i);
-      const label = chartRange === 'month'
-        ? dd.toLocaleDateString('en', { day: 'numeric' })
-        : dd.toLocaleDateString('en', { weekday: 'short' });
-      out.push({ label, seconds: byDay[dd.toISOString().slice(0, 10)] || 0 });
-    }
-    return out;
-  }, [stats, chartRange]);
+  const chartDays = useMemo(
+    () => (chartRange === 'month'
+      ? monthWeekBuckets(stats?.study?.per_day)
+      : lastWeekDays(stats?.study?.per_day, 7)),
+    [stats, chartRange]
+  );
 
   // Build calendar week (Mon-Sun) simple representation 1..7 with active today index
   const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']; // display labels; the calendar's first day is Monday
@@ -360,7 +352,7 @@ const Home = () => {
               <div className={`stats-tab ${chartRange === 'month' ? 'active' : ''}`} onClick={() => setChartRange('month')}>Month</div>
             </div>
           </div>
-          <StudyTimeChart days={chartDays} labelEvery={chartRange === 'month' ? 5 : 1} />
+          <StudyTimeChart days={chartDays} />
           <div style={{marginTop:20, textAlign:'center', color:'var(--color-text-mid)', fontSize:14}}>
             <p>Average study time: {fmtStudy(stats?.averages?.daily_study_seconds || 0)}/day</p>
           </div>
