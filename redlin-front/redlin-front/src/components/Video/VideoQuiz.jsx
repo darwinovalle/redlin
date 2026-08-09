@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Button, Card, CardActionArea, FormControlLabel, Radio, RadioGroup, Stack, CircularProgress, Alert } from '@mui/material';
 import FocusToggle from '../common/FocusToggle';
+import { srService } from '../../services/api/sr';
+import { useStudySection } from '../../hooks/useStudySession';
 
 // Accepts mcqs array [{question, correct_answer, option_1, option_2, option_3}]
 const shuffle = (arr) => {
@@ -11,7 +13,9 @@ const shuffle = (arr) => {
 
 const UNANSWERED_SEGMENT_COLOR = 'color-mix(in srgb, var(--color-white) 18%, transparent)';
 
-const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, onFocusChange, onStart, autoStart = false }) => {
+const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, onFocusChange, onStart, autoStart = false, videoId }) => {
+  // Section timer: attribute MCQ practice time to this video source.
+  useStudySection({ model: 'video', itemId: videoId, method: 'MCQ' });
   const [questions, setQuestions] = useState([]);
   const [active, setActive] = useState(false);
   const [idx, setIdx] = useState(0);
@@ -20,6 +24,7 @@ const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, onFocus
   const [finished, setFinished] = useState(false);
   const [score, setScore] = useState(0);
   const correctAudioRef = useRef(null);
+  const startedAtRef = useRef(null);
   const wrongAudioRef = useRef(null);
 
   useEffect(() => {
@@ -39,6 +44,9 @@ const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, onFocus
   useEffect(() => {
     if (autoStart && !active && questions.length) setActive(true);
   }, [autoStart, active, questions.length]);
+
+  // Start the clock the moment the quiz becomes active.
+  useEffect(() => { if (active && !startedAtRef.current) startedAtRef.current = Date.now(); }, [active]);
 
   if (!mcqs) return <CircularProgress size={20} sx={{ color:'var(--color-teal)' }} />;
 
@@ -83,6 +91,8 @@ const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, onFocus
     setAnswers(a => ({ ...a, [idx]: picked }));
     setFeedback(correct ? 'correct' : 'incorrect');
     if (correct) setScore(s => s + 1);
+    // Feed the SR/stats engine (fire-and-forget).
+    srService.submitAttempt({ model: 'video_mcq', item_id: current.id, method: 'MCQ', correct }).then(() => {}).catch(() => {});
     // audio feedback only
     if (correct) {
       correctAudioRef.current && correctAudioRef.current.play().catch(()=>{});
@@ -109,10 +119,13 @@ const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, onFocus
   };
 
   if (finished) {
+    const elapsedSec = startedAtRef.current ? Math.round((Date.now() - startedAtRef.current) / 1000) : 0;
+    const pct = questions.length ? Math.round((score / questions.length) * 100) : 0;
     return (
       <Box sx={{ p:3, textAlign:'center', maxWidth:760, mx:'auto' }}>
         <Typography variant="h5" sx={{ mb:2, fontWeight:700, color:'var(--color-white)' }}>Results</Typography>
-        <Typography variant="body1" sx={{ mb:3, color:'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Score: {score} / {questions.length}</Typography>
+        <Typography variant="body1" sx={{ mb:0.5, color:'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>Time: {Math.floor(elapsedSec / 60)}m {elapsedSec % 60}s</Typography>
+        <Typography variant="body1" sx={{ mb:3, color:'var(--color-teal)', fontWeight:700 }}>{pct}% · {score} / {questions.length} correct</Typography>
         <Button
           variant="contained"
           onClick={()=>{ setActive(false); }}

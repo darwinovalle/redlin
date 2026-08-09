@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Typography, Button, Stack } from '@mui/material';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 import { clozeService } from '../../services/api/cloze.jsx';
+import { srService } from '../../services/api/sr';
+import { useStudySection } from '../../hooks/useStudySession';
 import VideoClozeCard from './VideoClozeCard';
 import FocusToggle from '../common/FocusToggle';
 
@@ -10,6 +12,8 @@ import FocusToggle from '../common/FocusToggle';
  * Props: videoId, focus, onFocusChange, onStart, autoStart, title
  */
 const VideoClozePanel = ({ videoId, title = 'Cloze Practice', focus = false, onFocusChange, onStart, autoStart = false }) => {
+  // Section timer: attribute Cloze practice time to this video source.
+  useStudySection({ model: 'video', itemId: videoId, method: 'CLOZE' });
   const [clozes, setClozes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -174,7 +178,12 @@ const VideoClozePanel = ({ videoId, title = 'Cloze Practice', focus = false, onF
             cloze={c}
             onValidate={handleValidate}
             sessionKey={sessionKey}
-            onResult={({ clozeId, correct }) => setAnsweredMap(prev => prev[clozeId] == null ? { ...prev, [clozeId]: correct } : prev)}
+            onResult={({ clozeId, correct }) => {
+              if (answeredMap[clozeId] == null) {
+                srService.submitAttempt({ model: 'video_cloze', item_id: clozeId, method: 'CLOZE', correct }).then(() => {}).catch(() => {});
+                setAnsweredMap(prev => prev[clozeId] == null ? { ...prev, [clozeId]: correct } : prev);
+              }
+            }}
           />
         ))}
       </Stack>

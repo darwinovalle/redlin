@@ -5,11 +5,15 @@ import WavyBackground from '../components/common/WavyBackground';
 import MiniDrawer from '../pages/Dashboard/Sidebar';
 import ApiSettingsModal from '../components/common/ApiSettingsModal';
 import { useAuth } from '../context/AuthContext';
+import useSessionIdleTimeout from '../hooks/useSessionIdleTimeout';
 
 const AppLayout = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Inactivity session timeout: auto-logout + redirect to /login after 30 min idle.
+  useSessionIdleTimeout();
 
   return (
   <Box sx={{ position: 'relative', display: 'flex', width: '100%', minHeight: '100vh', zIndex: 5, background: 'var(--color-shell)', overflow: 'hidden' }}>

@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import status
 
 from API.errors import ApiError, ErrorCode
@@ -17,6 +18,9 @@ class AuthService:
                 message="Invalid credentials",
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
+        # Start the idle-session clock at login.
+        user.last_active_at = timezone.now()
+        user.save(update_fields=["last_active_at"])
         return user
 
     @staticmethod

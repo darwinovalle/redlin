@@ -17,6 +17,9 @@ const Books = lazy(() => import('./pages/Books'));
 const BookDetail = lazy(() => import('./pages/Books/BookDetail'));
 const BookUpload = lazy(() => import('./pages/Books/BookUpload'));
 const BookChapterStudy = lazy(() => import('./pages/Books/BookChapterStudy'));
+const Subjects = lazy(() => import('./pages/Subjects'));
+const SubjectBoard = lazy(() => import('./pages/Subjects/Board'));
+const Stats = lazy(() => import('./pages/Stats'));
 const Home = lazy(() => import('./pages/Home'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const Login = lazy(() => import('./pages/Login'));
@@ -64,6 +67,9 @@ const RouterContent = () => {
             <Route path="/videos/:videoId" element={<VideoStudy />} />
             <Route path="/classroom" element={<ClassroomDirectory />} />
             <Route path="/classroom/:sessionId" element={<Classroom />} />
+            <Route path="/subjects" element={<Subjects />} />
+            <Route path="/subjects/:topicId" element={<SubjectBoard />} />
+            <Route path="/stats" element={<Stats />} />
             <Route path="/books" element={<Books />} />
             <Route path="/books/new" element={<BookUpload />} />
             <Route path="/books/:bookId" element={<BookDetail />} />

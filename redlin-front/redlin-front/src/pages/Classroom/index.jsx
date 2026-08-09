@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
   import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+  import { useStudySession } from '../../hooks/useStudySession';
+  import StudyTimerBadge from '../../components/common/StudyTimerBadge';
   import CaptureAudioModal from '../../components/Classroom/CaptureAudioModal';                                                                                                  
   import Box from '@mui/material/Box';                                                                                                                        
   import Button from '@mui/material/Button';                                                                                                                  
@@ -82,8 +84,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
     }                                                                                                                                                         
   };                                                                                                                                                          
                                                                                                                                                               
-  const Classroom = () => {                                                                                                                                   
-    const { sessionId } = useParams();                                                                                                                        
+  const Classroom = () => {
+    const { sessionId } = useParams();
+    // Auto-record study time while this lecture study page stays open.
+    const studyElapsed = useStudySession({ model: 'lecture', itemId: sessionId });                                                                                                                        
     const navigate = useNavigate();                                                                                                                           
     const [session, setSession] = useState(null);
     const [results, setResults] = useState(null);
@@ -194,7 +198,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             setManualTranscript(data.transcript_text);
           }
         } catch (err) {
-          setError(err?.response?.data?.detail || err?.message || 'Failed to load classroom session');
+          setError(err?.response?.data?.detail || err?.message || 'Failed to load lecture');
         } finally {
           setLoading(false);
         }
@@ -221,7 +225,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
             if (!ignore) setResults(full);                                                                                                                    
           }                                                                                                                                                   
         } catch (err) {                                                                                                                                       
-          if (!ignore) setError(err?.response?.data?.detail || err?.message || 'Failed to load classroom session');                                           
+          if (!ignore) setError(err?.response?.data?.detail || err?.message || 'Failed to load lecture');                                           
         } finally {                                                                                                                                           
           if (!ignore) setLoading(false);                                                                                                                     
         }                                                                                                                                                     
@@ -547,7 +551,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
         <Box sx={{ width: '100%', display: 'grid', placeItems: 'center', minHeight: '100vh' }}>                                                               
           <Stack alignItems="center" spacing={2}>                                                                                                             
             <CircularProgress />                                                                                                                              
-            <Typography variant="body2">Loading classroom space...</Typography>                                                                               
+            <Typography variant="body2">Loading lecture...</Typography>                                                                               
           </Stack>                                                                                                                                            
         </Box>                                                                                                                                                
       );                                                                                                                                                      
@@ -566,8 +570,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                                                                                                                                                               
    return (                                                                                                                                                  
       <div className="classroom-root">                                                                                                                        
-        <div className="classroom-mesh classroom-mesh-top" />                                                                                                 
-        <div className="classroom-mesh classroom-mesh-bottom" />                                                                                              
+        <div className="classroom-mesh classroom-mesh-top" />
+        <div className="classroom-mesh classroom-mesh-bottom" />
+        <Box sx={{ position: 'absolute', top: 24, right: 32, zIndex: 5 }}><StudyTimerBadge seconds={studyElapsed} /></Box>
         <div className="classroom-shell">
           <div className="classroom-grid">
             <div className="classroom-column">
@@ -795,12 +800,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                       {activeTab === 0 && (
                         <div className="classroom-output-block">
                           <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>MCQs ({results.mcqs?.length || 0})</Typography>
-                          <ClassroomQuiz mcqs={results.mcqs} focus={focusMode} onStart={() => openFocus('mcq')} />
+                          <ClassroomQuiz mcqs={results.mcqs} sessionId={sessionId} focus={focusMode} onStart={() => openFocus('mcq')} />
                         </div>
                       )}
                       {activeTab === 1 && (
                         <div className="classroom-output-block">
-                          <ClassroomClozePanel clozes={results.clozes} focus={focusMode} onStart={() => openFocus('cloze')} />
+                          <ClassroomClozePanel clozes={results.clozes} sessionId={sessionId} focus={focusMode} onStart={() => openFocus('cloze')} />
                         </div>
                       )}
                       {activeTab === 2 && (
@@ -929,8 +934,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               </IconButton>
             </Box>
             <DialogContent sx={{ p: { xs: 1.5, sm: 3 }, overflowY: 'auto' }}>
-              {focusSession === 'mcq' && <ClassroomQuiz key={focusKey} mcqs={results?.mcqs} autoStart onExit={() => setFocusSession(null)} />}
-              {focusSession === 'cloze' && <ClassroomClozePanel key={focusKey} clozes={results?.clozes} autoStart />}
+              {focusSession === 'mcq' && <ClassroomQuiz key={focusKey} mcqs={results?.mcqs} sessionId={sessionId} autoStart onExit={() => setFocusSession(null)} />}
+              {focusSession === 'cloze' && <ClassroomClozePanel key={focusKey} clozes={results?.clozes} sessionId={sessionId} autoStart />}
               {focusSession === 'feynman' && (
                 <ClassroomFeynmanPanel key={focusKey} sessionId={session.id} prompts={results?.feynmans} language={session.language || 'en'} autoStart />
               )}

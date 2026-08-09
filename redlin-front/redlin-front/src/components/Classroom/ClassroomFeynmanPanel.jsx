@@ -5,6 +5,8 @@ import StopIcon from '@mui/icons-material/Stop';
 import PropTypes from 'prop-types';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 import { classroomService } from '../../services/api/classroom';
+import { srService } from '../../services/api/sr';
+import { useStudySection } from '../../hooks/useStudySession';
 import useWhisperDictation from '../Feynman/useWhisperDictation';
 import ListeningIndicator from '../Feynman/ListeningIndicator';
 
@@ -30,6 +32,8 @@ const Metric = ({ label, value, color }) => (
 );
 
 const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 'en', focus = false, autoStart = false, onStart }) => {
+  // Section timer: attribute Feynman practice time to this lecture source.
+  useStudySection({ model: 'lecture', itemId: sessionId, method: 'FEYNMAN' });
   const [prompts, setPrompts] = useState(Array.isArray(initialPrompts) ? initialPrompts : []);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -47,6 +51,8 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
   const recognitionRef = useRef(null);
   const autoSubmittingRef = useRef(false);
   const evalIndexRef = useRef(null);
+  const sessionStartedAtRef = useRef(null);
+  const sessionSentRef = useRef(false);
 
   // Firefox fallback: when the Web Speech API is unavailable, record the mic
   // and transcribe the whole utterance with whisper-base.
@@ -245,6 +251,8 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
   }, [currentIndex]);
 
   const startSession = () => {
+    sessionStartedAtRef.current = Date.now();
+    sessionSentRef.current = false;
     setSessionActive(true);
     setSessionFinished(false);
     setResults([]);
@@ -260,6 +268,21 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
   useEffect(() => {
     if (autoStart && prompts.length) startSession();
   }, [autoStart, prompts]);
+
+  // When a session completes, send time + average score to the SR/stats engine.
+  useEffect(() => {
+    if (!sessionFinished || !results.length) return;
+    if (sessionSentRef.current) return;
+    sessionSentRef.current = true;
+    const elapsed = Math.round((Date.now() - (sessionStartedAtRef.current || Date.now())) / 1000);
+    const avg = results.length ? Math.round(results.reduce((a, r) => a + (r.score || 0), 0) / results.length) : 0;
+    srService.saveFeynmanSession({
+      model: 'class_feynman',
+      seconds: elapsed,
+      average: avg,
+      scores: results.map((r) => ({ item_id: r.feynman, score: r.score })),
+    }).then(() => {}).catch(() => {});
+  }, [sessionFinished, results]);
 
   if (!sessionId) {
     return (
@@ -378,11 +401,16 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
   };
 
   if (sessionFinished) {
+    const elapsedSec = Math.round((Date.now() - (sessionStartedAtRef.current || Date.now())) / 1000);
+    const avgScore = results.length ? Math.round(results.reduce((a, r) => a + (r.score || 0), 0) / results.length) : 0;
     return (
       <Box sx={{ p: 2, height: '100%', position: 'relative', overflowY: 'auto', color: 'var(--color-white)' }}>
         <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, color: 'var(--color-white)' }}>Session Summary</Typography>
-        <Typography variant="body2" sx={{ mb: 3, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+        <Typography variant="body2" sx={{ mb: 0.5, color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
           You completed {results.length} / {prompts.length} questions.
+        </Typography>
+        <Typography variant="body2" sx={{ mb: 3, color: 'var(--color-teal)', fontWeight: 700 }}>
+          Time: {Math.floor(Math.max(0, elapsedSec) / 60)}m {Math.max(0, elapsedSec) % 60}s · Avg score: {avgScore}
         </Typography>
         <Divider sx={{ mb: 2, borderColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' }} />
         {results.map((attempt) => {

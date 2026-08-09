@@ -13,6 +13,9 @@ class User(models.Model):
     password = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # Last real user activity (drives the 30-min idle session timeout). Only
+    # updated by login and POST /api/auth/activity/, never by background polls.
+    last_active_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.username

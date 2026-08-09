@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from API.models import User
@@ -171,3 +172,149 @@ def create_xp_account(sender, instance, created, **kwargs):
 	"""Auto crea la cuenta de XP al crear un usuario."""
 	if created:
 		CoreXpAccount.objects.create(user=instance)
+
+
+class Topic(models.Model):
+	"""Un tema/studio subject que el usuario estudia (la cima del kanban).
+
+	Cada Topic posee un único Board (kanban) con Columnas y Cards de tareas.
+	"""
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="topics")
+	name = models.CharField(max_length=255)
+	color = models.CharField(max_length=16, default="#14B8A6")  # hex
+	emoji = models.CharField(max_length=16, blank=True, default="")
+	description = models.TextField(blank=True, default="")
+	sort_order = models.PositiveIntegerField(default=0)
+	archived = models.BooleanField(default=False)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ["sort_order", "-created_at"]
+
+	def __str__(self):
+		return self.name
+
+
+class Board(models.Model):
+	"""Board kanban de un Topic (uno por tema)."""
+	topic = models.OneToOneField(Topic, on_delete=models.CASCADE, related_name="board")
+	title = models.CharField(max_length=255)
+	color = models.CharField(max_length=16, blank=True, default="")
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	def __str__(self):
+		return self.title
+
+
+class Column(models.Model):
+	"""Etapa de un board (Backlog / In progress / Review / Mastered)."""
+	board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name="columns")
+	title = models.CharField(max_length=120)
+	position = models.PositiveIntegerField(default=0)
+	wip_limit = models.PositiveIntegerField(default=0)  # 0 = sin límite
+	color = models.CharField(max_length=16, blank=True, default="")
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ["position", "id"]
+
+	def __str__(self):
+		return self.title
+
+
+class Card(models.Model):
+	"""Quiz Ticket del kanban; arrastrable entre columnas de un board."""
+	PRIORITY_CHOICES = [
+		("low", "Low"),
+		("normal", "Normal"),
+		("high", "High"),
+	]
+
+	column = models.ForeignKey(Column, on_delete=models.CASCADE, related_name="cards")
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="kanban_cards")
+	title = models.CharField(max_length=255)
+	notes = models.TextField(blank=True, default="")
+	priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="normal")
+	position = models.PositiveIntegerField(default=0)
+	due_date = models.DateField(null=True, blank=True)
+	archived = models.BooleanField(default=False)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ["position", "id"]
+
+	def __str__(self):
+		return self.title
+
+
+class StudyTime(models.Model):
+	"""Tiempo de estudio acumulado, opcionalmente ligado a Topic/Card/recurso."""
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="study_times")
+	topic = models.ForeignKey("Topic", on_delete=models.SET_NULL, null=True, blank=True, related_name="study_times")
+	card = models.ForeignKey("Card", on_delete=models.SET_NULL, null=True, blank=True, related_name="study_times")
+	content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True)
+	object_id = models.PositiveIntegerField(null=True, blank=True)
+	method = models.CharField(max_length=20, blank=True, default="")
+	started_at = models.DateTimeField(default=timezone.now)
+	seconds = models.PositiveIntegerField(default=0)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		indexes = [
+			models.Index(fields=["user", "started_at"]),
+			models.Index(fields=["user", "topic"]),
+		]
+
+	def __str__(self):
+		return f"StudyTime(user={self.user_id}, topic={self.topic_id}, {self.seconds}s)"
+
+
+class Reminder(models.Model):
+	"""Notificación de recordatorio para el usuario (p.ej. ítems SR vencidos).
+
+	La tarea Celery diaria escanea CoreLearningProgress vencidos y crea una
+	Reminder resumen por usuario; el frontend la muestra en una campana/popup.
+	"""
+	KIND_REVIEW = "review_due"
+	KIND_CHOICES = [
+		(KIND_REVIEW, "Review due"),
+	]
+
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reminders")
+	kind = models.CharField(max_length=20, choices=KIND_CHOICES, default=KIND_REVIEW)
+	subject = models.CharField(max_length=255)
+	topic = models.ForeignKey("Topic", on_delete=models.CASCADE, null=True, blank=True, related_name="reminders")
+	payload = models.JSONField(default=dict, blank=True)
+	read_at = models.DateTimeField(null=True, blank=True)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ["-created_at"]
+		indexes = [
+			models.Index(fields=["user", "created_at"]),
+			models.Index(fields=["user", "read_at"]),
+		]
+
+	def __str__(self):
+		return f"Reminder({self.kind}) user={self.user_id} {self.subject}"
+
+
+class CardResource(models.Model):
+	"""Enlace genérico entre un Card y un material existente.
+
+	Apunta vía GenericForeignKey a un Document (doc/book/chapter), un Video
+	o un ClassSession (lectura). No mueve ni duplica el recurso.
+	"""
+	card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name="resources")
+	content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+	object_id = models.PositiveIntegerField()
+	content_object = GenericForeignKey("content_type", "object_id")
+	added_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		unique_together = [("card", "content_type", "object_id")]
+
+	def __str__(self):
+		return f"CardResource(card={self.card_id}, ct={self.content_type_id}, oid={self.object_id})"

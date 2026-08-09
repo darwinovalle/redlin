@@ -213,7 +213,7 @@ const ClassroomDirectory = () => {
       const list = await classroomService.listSessions();
       setSessions(Array.isArray(list) ? list : []);
     } catch (e) {
-      setError(e?.detail || e?.message || 'Could not load classroom spaces');
+      setError(e?.detail || e?.message || 'Could not load lectures');
     } finally {
       setLoading(false);
     }
@@ -226,13 +226,13 @@ const ClassroomDirectory = () => {
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 3.5 }}>
         <Box>
-          <Typography variant="h3" sx={{ fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 0.95, mb: '14px', maxWidth: '14ch', color: 'var(--color-white)' }}>Classroom Spaces</Typography>
+          <Typography variant="h3" sx={{ fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 0.95, mb: '14px', maxWidth: '14ch', color: 'var(--color-white)' }}>Lectures</Typography>
           <Typography variant="body1" sx={{ maxWidth: '56ch', color: 'color-mix(in srgb, var(--color-white) 74%, transparent)' }}>
-            Create a space to capture and study a live session. Pick a space to open it, or add a new one with a custom cover.
+            Capture and study a live lecture. Pick a lecture to open it, or add a new one with a custom cover.
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)} sx={{ borderRadius: '999px', px: 3, py: 1.15, fontWeight: 700, textTransform: 'none', flexShrink: 0, backgroundColor: 'var(--color-teal)', color: 'var(--color-navy-deep)', boxShadow: '0 10px 28px color-mix(in srgb, var(--color-teal) 30%, transparent)', '&:hover': { backgroundColor: 'var(--color-teal-pale)' } }}>
-          Add space
+          Add lecture
         </Button>
       </Box>
 
@@ -298,14 +298,14 @@ const ClassroomDirectory = () => {
               <AddIcon sx={{ fontSize: 26, color: 'color-mix(in srgb, var(--color-white) 32%, transparent)' }} />
             </Box>
             <Box>
-              <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 74%, transparent)', fontWeight: 600, fontSize: 15, lineHeight: 1.3 }}>Add a space to this grid</Typography>
-              <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 48%, transparent)', fontSize: 13, lineHeight: 1.55, mt: 0.6, maxWidth: 224, mx: 'auto' }}>Create a classroom space and give it a cover image — or let the logo default.</Typography>
+              <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 74%, transparent)', fontWeight: 600, fontSize: 15, lineHeight: 1.3 }}>Add a lecture to this grid</Typography>
+              <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 48%, transparent)', fontSize: 13, lineHeight: 1.55, mt: 0.6, maxWidth: 224, mx: 'auto' }}>Create a lecture and give it a cover image — or let the logo default.</Typography>
             </Box>
           </Box>
         ))}
       </Box>
 
-      <RenameDialog open={renameState.open} initialValue={renameState.session?.title || ''} onClose={closeRename} onSubmit={submitRename} submitting={renameState.saving} title="Rename space" label="Space title" />
+      <RenameDialog open={renameState.open} initialValue={renameState.session?.title || ''} onClose={closeRename} onSubmit={submitRename} submitting={renameState.saving} title="Rename lecture" label="Lecture title" />
       <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} onConfirm={runConfirm} onClose={closeConfirm} confirming={confirmState.confirming} />
 
       <ClassroomModal open={addOpen} onClose={() => setAddOpen(false)} onImported={load} />

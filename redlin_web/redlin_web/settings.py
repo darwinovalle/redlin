@@ -33,6 +33,11 @@ ALLOWED_HOSTS = ['*']
 
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 
+# Session idle timeout: after this many seconds of no real user activity the
+# access token is rejected with code=session_expired and the app forces a
+# re-login. Set to 1800 (30 min) for the self-hosted MVP.
+SESSION_IDLE_TIMEOUT_SECONDS = int(os.getenv('SESSION_IDLE_TIMEOUT_SECONDS', '1800'))
+
 
 def _compute_default_fernet_key() -> str:
     """Derive a stable Fernet key from SECRET_KEY (or the LLM_ENCRYPTION_KEY env var).
@@ -227,6 +232,8 @@ SPECTACULAR_SETTINGS = {
     },
 }
 
+from celery.schedules import crontab  # noqa: E402
+
 # Celery / Redis configuration (Issue #6)
 REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
 REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
@@ -245,6 +252,13 @@ CELERY_BEAT_SCHEDULER = 'celery.beat:PersistentScheduler'
 CELERY_BEAT_SCHEDULE_FILENAME = str(BASE_DIR / 'celerybeat-schedule')
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_DEFAULT_QUEUE = 'default'
+
+CELERY_BEAT_SCHEDULE = {
+    'generate-daily-review-reminders': {
+        'task': 'CORE.tasks.generate_reminders',
+        'schedule': crontab(hour=8, minute=15),
+    },
+}
 
 
 # CSRF trusted origins for cross-site POSTs from the frontend dev server

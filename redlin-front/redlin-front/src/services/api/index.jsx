@@ -19,6 +19,21 @@ function clearStoredAuth() {
   } catch {}
 }
 
+// Inactivity session timeout: the backend rejects stale sessions with
+// 401 { code: 'session_expired' }. The interceptor raises this global event so
+// the idle watchdog can log the user out and redirect to /login, where a modal
+// explains why. The flag survives the redirect so the Login page can show it.
+export const SESSION_EXPIRED_EVENT = 'redlin:session-expired';
+
+export function notifySessionExpired() {
+  try {
+    sessionStorage.setItem('redlin_session_expired', '1');
+  } catch {}
+  try {
+    window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+  } catch {}
+}
+
 function buildApiUrl(url) {
   if (/^https?:\/\//i.test(url)) {
     return url;
@@ -142,6 +157,11 @@ async function refreshAccessToken() {
   } catch (error) {
     clearStoredAuth();
     rejectRefreshSubscribers(error);
+    // A rejected refresh (bad/expired refresh token) means the session is over:
+    // surface it unless the failure was a network blip (no HTTP status).
+    if (error?.status && error.status >= 400 && error.status < 500) {
+      notifySessionExpired();
+    }
     throw error;
   } finally {
     isRefreshing = false;
@@ -188,6 +208,15 @@ async function request(method, url, data, config = {}, canRefresh = true) {
   }
 
   const requestConfig = { method: normalizedMethod, url, data, headers: config.headers };
+
+  // Inactivity session timeout (idle > 30 min): the backend answers 401 with
+  // code=session_expired. Never try to refresh here — force a re-login instead.
+  if ((response.status === 401 || response.status === 403) && responseData?.code === 'session_expired') {
+    clearStoredAuth();
+    notifySessionExpired();
+    throw createHttpError(responseData, response.status, requestConfig, fullUrl);
+  }
+
   if (response.status === 401 && canRefresh && !config.skipAuthRefresh && !url.includes('/auth/refresh/')) {
     await refreshAccessToken();
     return request(method, url, data, config, false);
@@ -234,6 +263,18 @@ export const authService = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { error: 'Registration failed' };
+    }
+  },
+
+  // Inactivity-session heartbeat: only real user interaction calls this, so
+  // background polling (reminder bell, stats refresh) never resets the idle
+  // timer server-side.
+  activity: async () => {
+    try {
+      const response = await api.post('/auth/activity/', {});
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Activity failed' };
     }
   }
 };

@@ -57,7 +57,7 @@ const VideoStudyPanel = ({ video, summary, mcqs }) => {
         </div>
         <div role="tabpanel" hidden={activeTab !== 1} style={{ height: '100%' }}>
           {activeTab === 1 && (
-            <VideoQuiz mcqs={mcqs} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('quiz')} />
+            <VideoQuiz mcqs={mcqs} videoId={video.id} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('quiz')} />
           )}
         </div>
         <div role="tabpanel" hidden={activeTab !== 2} style={{ height: '100%' }}>
@@ -103,7 +103,7 @@ const VideoStudyPanel = ({ video, summary, mcqs }) => {
           </IconButton>
         </Box>
         <DialogContent sx={{ p: { xs: 1.5, sm: 3 }, overflowY: 'auto' }}>
-          {focusSession === 'quiz' && <VideoQuiz key={focusKey} mcqs={mcqs} autoStart />}
+          {focusSession === 'quiz' && <VideoQuiz key={focusKey} mcqs={mcqs} videoId={video.id} autoStart />}
           {focusSession === 'cloze' && <VideoClozePanel key={focusKey} videoId={video.id} autoStart />}
           {focusSession === 'feynman' && <VideoFeynmanPanel key={focusKey} videoId={video.id} autoStart />}
         </DialogContent>
