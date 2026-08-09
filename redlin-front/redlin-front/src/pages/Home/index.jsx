@@ -8,6 +8,7 @@ import { classroomService } from '../../services/api/classroom';
 import { topicsService } from '../../services/api/topics';
 import NotificationBell from '../../components/common/NotificationBell';
 import StudyTimeChart from '../../components/common/StudyTimeChart';
+import ReviewCalendar from '../../components/common/ReviewCalendar';
 import './Home.css';
 
 const fmtStudy = (s) => {
@@ -266,7 +267,7 @@ const Home = () => {
         </div>
         <div className="header-actions">
           <NotificationBell tone="light" />
-          <div className="action-btn"><i className="ri-calendar-line" /></div>
+          <ReviewCalendar />
         </div>
       </div>
 

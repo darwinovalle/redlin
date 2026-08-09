@@ -658,6 +658,58 @@ def reminders_due_view(request):
 	return Response({"count": len(items), "items": items})
 
 
+@api_view(["GET"])
+def reminders_calendar_view(request):
+	"""Upcoming SM-2 review dates by day (for the Home calendar popup).
+
+	Overdue items are folded into "today" so the current month shows what needs
+	to be practiced now; future items keep their scheduled review date. Only the
+	next 90 days are returned, alongside a short "upcoming" sample list.
+	"""
+	from CORE.services.srs import resolve_target
+
+	now = timezone.now()
+	today = timezone.localdate()
+	horizon = today + timezone.timedelta(days=90)
+
+	rows = CoreLearningProgress.objects.filter(
+		user=request.user, next_review_at__isnull=False
+	).order_by("next_review_at")
+
+	by_day = {}
+	upcoming = []
+	for p in rows:
+		review_dt = max(p.next_review_at, now)
+		day = review_dt.date()
+		if day > horizon:
+			continue
+		key = day.isoformat()
+		by_day[key] = by_day.get(key, 0) + 1
+		target = resolve_target(p.content_type_id, p.object_id)
+		if target is None:
+			continue
+		question = (
+			getattr(target, "question", None)
+			or getattr(target, "text_with_blank", None)
+			or getattr(target, "prompt", None)
+			or str(target)
+		)
+		model = p.content_type.model if p.content_type_id else ""
+		method = "FEYNMAN" if "feynman" in model else ("CLOZE" if "cloze" in model else "MCQ")
+		upcoming.append({
+			"date": key,
+			"method": method,
+			"question": question,
+			"interval_days": p.interval,
+		})
+
+	return Response({
+		"count": len(by_day),
+		"days": [{"date": d, "count": by_day[d]} for d in sorted(by_day)],
+		"upcoming": upcoming[:8],
+	})
+
+
 def _reminder_payload(r):
 	return {
 		"id": r.id,

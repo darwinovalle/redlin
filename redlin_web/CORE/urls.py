@@ -12,6 +12,7 @@ from .views import (
     reminders_due_view,
     reminders_list_view,
     reminder_read_view,
+    reminders_calendar_view,
     feynman_session_view,
 )
 
@@ -27,6 +28,7 @@ urlpatterns = router.urls + [
     path('study/', study_view, name='study'),
     path('stats/', stats_view, name='stats'),
     path('reminders/due/', reminders_due_view, name='reminders-due'),
+    path('reminders/calendar/', reminders_calendar_view, name='reminders-calendar'),
     path('reminders/', reminders_list_view, name='reminders-list'),
     path('reminders/<int:pk>/read/', reminder_read_view, name='reminder-read'),
     path('study/feynman/', feynman_session_view, name='feynman-session'),
