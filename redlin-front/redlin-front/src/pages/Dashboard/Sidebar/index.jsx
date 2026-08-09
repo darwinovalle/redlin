@@ -307,6 +307,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
               <ItemIcon><HomeIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span>Home</span>
             </NavItem>
+            <SectionTitle>STUDY</SectionTitle>
             <NavItem type="button" onClick={()=>navigate('/classroom')} className={isClassroom?'active':''}>
               <ItemIcon><SchoolIcon sx={{ fontSize:20 }} /></ItemIcon>
               <span style={{ flex:1 }}>Lectures</span>
@@ -324,6 +325,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
               <span style={{ flex:1 }}>Books</span>
             </NavItem>
           </div>
+          <SectionTitle>TRACK</SectionTitle>
           {/* <div className="nav-section">
             <NavItem type="button" onClick={()=>setSheetsOpen(v=>!v)} className={sheetsOpen?'active':''}>
               <ItemIcon><DescriptionIcon sx={{ fontSize:20 }} /></ItemIcon>
