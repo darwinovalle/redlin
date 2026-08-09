@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { srService } from '../../services/api/sr';
+import StudyTimeChart from '../../components/common/StudyTimeChart';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -58,6 +59,27 @@ const Stats = () => {
   const [due, setDue] = useState({ items: [], count: 0 });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [chartRange, setChartRange] = useState('week'); // 'week' | 'month'
+
+  // Series for the study-activity plot: last 7 days (week) or last 30 (month).
+  const statsDays = useMemo(() => {
+    const byDay = {};
+    for (const d of (stats?.study?.per_day || [])) byDay[d.started_at__date] = d.seconds || 0;
+    const n = chartRange === 'month' ? 30 : 7;
+    const out = [];
+    const today = new Date();
+    for (let i = n - 1; i >= 0; i -= 1) {
+      const dd = new Date(today); dd.setDate(dd.getDate() - i);
+      const label = chartRange === 'month'
+        ? dd.toLocaleDateString('en', { day: 'numeric' })
+        : dd.toLocaleDateString('en', { weekday: 'short' });
+      out.push({ label, seconds: byDay[dd.toISOString().slice(0, 10)] || 0 });
+    }
+    return out;
+  }, [stats, chartRange]);
+
+  const weekSeconds = (stats?.study?.per_day || []).slice(-7).reduce((a, d) => a + (d.seconds || 0), 0);
+  const monthSeconds = (stats?.study?.per_day || []).slice(-30).reduce((a, d) => a + (d.seconds || 0), 0);
 
   const load = useCallback(async () => {
     setError(null);
@@ -131,6 +153,23 @@ const Stats = () => {
         <StatCard icon={<EmojiEventsIcon sx={{ color: 'var(--color-amber)' }} />} tint="var(--color-amber)" label="Longest streak" value={`${stats.streak.longest}`} sub={`Level ${stats.xp.level}`} />
         <StatCard icon={<ScheduleIcon sx={{ color: 'var(--color-teal)' }} />} tint="var(--color-teal)" label="Study time" value={fmtTime(stats.study?.total_seconds || 0)} sub="across all subjects" />
         <StatCard icon={<SelfImprovementIcon sx={{ color: 'var(--color-blue)' }} />} tint="var(--color-blue)" label="X.P." value={stats.xp.level} sub={`${stats.xp.total} total XP`} />
+      </Box>
+
+      {/* Study activity (week/month time-series plot) */}
+      <Box sx={{ p: 3, borderRadius: 3, mb: 4, border: '1px solid color-mix(in srgb, var(--color-white) 12%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>Study activity</Typography>
+          <Box sx={{ display: 'flex', gap: 0.5, p: 0.25, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' }}>
+            {['week', 'month'].map((r) => (
+              <Box key={r} onClick={() => setChartRange(r)} sx={{ px: 1.5, py: 0.5, borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: 'pointer', userSelect: 'none', color: chartRange === r ? 'var(--color-navy-deep)' : 'color-mix(in srgb, var(--color-white) 60%, transparent)', bgcolor: chartRange === r ? 'var(--color-teal)' : 'transparent' }}>{r === 'week' ? 'Week' : 'Month'}</Box>
+            ))}
+          </Box>
+        </Box>
+        <StudyTimeChart days={statsDays} tone="dark" labelEvery={chartRange === 'month' ? 5 : 1} />
+        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', display: 'flex', justifyContent: 'center', gap: 6 }}>
+          <MetricView label="This week" value={fmtTime(weekSeconds)} />
+          <MetricView label="This month" value={fmtTime(monthSeconds)} />
+        </Box>
       </Box>
 
       {/* Feynman practice */}
