@@ -118,6 +118,17 @@ const Stats = () => {
   };
 
   if (!stats) {
+    // A failed load shouldn't hang on an infinite spinner — surface the error
+    // with a retry instead.
+    if (error) {
+      return (
+        <Box sx={{ minHeight: '100vh', width: '100%', background: 'var(--color-navy-deep)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, p: 3, color: 'var(--color-white)' }}>
+          <Typography sx={{ fontWeight: 800 }}>Couldn&apos;t load your stats</Typography>
+          <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 60%, transparent)', textAlign: 'center', maxWidth: 380 }}>{error}</Typography>
+          <Button onClick={load} sx={{ borderRadius: 999, px: 3, color: 'var(--color-teal)', border: '1px solid color-mix(in srgb, var(--color-teal) 45%, transparent)', textTransform: 'none', fontWeight: 700 }}>Try again</Button>
+        </Box>
+      );
+    }
     return <Box sx={{ minHeight: '100vh', width: '100%', background: 'var(--color-navy-deep)', display: 'grid', placeItems: 'center' }}><CircularProgress sx={{ color: 'var(--color-teal)' }} /></Box>;
   }
 

@@ -5,7 +5,7 @@ stores it on the User model. All day-boundary logic (streak "today", reminder
 scan, calendar day folding) goes through these helpers so a user in Colombia
 gets local days regardless of the container running in UTC.
 """
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, timezone as dt_timezone
 from zoneinfo import ZoneInfo
 
 from django.utils import timezone
@@ -20,7 +20,8 @@ def user_zone(user):
         return ZoneInfo(name)
     except Exception:
         # Invalid/unrecognized IANA name or an older tzdata — degrade gracefully.
-        return timezone.utc
+        # NOTE: use ZoneInfo, not django.utils.timezone.utc (removed in Django 5).
+        return ZoneInfo("UTC")
 
 
 def user_now(user):
@@ -39,4 +40,4 @@ def local_day_bounds(user):
     day = timezone.now().astimezone(zone).date()
     start = datetime.combine(day, time.min, tzinfo=zone)
     end = start + timedelta(days=1)
-    return start.astimezone(timezone.utc), end.astimezone(timezone.utc), day
+    return start.astimezone(dt_timezone.utc), end.astimezone(dt_timezone.utc), day
