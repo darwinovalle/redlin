@@ -6,6 +6,7 @@ import { documentService } from '../../services/api';
 import { videoService } from '../../services/api/video';
 import { classroomService } from '../../services/api/classroom';
 import { topicsService } from '../../services/api/topics';
+import NotificationBell from '../../components/common/NotificationBell';
 import './Home.css';
 
 const fmtStudy = (s) => {
@@ -295,7 +296,7 @@ const Home = () => {
           </div>
         </div>
         <div className="header-actions">
-          <div className="action-btn"><i className="ri-notification-3-line" /></div>
+          <NotificationBell tone="light" />
           <div className="action-btn"><i className="ri-calendar-line" /></div>
         </div>
       </div>

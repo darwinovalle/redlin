@@ -30,7 +30,6 @@ import { useAuth } from '../../../context/AuthContext';
 import { documentService } from '../../../services/api';
 import { videoService } from '../../../services/api/video';
 import { classroomService } from '../../../services/api/classroom';
-import NotificationBell from '../../../components/common/NotificationBell';
 import { csvService } from '../../../services/api/csv';
 import LoaderOverlay from '../../../components/common/LoaderOverlay';
 import SuccessAlert from '../../../components/common/SuccessAlert';
@@ -293,12 +292,11 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
   const sidebarContent = (
     <>
         <div style={{ padding: '0 24px 24px', borderBottom: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', marginBottom: 24 }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:64, position:'relative' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:64 }}>
             <div style={{ width:40, height:40, background:'linear-gradient(135deg,var(--color-teal),var(--color-blue))', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', marginRight:12, boxShadow:'0 0 20px color-mix(in srgb, var(--color-teal) 30%, transparent)' }}>
               <i className="ri-brain-line" style={{ fontSize:22, color:'var(--color-white)' }} />
             </div>
-            <span style={{ fontSize:24, fontWeight:700, background:'linear-gradient(90deg,var(--color-white),var(--color-text-muted-on-dark))', WebkitBackgroundClip:'text', backgroundClip:'text', color:'transparent' }}>Redlin</span>
-            <Box sx={{ position:'absolute', right:0, top:0, bottom:0, display:'flex', alignItems:'center' }}><NotificationBell /></Box>
+            <span style={{ display:'flex', alignItems:'center', lineHeight:1, fontSize:24, fontWeight:700, background:'linear-gradient(90deg,var(--color-white),var(--color-text-muted-on-dark))', WebkitBackgroundClip:'text', backgroundClip:'text', color:'transparent' }}>Redlin</span>
           </div>
         </div>
         <div style={{ flex:1, overflowY:'auto' }}>

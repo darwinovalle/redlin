@@ -9,9 +9,11 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 
-// Sidebar notification bell: polls /api/reminders/, shows an unread badge, and
-// opens a popup with the daily "due for review" reminders.
-const NotificationBell = () => {
+// Notification bell: polls /api/reminders/, shows an unread badge, and opens a
+// popup with the daily "due for review" reminders.
+// tone: "dark" (dark sidebar, white icon) or "light" (light pages, dark icon).
+const NotificationBell = ({ tone = 'dark' }) => {
+  const isDark = tone !== 'light';
   const navigate = useNavigate();
   const [reminders, setReminders] = useState([]);
   const [unread, setUnread] = useState(0);
@@ -43,7 +45,7 @@ const NotificationBell = () => {
 
   return (
     <>
-      <IconButton aria-label="Notifications" onClick={openMenu} sx={{ color: 'rgba(255,255,255,0.75)', '&:hover': { color: 'var(--color-white)', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+      <IconButton aria-label="Notifications" onClick={openMenu} sx={isDark ? { color: 'rgba(255,255,255,0.75)', '&:hover': { color: 'var(--color-white)', backgroundColor: 'rgba(255,255,255,0.08)' } } : { color: 'var(--color-text-mid)', '&:hover': { color: 'var(--color-blue)', backgroundColor: 'var(--color-cloud)' } }}>
         <Badge badgeContent={unread} color="error" overlap="circular">
           <NotificationsNoneIcon />
         </Badge>
