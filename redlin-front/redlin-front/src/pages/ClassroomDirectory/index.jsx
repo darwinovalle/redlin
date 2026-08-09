@@ -222,20 +222,44 @@ const ClassroomDirectory = () => {
   useEffect(() => { load(); }, [load]);
 
   return (
-    <Box sx={{ width: '100%', p: { xs: 3, md: 4 }, height: '100%', overflowY: 'auto', background: 'var(--color-navy-deep)' }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 3.5 }}>
-        <Box>
-          <Typography variant="h3" sx={{ fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 0.95, mb: '14px', maxWidth: '14ch', color: 'var(--color-white)' }}>Lectures</Typography>
-          <Typography variant="body1" sx={{ maxWidth: '56ch', color: 'color-mix(in srgb, var(--color-white) 74%, transparent)' }}>
-            Capture and study a live lecture. Pick a lecture to open it, or add a new one with a custom cover.
+    <Box sx={{ width: '100%', minHeight: '100vh', overflowX: 'hidden', background: 'radial-gradient(circle, color-mix(in srgb, var(--color-navy) 30%, transparent) 1px, transparent 1.5px), #FFFFFF', backgroundSize: '22px 22px' }}>
+      {/* Hero — full-width navy panel with decorative glow bubbles */}
+      <Box sx={{ position: 'relative', width: '100%', mb: { xs: 4, md: 6 }, overflow: 'hidden', background: 'var(--color-navy-deep)' }}>
+        {/* purple glow, top-right */}
+        <Box sx={{ position: 'absolute', top: -80, right: -40, width: 288, height: 288, borderRadius: '50%', background: 'radial-gradient(circle, rgba(127, 99, 244, 0.35), transparent 70%)', pointerEvents: 'none' }} />
+        {/* teal glow, bottom-left */}
+        <Box sx={{ position: 'absolute', bottom: -96, left: '33.33%', width: 288, height: 288, borderRadius: '50%', background: 'radial-gradient(circle, rgba(32, 201, 151, 0.3), transparent 70%)', pointerEvents: 'none' }} />
+
+        <Box sx={{ position: 'relative', maxWidth: 1500, mx: 'auto', px: { xs: '24px', md: '40px' }, py: { xs: '48px', md: '64px' } }}>
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--color-teal)', mb: 2 }}>
+            Classroom spaces
+          </Box>
+          <Typography component="h1" sx={{ fontFamily: "'Poppins', 'Titillium Web', sans-serif", fontWeight: 700, lineHeight: 1.1, fontSize: 'clamp(2.2rem, 5vw, 3.4rem)', color: 'var(--color-white)' }}>
+            Lectures
           </Typography>
+          <Typography sx={{ color: '#B0B7C3', mt: 1.5, maxWidth: 672, fontSize: 15, lineHeight: 1.6 }}>
+            Capture and study a live lecture. Pick a space to open it, or add a new one with a custom cover.
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setAddOpen(true)}
+            sx={{
+              mt: 3.5, height: 48, px: 3, borderRadius: '999px',
+              backgroundColor: 'var(--color-teal)',
+              color: 'var(--color-white)',
+              fontWeight: 600, fontSize: 14, textTransform: 'none',
+              boxShadow: '0 6px 20px rgba(32, 201, 151, 0.5)',
+              transition: 'all .2s ease',
+              '&:hover': { backgroundColor: 'var(--color-teal-hover)', transform: 'translateY(-2px)' },
+            }}
+          >
+            Add lecture
+          </Button>
         </Box>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)} sx={{ borderRadius: '999px', px: 3, py: 1.15, fontWeight: 700, textTransform: 'none', flexShrink: 0, backgroundColor: 'var(--color-teal)', color: 'var(--color-navy-deep)', boxShadow: '0 10px 28px color-mix(in srgb, var(--color-teal) 30%, transparent)', '&:hover': { backgroundColor: 'var(--color-teal-pale)' } }}>
-          Add lecture
-        </Button>
       </Box>
 
+      <Box sx={{ p: { xs: 3, md: 4 }, pt: 0 }}>
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
           <CircularProgress sx={{ color: 'var(--color-teal)' }} />
@@ -259,8 +283,9 @@ const ClassroomDirectory = () => {
               sx={{
                 cursor: 'pointer',
                 borderRadius: '20px',
-                background: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)',
-                border: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)',
+                height: 320,
+                background: 'linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%)', /* like Change-cover modal */
+                border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
@@ -270,12 +295,12 @@ const ClassroomDirectory = () => {
               }}
             >
               {/* Cover */}
-              <Box sx={{ position: 'relative', height: 132, overflow: 'hidden' }}>
+              <Box sx={{ position: 'relative', flex: '0 0 65%', minHeight: 0, overflow: 'hidden' }}>
                 <ClassCover url={session.cover_image_url} title={session.title} />
               </Box>
 
               {/* Body */}
-              <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ flex: 1, minHeight: 0, p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5, justifyContent: 'center', background: 'linear-gradient(135deg, #1A5C4E 0%, #10443A 50%, #0A2F2A 100%)' }}>
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
                   <Typography variant="h6" sx={{ flex: 1, minWidth: 0, fontWeight: 700, lineHeight: 1.12, color: 'var(--color-white)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                     {session.title}
@@ -293,16 +318,17 @@ const ClassroomDirectory = () => {
 
         {/* Dashed placeholders */}
         {!loading && !error && Array.from({ length: Math.max(0, 8 - sessions.length) }).map((_, i) => (
-          <Box key={`class-slot-${i}`} role="button" tabIndex={0} onClick={() => setAddOpen(true)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAddOpen(true); } }} sx={{ cursor: 'pointer', borderRadius: '20px', border: '1px dashed color-mix(in srgb, var(--color-white) 20%, transparent)', background: 'color-mix(in srgb, var(--color-navy-700) 30%, transparent)', minHeight: 280, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', p: 4, gap: 1.5, '&:hover': { transform: 'translateY(-4px)', borderColor: 'color-mix(in srgb, var(--color-teal) 55%, transparent)' }, '&:focus-visible': { outline: '2px solid var(--color-teal)', outlineOffset: '2px' } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 58, height: 58, borderRadius: '50%', border: '1px dashed color-mix(in srgb, var(--color-white) 22%, transparent)', mb: 0.5 }}>
-              <AddIcon sx={{ fontSize: 26, color: 'color-mix(in srgb, var(--color-white) 32%, transparent)' }} />
+          <Box key={`class-slot-${i}`} role="button" tabIndex={0} onClick={() => setAddOpen(true)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAddOpen(true); } }} sx={{ cursor: 'pointer', borderRadius: '20px', border: '2px dashed color-mix(in srgb, var(--color-navy) 45%, transparent)', background: 'var(--color-white)', minHeight: 320, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', p: 4, gap: 1.5, boxShadow: '0 6px 18px color-mix(in srgb, var(--color-navy) 7%, transparent)', '&:hover': { transform: 'translateY(-4px)', borderColor: 'color-mix(in srgb, var(--color-teal) 60%, transparent)', boxShadow: '0 14px 30px color-mix(in srgb, var(--color-navy) 16%, transparent)' }, '&:focus-visible': { outline: '2px solid var(--color-teal)', outlineOffset: '2px' } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 58, height: 58, borderRadius: '50%', border: '2px dashed color-mix(in srgb, var(--color-navy) 40%, transparent)', mb: 0.5 }}>
+              <AddIcon sx={{ fontSize: 26, color: 'color-mix(in srgb, var(--color-navy) 55%, transparent)' }} />
             </Box>
             <Box>
-              <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 74%, transparent)', fontWeight: 600, fontSize: 15, lineHeight: 1.3 }}>Add a lecture to this grid</Typography>
-              <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 48%, transparent)', fontSize: 13, lineHeight: 1.55, mt: 0.6, maxWidth: 224, mx: 'auto' }}>Create a lecture and give it a cover image — or let the logo default.</Typography>
+              <Typography sx={{ color: 'var(--color-text)', fontWeight: 600, fontSize: 15, lineHeight: 1.3 }}>Add a lecture to this grid</Typography>
+              <Typography sx={{ color: 'var(--color-text-mid)', fontSize: 13, lineHeight: 1.55, mt: 0.6, maxWidth: 224, mx: 'auto' }}>Create a lecture and give it a cover image — or let the logo default.</Typography>
             </Box>
           </Box>
         ))}
+      </Box>
       </Box>
 
       <RenameDialog open={renameState.open} initialValue={renameState.session?.title || ''} onClose={closeRename} onSubmit={submitRename} submitting={renameState.saving} title="Rename lecture" label="Lecture title" />

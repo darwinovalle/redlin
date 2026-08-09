@@ -113,8 +113,10 @@ const DocumentImportModal = ({ open, onClose, onImported }) => {
     <Dialog
       open={open}
       onClose={processing ? undefined : onClose}
+      fullWidth
+      maxWidth="sm"
       PaperProps={{
-        style: { backgroundColor: '#1A2A3A' },
+        style: { background: 'linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%)' },
         sx: {
           width: { xs: '92vw', sm: 540 },
           maxWidth: '92vw',
@@ -128,21 +130,27 @@ const DocumentImportModal = ({ open, onClose, onImported }) => {
         backdrop: { sx: { backgroundColor: 'color-mix(in srgb, var(--color-black) 60%, transparent)' } },
       }}
     >
-      <Box sx={{ position: 'relative', p: { xs: 2.5, md: 3.5 } }}>
-        <IconButton
-          aria-label="close"
-          onClick={onClose}
-          size="small"
-          disabled={busy}
-          sx={{ position: 'absolute', right: 12, top: 12, zIndex: 2, color: 'rgba(255,255,255,0.6)', '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)', color: 'var(--color-white)' } }}
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
+      {/* teal / blue glows */}
+      <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(circle at top left, color-mix(in srgb, var(--color-teal) 18%, transparent), transparent 45%), radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-blue) 20%, transparent), transparent 48%)' }} />
 
-        <Typography variant="h5" sx={{ mb: 0.5, letterSpacing: 0.2, color: 'var(--color-white)' }}>Import a Document</Typography>
-        <Typography variant="body2" sx={{ mb: 2, color: 'color-mix(in srgb, var(--color-white) 66%, transparent)' }}>
-          Give your document a title, then upload it. Documents are limited to {MAX_DOC_CHARS.toLocaleString()} characters.
-        </Typography>
+      <Box sx={{ position: 'relative', p: { xs: 2.5, md: 3.5 } }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'color-mix(in srgb, var(--color-teal) 18%, transparent)', color: 'var(--color-teal)' }}>
+              <CloudUploadIcon fontSize="small" />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 700, letterSpacing: '-0.01em' }}>Import a Document</Typography>
+              <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 62%, transparent)' }}>
+                Give your document a title, then upload it — up to {MAX_DOC_CHARS.toLocaleString()} characters.
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={onClose} size="small" disabled={busy} sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
 
         <TextField
           fullWidth
@@ -163,13 +171,15 @@ const DocumentImportModal = ({ open, onClose, onImported }) => {
             textAlign: 'center',
             px: { xs: 1, md: 2 },
             py: { xs: 2.5, md: 3 },
-            border: '1px dashed color-mix(in srgb, var(--color-white) 18%, transparent)',
+            border: '1px dashed color-mix(in srgb, var(--color-teal) 40%, transparent)',
             borderRadius: '16px',
-            background: isDragging ? 'color-mix(in srgb, var(--color-teal) 10%, transparent)' : 'transparent',
+            backgroundImage: 'radial-gradient(circle, color-mix(in srgb, var(--color-teal) 11%, transparent) 1px, transparent 1px)',
+            backgroundSize: '18px 18px',
+            backgroundColor: isDragging ? 'color-mix(in srgb, var(--color-teal) 10%, transparent)' : 'transparent',
           }}
         >
-          <Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 64, height: 64, borderRadius: '16px', border: '2px dashed rgba(255,255,255,0.12)', mb: 1.5 }}>
-            <CloudUploadIcon sx={{ fontSize: 32, color: 'rgba(255,255,255,0.6)' }} />
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 62, height: 62, borderRadius: '50%', border: '2px dashed color-mix(in srgb, var(--color-teal) 45%, transparent)', mb: 1.5, color: 'var(--color-teal)', background: 'color-mix(in srgb, var(--color-teal) 8%, transparent)' }}>
+            <CloudUploadIcon sx={{ fontSize: 32 }} />
           </Box>
           <Typography variant="body2" sx={{ mb: 1.5, color: 'color-mix(in srgb, var(--color-white) 70%, transparent)' }}>
             Drag and drop your PDF here, or

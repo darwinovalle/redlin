@@ -105,10 +105,11 @@
   background-size: 22px 22px;
   padding:36px 44px;
 }
-.header { margin-bottom:34px; background:#F6F8FB; }
-.welcome-text h2 { font-size:30px; font-weight:700; letter-spacing:-0.02em; }
+.header { margin-bottom:30px; padding:30px 34px; border-radius:22px; background:linear-gradient(to right,var(--color-teal-deep),var(--color-blue-deep)); }
+.welcome-text h2 { font-size:30px; font-weight:700; letter-spacing:-0.02em; color:var(--color-white); }
+.welcome-text p { margin:0 0 4px; font-size:14px; color:color-mix(in srgb, var(--color-white) 78%, transparent); }
 .user-avatar { width:56px; height:56px; font-size:22px; box-shadow:0 10px 22px color-mix(in srgb, var(--color-purple) 30%, transparent); }
-.streak { font-size:15px; }
+.streak { font-size:15px; color:color-mix(in srgb, var(--color-white) 88%, transparent); }
 
 .card,
 .progress-card,

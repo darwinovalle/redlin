@@ -52,7 +52,7 @@ const SidebarShell = styled('div')(() => ({
   position: 'fixed',
   top: 0,
   left: 0,
-  backgroundColor: 'var(--color-navy)', // solid dark per mock
+  backgroundColor: 'var(--color-navy-deep)', // solid dark per mock
   color: 'var(--color-white)',
   fontFamily: "'Poppins', 'Titillium Web', Arial, sans-serif",
   borderRight: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)',
@@ -398,7 +398,7 @@ export default function MiniDrawer({ selectedDocumentId, onDocumentSelect, onDoc
             open={mobileOpen}
             onClose={() => setMobileOpen(false)}
             ModalProps={{ keepMounted: true }}
-            PaperProps={{ sx: { width: SIDEBAR_WIDTH, boxSizing: 'border-box', backgroundColor: 'var(--color-navy)', color: 'var(--color-white)', fontFamily: "'Poppins', 'Titillium Web', Arial, sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)' } }}
+            PaperProps={{ sx: { width: SIDEBAR_WIDTH, boxSizing: 'border-box', backgroundColor: 'var(--color-navy-deep)', color: 'var(--color-white)', fontFamily: "'Poppins', 'Titillium Web', Arial, sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)' } }}
           >
             {sidebarContent}
           </Drawer>

@@ -55,6 +55,7 @@ const FieldInput = ({ label, value, onChange, placeholder, type, helper, disable
           background: 'rgba(32,201,151,0.06)',
         },
         '&::placeholder': { color: 'rgba(255,255,255,0.3)' },
+        '& option': { backgroundColor: 'var(--color-navy-600)', color: '#E0E0E0' },
       }}
     >
       {region === 'select'
@@ -145,63 +146,60 @@ export default function ApiSettingsModal({ open, onClose }) {
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth={false}
+      fullWidth
+      maxWidth="sm"
       PaperProps={{
-        style: { backgroundColor: '#1A2A3A' },
+        style: { background: 'linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%)' },
         sx: {
           width: { xs: '92vw', sm: 520 },
           maxWidth: '92vw',
           borderRadius: '20px',
           boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
           overflow: 'hidden',
+          position: 'relative',
         },
       }}
     >
-      {/* ── Header bar ── */}
+      {/* teal / blue glows */}
+      <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(circle at top left, color-mix(in srgb, var(--color-teal) 18%, transparent), transparent 45%), radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-blue) 20%, transparent), transparent 48%)' }} />
+
+      {/* Header */}
       <Box
         sx={{
+          position: 'relative',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           px: 3,
-          py: 2.25,
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          py: 2.5,
+          borderBottom: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <SettingsIcon sx={{ color: '#20C997', fontSize: 22 }} />
-          <Typography sx={{ color: 'white', fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>
-            API Settings
-          </Typography>
-          {configured && (
-            <Box
-              sx={{
-                ml: 1,
-                px: 1,
-                py: '2px',
-                borderRadius: '999px',
-                background: 'rgba(32,201,151,0.15)',
-                color: '#20C997',
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: '0.03em',
-              }}
-            >
-              CONFIGURED
-            </Box>
-          )}
+          <Box sx={{ width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'color-mix(in srgb, var(--color-teal) 18%, transparent)', color: 'var(--color-teal)' }}>
+            <SettingsIcon fontSize="small" />
+          </Box>
+          <Box>
+            <Typography sx={{ color: 'var(--color-white)', fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em' }}>
+              API Settings
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 62%, transparent)' }}>
+              Choose an LLM provider to power generation &amp; scoring.
+            </Typography>
+            {configured && (
+              <Box component="span" sx={{ display: 'inline-block', mt: 0.25, px: 1, py: '1px', borderRadius: '999px', background: 'color-mix(in srgb, var(--color-teal) 18%, transparent)', color: 'var(--color-teal)', fontSize: 10, fontWeight: 600, letterSpacing: '0.05em' }}>
+                CONFIGURED
+              </Box>
+            )}
+          </Box>
         </Box>
-        <IconButton
-          onClick={onClose}
-          size="small"
-          sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white' } }}
-        >
+        <IconButton onClick={onClose} size="small" sx={{ color: 'color-mix(in srgb, var(--color-white) 50%, transparent)', '&:hover': { color: 'var(--color-white)', backgroundColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' } }}>
           <CloseIcon fontSize="small" />
         </IconButton>
       </Box>
 
       {/* ── Body ── */}
-      <Box sx={{ px: 3, pt: 3, pb: 1 }}>
+      <Box sx={{ position: 'relative', px: 3, pt: 3, pb: 1 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
             <CircularProgress size={28} sx={{ color: '#20C997' }} />
@@ -317,15 +315,16 @@ export default function ApiSettingsModal({ open, onClose }) {
           <Button
             onClick={onClose}
             sx={{
-              px: 2,
+              px: 3,
               py: 1.15,
-              borderRadius: '12px',
-              background: 'rgba(255,255,255,0.06)',
+              borderRadius: '999px',
+              background: 'transparent',
+              border: '1px solid color-mix(in srgb, var(--color-white) 22%, transparent)',
               color: '#E0E0E0',
               fontWeight: 600,
               fontSize: 14,
               textTransform: 'none',
-              '&:hover': { background: 'rgba(255,255,255,0.1)' },
+              '&:hover': { borderColor: 'var(--color-teal)' },
             }}
             disabled={saving}
           >
@@ -337,15 +336,15 @@ export default function ApiSettingsModal({ open, onClose }) {
             sx={{
               px: 3,
               py: 1.15,
-              borderRadius: '12px',
-              background: '#20C997',
-              color: '#0A1628',
+              borderRadius: '999px',
+              background: 'var(--color-teal)',
+              color: 'var(--color-navy-deep)',
               fontWeight: 700,
               fontSize: 14,
               letterSpacing: '0.02em',
               textTransform: 'none',
-              boxShadow: '0 6px 20px rgba(32,201,151,0.25)',
-              '&:hover': { background: 'var(--color-teal-hover)', boxShadow: '0 6px 24px rgba(32,201,151,0.4)' },
+              boxShadow: '0 10px 28px color-mix(in srgb, var(--color-teal) 30%, transparent)',
+              '&:hover': { background: 'var(--color-teal-pale)' },
             }}
           >
             {saving ? <CircularProgress size={16} sx={{ mr: 1, color: '#0A1628' }} /> : null}

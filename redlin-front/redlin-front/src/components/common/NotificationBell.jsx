@@ -45,7 +45,7 @@ const NotificationBell = ({ tone = 'dark' }) => {
 
   return (
     <>
-      <IconButton aria-label="Notifications" onClick={openMenu} sx={isDark ? { color: 'rgba(255,255,255,0.75)', '&:hover': { color: 'var(--color-white)', backgroundColor: 'rgba(255,255,255,0.08)' } } : { color: 'var(--color-text-mid)', '&:hover': { color: 'var(--color-blue)', backgroundColor: 'var(--color-cloud)' } }}>
+      <IconButton aria-label="Notifications" onClick={openMenu} sx={isDark ? { color: 'rgba(255,255,255,0.75)', '&:hover': { color: 'var(--color-white)', backgroundColor: 'rgba(255,255,255,0.08)' } } : { color: 'var(--color-text-mid)', backgroundColor: 'var(--color-white)', border: '1px solid var(--color-border-faint)', '&:hover': { color: 'var(--color-blue)', backgroundColor: 'var(--color-cloud)' } }}>
         <Badge badgeContent={unread} color="error" overlap="circular">
           <NotificationsNoneIcon />
         </Badge>
