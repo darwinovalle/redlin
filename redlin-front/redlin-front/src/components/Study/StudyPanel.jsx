@@ -71,21 +71,21 @@ const StudyPanel = ({ documentId, title = '' }) => {
         <div role="tabpanel" hidden={activeTab !== 1} style={{ height: '100%' }}>
           {activeTab === 1 && (
             <Suspense fallback={<LoadingPanel />}>
-              <QuizViewLazy documentId={documentId} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('quiz')} />
+              <QuizViewLazy documentId={documentId} focus={focusMode} showStudyImage onFocusChange={setFocusMode} onStart={() => openFocus('quiz')} />
             </Suspense>
           )}
         </div>
         <div role="tabpanel" hidden={activeTab !== 2} style={{ height: '100%' }}>
           {activeTab === 2 && (
             <Suspense fallback={<LoadingPanel />}>
-              <ClozePanelLazy documentId={documentId} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('cloze')} />
+              <ClozePanelLazy documentId={documentId} focus={focusMode} showStudyImage onFocusChange={setFocusMode} onStart={() => openFocus('cloze')} />
             </Suspense>
           )}
         </div>
         <div role="tabpanel" hidden={activeTab !== 3} style={{ height: '100%' }}>
           {activeTab === 3 && documentId && (
             <Suspense fallback={<LoadingPanel />}>
-              <FeynmanPanelLazy documentId={documentId} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('feynman')} />
+              <FeynmanPanelLazy documentId={documentId} focus={focusMode} showStudyImage onFocusChange={setFocusMode} onStart={() => openFocus('feynman')} />
             </Suspense>
           )}
         </div>

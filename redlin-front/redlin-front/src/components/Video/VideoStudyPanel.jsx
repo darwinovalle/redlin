@@ -57,17 +57,17 @@ const VideoStudyPanel = ({ video, summary, mcqs }) => {
         </div>
         <div role="tabpanel" hidden={activeTab !== 1} style={{ height: '100%' }}>
           {activeTab === 1 && (
-            <VideoQuiz mcqs={mcqs} videoId={video.id} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('quiz')} />
+            <VideoQuiz mcqs={mcqs} videoId={video.id} focus={focusMode} showStudyImage onFocusChange={setFocusMode} onStart={() => openFocus('quiz')} />
           )}
         </div>
         <div role="tabpanel" hidden={activeTab !== 2} style={{ height: '100%' }}>
           {activeTab === 2 && (
-            <VideoClozePanel videoId={video.id} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('cloze')} />
+            <VideoClozePanel videoId={video.id} focus={focusMode} showStudyImage onFocusChange={setFocusMode} onStart={() => openFocus('cloze')} />
           )}
         </div>
         <div role="tabpanel" hidden={activeTab !== 3} style={{ height: '100%' }}>
           {activeTab === 3 && (
-            <VideoFeynmanPanel videoId={video.id} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('feynman')} />
+            <VideoFeynmanPanel videoId={video.id} focus={focusMode} showStudyImage onFocusChange={setFocusMode} onStart={() => openFocus('feynman')} />
           )}
         </div>
       </div>

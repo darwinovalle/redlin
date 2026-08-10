@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Button, Card, CardActionArea, FormControlLabel, Radio, RadioGroup, Stack, CircularProgress, Alert } from '@mui/material';
 import FocusToggle from '../common/FocusToggle';
+import dinoStudy from '../../assets/redlin_logo/dino_study.png';
 import { srService } from '../../services/api/sr';
 import { useStudySection } from '../../hooks/useStudySession';
 
@@ -13,7 +14,7 @@ const shuffle = (arr) => {
 
 const UNANSWERED_SEGMENT_COLOR = 'color-mix(in srgb, var(--color-white) 18%, transparent)';
 
-const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, onFocusChange, onStart, autoStart = false, videoId }) => {
+const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, showStudyImage = false, onFocusChange, onStart, autoStart = false, videoId }) => {
   // Section timer: attribute MCQ practice time to this video source.
   useStudySection({ model: 'video', itemId: videoId, method: 'MCQ' });
   const [questions, setQuestions] = useState([]);
@@ -73,6 +74,9 @@ const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, onFocus
           Start Quiz
         </Button>
         <FocusToggle focus={focus} onChange={onFocusChange} />
+        {showStudyImage && (
+          <img src={dinoStudy} alt="Start studying" style={{ width: 'auto', height: 300, maxWidth: '100%', objectFit: 'contain', display: 'block', margin: '20px auto 0' }} />
+        )}
       </Box>
     );
   }
