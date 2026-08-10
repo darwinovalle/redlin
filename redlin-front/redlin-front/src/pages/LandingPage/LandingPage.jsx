@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useNeuralNetworkAnimation } from '../../hooks/useNeuralNetworkAnimation';
 import { useGsapAnimations } from '../../hooks/useGsapAnimations';
 import { useLenisScroll } from '../../hooks/useLenisScroll';
+import dinoRedlin from '../../assets/redlin_logo/dino_redlin.png';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -46,9 +47,7 @@ const LandingPage = () => {
             <nav className="navbar-landing">
                 <div className="logo-container-landing">
                     <div className="logo-landing">
-                        <div className="logo-icon-landing">
-                            <i className="ri-brain-line"></i>
-                        </div>
+                        <img src={dinoRedlin} alt="Redlin" style={{ width: 50, height: 50, objectFit: 'contain', display: 'block', marginRight: 12 }} />
                         Redlin 
                     </div>
                 </div>

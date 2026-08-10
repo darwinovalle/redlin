@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { authService } from '../../services/api';
 import { useNavigate, Link } from 'react-router-dom';
+import dinoRedlin from '../../assets/redlin_logo/dino_redlin.png';
 import './Register.css';
 
 const Register = () => {
@@ -74,7 +75,7 @@ const Register = () => {
       <div className="form-section">
         <div className="form-container">
           <div className="logo-container">
-            <div className="logo"><i className="ri-brain-line" /></div>
+            <img src={dinoRedlin} alt="Redlin" style={{ width: 50, height: 50, objectFit: 'contain', display: 'block', marginRight: 12 }} />
             <div className="platform-name">Redlin</div>
           </div>
           <h1>Create Your Account</h1>
