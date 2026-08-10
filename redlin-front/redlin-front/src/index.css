@@ -473,3 +473,6 @@ body{
   0%, 100% { opacity: 0.25; transform: translateY(0); }
   50% { opacity: 1; transform: translateY(-3px); }
 }
+
+/* Library search inputs (Lectures, Videos, …) — explicit white placeholder over the navy surface. */
+.study-search::placeholder { color: rgba(255, 255, 255, 0.5); opacity: 1; }

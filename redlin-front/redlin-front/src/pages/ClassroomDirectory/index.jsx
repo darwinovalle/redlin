@@ -10,6 +10,9 @@ import DialogContent from '@mui/material/DialogContent';
 import IconButton from '@mui/material/IconButton';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import CheckIcon from '@mui/icons-material/Check';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ImageIcon from '@mui/icons-material/Image';
 import { classroomService } from '../../services/api/classroom';
 import ItemMenu from '../../components/common/ItemMenu';
@@ -148,6 +151,33 @@ const ClassroomDirectory = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [query, setQuery] = useState(''); // lecture title filter
+  const visible = query.trim()
+    ? sessions.filter((s) => (s.title || '').toLowerCase().includes(query.trim().toLowerCase()))
+    : sessions;
+
+  // Multi-select + batch delete
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const toggleSelect = (id) => setSelectedIds((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const clearSelection = () => { setSelectedIds(new Set()); setSelectMode(false); };
+  const handleDeleteSelected = () => {
+    const ids = [...selectedIds];
+    if (!ids.length) return;
+    openConfirm({
+      title: ids.length === 1 ? 'Delete lecture?' : `Delete ${ids.length} lectures?`,
+      message: `Delete ${ids.length} selected lecture${ids.length === 1 ? '' : 's'}? This cannot be undone.`,
+      onConfirm: async () => {
+        for (const id of ids) { try { await classroomService.deleteSession(id); } catch {} }
+        clearSelection();
+        await load();
+      },
+    });
+  };
   const [error, setError] = useState(null);
   const [renameState, setRenameState] = useState({ open: false, session: null, saving: false });
   const [confirmState, setConfirmState] = useState({ open: false, title: '', message: '', onConfirm: null, confirming: false });
@@ -260,6 +290,47 @@ const ClassroomDirectory = () => {
       </Box>
 
       <Box sx={{ p: { xs: 3, md: 4 }, pt: 0 }}>
+      {/* Search + selection toolbar */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3.5, flexWrap: 'wrap', maxWidth: { xs: '100%', md: 780 } }}>
+        {/* Search field */}
+        <Box sx={{ flex: 1, minWidth: 260, height: 46, display: 'flex', alignItems: 'center', gap: 1.5, px: 2, borderRadius: '12px', border: '1px solid color-mix(in srgb, var(--color-white) 16%, transparent)', background: 'linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%)', boxShadow: '0 6px 18px color-mix(in srgb, var(--color-navy) 10%, transparent)', transition: 'border-color .2s, box-shadow .2s', '&:focus-within': { borderColor: 'var(--color-teal)', boxShadow: '0 6px 22px color-mix(in srgb, var(--color-teal) 22%, transparent)' } }}>
+          <SearchRoundedIcon sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', fontSize: 19 }} />
+          <input
+            className="study-search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search lectures by title…"
+            aria-label="Search lectures"
+            style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', fontSize: 14, color: 'var(--color-white)', fontFamily: 'inherit' }}
+          />
+          {query && (
+            <IconButton size="small" aria-label="Clear search" onClick={() => setQuery('')} sx={{ color: 'color-mix(in srgb, var(--color-white) 60%, transparent)', '&:hover': { color: 'var(--color-white)' } }}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+
+        {/* Selection controls */}
+        {!selectMode ? (
+          <Button aria-label="Select lectures" onClick={() => setSelectMode(true)} sx={{ flexShrink: 0, height: 46, px: 3, borderRadius: '12px', background: 'var(--color-teal)', color: 'var(--color-navy-deep)', textTransform: 'none', fontWeight: 700, fontSize: 14, letterSpacing: '0.01em', boxShadow: '0 8px 22px color-mix(in srgb, var(--color-teal) 34%, transparent)', '&:hover': { background: 'var(--color-teal-pale)' } }}>
+            Select
+          </Button>
+        ) : (
+          <>
+            <Box sx={{ flexShrink: 0, height: 46, px: 2.5, display: 'flex', alignItems: 'center', gap: 1.5, borderRadius: '12px', background: 'color-mix(in srgb, var(--color-navy) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-navy) 14%, transparent)' }}>
+              <Typography sx={{ fontSize: 13, color: 'var(--color-text-mid)', fontWeight: 600 }}>{selectedIds.size}</Typography>
+              <Typography sx={{ fontSize: 13, color: 'var(--color-text)', fontWeight: 700 }}>selected</Typography>
+            </Box>
+            <Button onClick={handleDeleteSelected} disabled={selectedIds.size === 0} startIcon={<DeleteOutlineIcon />} sx={{ flexShrink: 0, height: 46, px: 3, borderRadius: '12px', background: 'var(--color-danger)', color: 'var(--color-white)', textTransform: 'none', fontWeight: 600, fontSize: 14, boxShadow: '0 8px 20px color-mix(in srgb, var(--color-danger) 28%, transparent)', '&:hover': { background: 'var(--color-danger-deep)' }, '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 12%, transparent)', color: 'color-mix(in srgb, var(--color-white) 40%, transparent)', boxShadow: 'none' } }}>
+              Delete
+            </Button>
+            <Button onClick={clearSelection} startIcon={<CloseIcon />} sx={{ flexShrink: 0, height: 46, px: 3, borderRadius: '12px', background: 'var(--color-white)', border: '1px solid color-mix(in srgb, var(--color-navy) 30%, transparent)', color: 'var(--color-navy-deep)', textTransform: 'none', fontWeight: 600, fontSize: 14, '&:hover': { borderColor: 'var(--color-navy)', boxShadow: '0 4px 14px color-mix(in srgb, var(--color-navy) 10%, transparent)' } }}>
+              Cancel
+            </Button>
+          </>
+        )}
+      </Box>
+
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
           <CircularProgress sx={{ color: 'var(--color-teal)' }} />
@@ -271,36 +342,45 @@ const ClassroomDirectory = () => {
 
       {/* Card grid */}
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 3 }}>
-        {sessions.map((session) => {
+        {visible.map((session) => {
           const meta = statusMeta(session.status);
           return (
             <Box
               key={session.id}
-              onClick={() => navigate(`/classroom/${session.id}`)}
+              onClick={() => (selectMode ? toggleSelect(session.id) : navigate(`/classroom/${session.id}`))}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/classroom/${session.id}`); } }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (selectMode) toggleSelect(session.id); else navigate(`/classroom/${session.id}`); } }}
               sx={{
                 cursor: 'pointer',
                 borderRadius: '20px',
                 height: 320,
+                position: 'relative',
                 background: 'linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%)', /* like Change-cover modal */
-                border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)',
+                border: selectMode && selectedIds.has(session.id) ? '1px solid var(--color-teal)' : '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)',
+                boxShadow: selectMode && selectedIds.has(session.id) ? '0 0 0 3px color-mix(in srgb, var(--color-teal) 35%, transparent)' : undefined,
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
                 transition: 'transform .2s cubic-bezier(.2,.8,.2,1), border-color .2s, box-shadow .2s',
+                '&::before': { content: '""', position: 'absolute', top: 0, left: '-100%', width: '60%', height: '100%', background: 'linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-white) 16%, transparent), transparent)', transform: 'skewX(-15deg)', transition: 'left .6s ease', zIndex: 2, pointerEvents: 'none' },
                 '&:hover': { transform: 'translateY(-4px)', borderColor: 'color-mix(in srgb, var(--color-teal) 55%, transparent)', boxShadow: '0 18px 44px color-mix(in srgb, var(--color-black) 42%, transparent)' },
+                '&:hover::before': { left: '140%' },
                 '&:focus-visible': { outline: '2px solid var(--color-teal)', outlineOffset: '2px' },
               }}
             >
               {/* Cover */}
               <Box sx={{ position: 'relative', flex: '0 0 65%', minHeight: 0, overflow: 'hidden' }}>
                 <ClassCover url={session.cover_image_url} title={session.title} />
+                {selectMode && (
+                  <Box onClick={(e) => { e.stopPropagation(); toggleSelect(session.id); }} sx={{ position: 'absolute', top: 12, left: 12, zIndex: 3, width: 26, height: 26, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: selectedIds.has(session.id) ? 'var(--color-teal)' : 'rgba(0,0,0,0.45)', color: selectedIds.has(session.id) ? 'var(--color-navy-deep)' : 'var(--color-white)', border: selectedIds.has(session.id) ? '2px solid transparent' : '2px solid color-mix(in srgb, var(--color-white) 55%, transparent)' }}>
+                    {selectedIds.has(session.id) ? <CheckIcon sx={{ fontSize: 18 }} /> : null}
+                  </Box>
+                )}
               </Box>
 
               {/* Body */}
-              <Box sx={{ flex: 1, minHeight: 0, p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5, justifyContent: 'center', background: 'linear-gradient(135deg, #1A5C4E 0%, #10443A 50%, #0A2F2A 100%)' }}>
+              <Box sx={{ flex: 1, minHeight: 0, p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5, justifyContent: 'center', background: 'linear-gradient(rgba(0,0,0,0.28), rgba(0,0,0,0.28)), linear-gradient(90deg, var(--color-teal-deep), var(--color-blue-deep))' }}>
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
                   <Typography variant="h6" sx={{ flex: 1, minWidth: 0, fontWeight: 700, lineHeight: 1.12, color: 'var(--color-white)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                     {session.title}
@@ -317,7 +397,7 @@ const ClassroomDirectory = () => {
         })}
 
         {/* Dashed placeholders */}
-        {!loading && !error && Array.from({ length: Math.max(0, 8 - sessions.length) }).map((_, i) => (
+        {!loading && !error && !query.trim() && Array.from({ length: Math.max(0, 8 - visible.length) }).map((_, i) => (
           <Box key={`class-slot-${i}`} role="button" tabIndex={0} onClick={() => setAddOpen(true)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAddOpen(true); } }} sx={{ cursor: 'pointer', borderRadius: '20px', border: '2px dashed color-mix(in srgb, var(--color-navy) 45%, transparent)', background: 'var(--color-white)', minHeight: 320, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', p: 4, gap: 1.5, boxShadow: '0 6px 18px color-mix(in srgb, var(--color-navy) 7%, transparent)', '&:hover': { transform: 'translateY(-4px)', borderColor: 'color-mix(in srgb, var(--color-teal) 60%, transparent)', boxShadow: '0 14px 30px color-mix(in srgb, var(--color-navy) 16%, transparent)' }, '&:focus-visible': { outline: '2px solid var(--color-teal)', outlineOffset: '2px' } }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 58, height: 58, borderRadius: '50%', border: '2px dashed color-mix(in srgb, var(--color-navy) 40%, transparent)', mb: 0.5 }}>
               <AddIcon sx={{ fontSize: 26, color: 'color-mix(in srgb, var(--color-navy) 55%, transparent)' }} />
@@ -329,6 +409,12 @@ const ClassroomDirectory = () => {
           </Box>
         ))}
       </Box>
+
+      {!loading && !error && query.trim() && visible.length === 0 && (
+        <Typography sx={{ textAlign: 'center', color: 'var(--color-text-mid)', py: 6 }}>
+          No lectures match “{query}”.
+        </Typography>
+      )}
       </Box>
 
       <RenameDialog open={renameState.open} initialValue={renameState.session?.title || ''} onClose={closeRename} onSubmit={submitRename} submitting={renameState.saving} title="Rename lecture" label="Lecture title" />
