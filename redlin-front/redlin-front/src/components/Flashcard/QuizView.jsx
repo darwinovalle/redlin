@@ -16,6 +16,7 @@ import { documentService } from '../../services/api';
 import { srService } from '../../services/api/sr';
 import { useStudySection } from '../../hooks/useStudySession';
 import FocusToggle from '../common/FocusToggle';
+import dinoStudy from '../../assets/redlin_logo/dino_study.png';
 
 const shuffleArray = (array) => {
   let currentIndex = array.length, randomIndex;
@@ -29,7 +30,7 @@ const shuffleArray = (array) => {
 
 const UNANSWERED_SEGMENT_COLOR = 'color-mix(in srgb, var(--color-white) 18%, transparent)';
 
-const QuizView = ({ documentId, focus = false, autoStart = false, onStart, onExit, onFocusChange }) => {
+const QuizView = ({ documentId, focus = false, autoStart = false, showStudyImage = false, onStart, onExit, onFocusChange }) => {
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
@@ -253,6 +254,9 @@ const QuizView = ({ documentId, focus = false, autoStart = false, onStart, onExi
           {canStart ? 'Start Quiz' : (documentId ? 'No Questions Found' : 'Select Document')}
         </Button>
         <FocusToggle focus={focus} onChange={onFocusChange} />
+        {showStudyImage && (
+          <img src={dinoStudy} alt="Start studying" style={{ width: 'auto', height: 300, maxWidth: '100%', objectFit: 'contain', display: 'block', margin: '20px auto 0' }} />
+        )}
       </Box>
     );
   }

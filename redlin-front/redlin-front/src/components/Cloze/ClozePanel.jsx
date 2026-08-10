@@ -6,13 +6,14 @@ import { srService } from '../../services/api/sr';
 import { useStudySection } from '../../hooks/useStudySession';
 import ClozeCard from './ClozeCard';
 import FocusToggle from '../common/FocusToggle';
+import dinoStudy from '../../assets/redlin_logo/dino_study.png';
 
 /**
  * ClozePanel lists clozes for a selected document and allows validation.
  * Props:
  *  - documentId
  */
-const ClozePanel = ({ documentId, focus = false, autoStart = false, onStart, onFocusChange }) => {
+const ClozePanel = ({ documentId, focus = false, autoStart = false, showStudyImage = false, onStart, onFocusChange }) => {
   // Section timer: attribute Cloze practice time to this document source.
   useStudySection({ model: 'document', itemId: documentId, method: 'CLOZE' });
   const [clozes, setClozes] = useState([]);
@@ -154,6 +155,9 @@ const ClozePanel = ({ documentId, focus = false, autoStart = false, onStart, onF
             Start Cloze Practice
           </Button>
           <FocusToggle focus={focus} onChange={onFocusChange} />
+          {showStudyImage && (
+            <img src={dinoStudy} alt="Start studying" style={{ width: 'auto', height: 300, maxWidth: '100%', objectFit: 'contain', display: 'block', margin: '20px auto 0' }} />
+          )}
         </Stack>
       </Box>
     );

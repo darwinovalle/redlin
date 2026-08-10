@@ -1,7 +1,7 @@
 /* Brand typefaces (Poppins, Titillium Web) come from Google Fonts via index.html. */
 .reg-container { display:flex; width:100%; height:100vh; font-family:'Poppins', 'Titillium Web', Arial, sans-serif; color:var(--color-white); overflow:hidden; }
 .illustration-section { width:50%; background:linear-gradient(135deg,var(--color-navy) 0%,var(--color-navy-400) 100%); position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:60px; }
-.illustration-overlay { position:absolute; inset:0; background:radial-gradient(circle at center, color-mix(in srgb, var(--color-navy) 40%, transparent) 0%, color-mix(in srgb, var(--color-navy) 95%, transparent) 100%); z-index:1; }
+.illustration-overlay { position:absolute; inset:0; background:radial-gradient(circle at center, color-mix(in srgb, var(--color-navy-deep) 40%, transparent) 0%, color-mix(in srgb, var(--color-navy-deep) 95%, transparent) 100%); z-index:1; }
 .illustration-content { position:relative; z-index:2; text-align:center; max-width:80%; }
 .illustration-content .illustration-title { font-size:42px; font-weight:700; margin-bottom:20px; color:var(--color-teal); text-shadow:0 2px 10px color-mix(in srgb, var(--color-teal) 20%, transparent); }
 .illustration-content p { font-size:18px; line-height:1.6; color:var(--color-text-muted-on-dark); margin-bottom:40px; }

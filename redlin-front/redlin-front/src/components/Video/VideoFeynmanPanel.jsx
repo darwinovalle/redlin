@@ -8,8 +8,9 @@ import AIFeedback from '../Feynman/AIFeedback';
 import Timer from '../Feynman/Timer';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 import FocusToggle from '../common/FocusToggle';
+import dinoStudy from '../../assets/redlin_logo/dino_study.png';
 
-const VideoFeynmanPanel = ({ videoId, title = 'Feynman Session', focus = false, onFocusChange, onStart, autoStart = false }) => {
+const VideoFeynmanPanel = ({ videoId, title = 'Feynman Session', focus = false, showStudyImage = false, onFocusChange, onStart, autoStart = false }) => {
   // Section timer: attribute Feynman practice time to this video source.
   useStudySection({ model: 'video', itemId: videoId, method: 'FEYNMAN' });
   const [prompts, setPrompts] = useState([]);
@@ -177,6 +178,9 @@ const VideoFeynmanPanel = ({ videoId, title = 'Feynman Session', focus = false, 
             Start Session ({prompts.length} questions)
           </Button>
           <FocusToggle focus={focus} onChange={onFocusChange} />
+          {showStudyImage && (
+            <img src={dinoStudy} alt="Start studying" style={{ width: 'auto', height: 300, maxWidth: '100%', objectFit: 'contain', display: 'block', margin: '20px auto 0' }} />
+          )}
         </Stack>
       </Box>
     );

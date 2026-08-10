@@ -4,12 +4,13 @@ import { feynmanService } from '../../services/api/feynman.jsx';
 import { srService } from '../../services/api/sr';
 import { useStudySection } from '../../hooks/useStudySession';
 import FocusToggle from '../common/FocusToggle';
+import dinoStudy from '../../assets/redlin_logo/dino_study.png';
 import FeynmanAttemptForm from './FeynmanAttemptForm';
 import AIFeedback from './AIFeedback';
 import Timer from './Timer';
 import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 
-const FeynmanPanel = ({ documentId, focus = false, autoStart = false, onStart, onFocusChange }) => {
+const FeynmanPanel = ({ documentId, focus = false, autoStart = false, showStudyImage = false, onStart, onFocusChange }) => {
   // Section timer: attribute Feynman practice time to this document source.
   useStudySection({ model: 'document', itemId: documentId, method: 'FEYNMAN' });
   const [prompts, setPrompts] = useState([]);
@@ -177,6 +178,9 @@ const FeynmanPanel = ({ documentId, focus = false, autoStart = false, onStart, o
             Start Session ({prompts.length} questions)
           </Button>
           <FocusToggle focus={focus} onChange={onFocusChange} />
+          {showStudyImage && (
+            <img src={dinoStudy} alt="Start studying" style={{ width: 'auto', height: 300, maxWidth: '100%', objectFit: 'contain', display: 'block', margin: '20px auto 0' }} />
+          )}
         </Stack>
       </Box>
     );

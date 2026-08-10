@@ -1,7 +1,7 @@
 /* Brand typefaces (Poppins, Titillium Web) come from Google Fonts via index.html. */
 
 .login-page-root { font-family: 'Poppins', 'Titillium Web', Arial, sans-serif; width: 100%; height: 100vh; display: flex; color: var(--color-white); overflow: hidden; }
-.left-section { width: 50%; background: var(--color-navy); display:flex; flex-direction:column; justify-content:center; align-items:center; position:relative; overflow:hidden; }
+.left-section { width: 50%; background: var(--color-navy-deep); display:flex; flex-direction:column; justify-content:center; align-items:center; position:relative; overflow:hidden; }
 .left-content { position:relative; z-index:2; text-align:center; padding:0 60px; }
 .illustration { width:80%; margin:0 auto 40px; }
 .platform-tagline { font-size:32px; font-weight:700; margin-bottom:20px; color:var(--color-teal); }

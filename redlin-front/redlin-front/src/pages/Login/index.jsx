@@ -3,6 +3,7 @@ import { authService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNeuralNetworkAnimation } from '../../hooks/useNeuralNetworkAnimation';
+import dinoRedlin from '../../assets/redlin_logo/dino_redlin.png';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -92,7 +93,7 @@ const Login = () => {
       <div className="right-section">
         <div className="login-form-container">
           <div className="logo-container">
-            <div className="logo"><i className="ri-brain-line" /></div>
+            <img src={dinoRedlin} alt="Redlin" style={{ width: 50, height: 50, objectFit: 'contain', display: 'block', marginRight: 12 }} />
             <div className="platform-name">Redlin</div>
           </div>
           <h1 className="login-title">Login</h1>

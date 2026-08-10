@@ -230,19 +230,19 @@ const Dashboard = () => {
             </TabPanel> */}
             <TabPanel value={activeTab} index={1}>
               <React.Suspense fallback={<LoadingPanel />}>
-                <QuizViewLazy documentId={selectedDocumentId} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('quiz')} />
+                <QuizViewLazy documentId={selectedDocumentId} focus={focusMode} showStudyImage onFocusChange={setFocusMode} onStart={() => openFocus('quiz')} />
               </React.Suspense>
             </TabPanel>
             <TabPanel value={activeTab} index={2}>
               <React.Suspense fallback={<LoadingPanel />}>
-                <ClozePanelLazy documentId={selectedDocumentId} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('cloze')} />
+                <ClozePanelLazy documentId={selectedDocumentId} focus={focusMode} showStudyImage onFocusChange={setFocusMode} onStart={() => openFocus('cloze')} />
               </React.Suspense>
             </TabPanel>
             <TabPanel value={activeTab} index={3}>
               {/* Feynman Panel */}
               {selectedDocumentId && (
                 <React.Suspense fallback={<LoadingPanel />}>
-                  <FeynmanPanelLazy documentId={selectedDocumentId} focus={focusMode} onFocusChange={setFocusMode} onStart={() => openFocus('feynman')} />
+                  <FeynmanPanelLazy documentId={selectedDocumentId} focus={focusMode} showStudyImage onFocusChange={setFocusMode} onStart={() => openFocus('feynman')} />
                 </React.Suspense>
               )}
             </TabPanel>

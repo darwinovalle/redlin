@@ -39,8 +39,10 @@ const VideoImportModal = ({ open, onClose, onImported }) => {
     <Dialog
       open={open}
       onClose={processing ? undefined : onClose}
+      fullWidth
+      maxWidth="sm"
       PaperProps={{
-        style: { backgroundColor: '#1A2A3A' },
+        style: { background: 'linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%)' },
         sx: {
           width: { xs: '92vw', sm: 540 },
           maxWidth: '92vw',
@@ -54,24 +56,27 @@ const VideoImportModal = ({ open, onClose, onImported }) => {
         backdrop: { sx: { backgroundColor: 'color-mix(in srgb, var(--color-black) 60%, transparent)' } },
       }}
     >
-      <Box sx={{ position: 'relative', p: { xs: 2.5, md: 3.5 } }}>
-        <IconButton
-          aria-label="close"
-          onClick={onClose}
-          size="small"
-          disabled={processing}
-          sx={{ position: 'absolute', right: 12, top: 12, zIndex: 2, color: 'rgba(255,255,255,0.6)', '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)', color: 'var(--color-white)' } }}
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
+      {/* teal / blue glows */}
+      <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(circle at top left, color-mix(in srgb, var(--color-teal) 18%, transparent), transparent 45%), radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-blue) 20%, transparent), transparent 48%)' }} />
 
-        <Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 52, height: 52, borderRadius: '14px', background: 'color-mix(in srgb, var(--color-danger) 18%, transparent)', mb: 1.25 }}>
-          <OndemandVideoIcon sx={{ fontSize: 28, color: 'var(--color-danger-soft)' }} />
+      <Box sx={{ position: 'relative', p: { xs: 2.5, md: 3.5 } }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'color-mix(in srgb, var(--color-teal) 18%, transparent)', color: 'var(--color-teal)' }}>
+              <OndemandVideoIcon fontSize="small" />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 700, letterSpacing: '-0.01em' }}>Add a Video</Typography>
+              <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 62%, transparent)' }}>
+                Paste a YouTube link and we&apos;ll fetch its transcript, summary, and study items.
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={onClose} size="small" disabled={processing} sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
         </Box>
-        <Typography variant="h5" sx={{ mb: 0.5, letterSpacing: 0.2, color: 'var(--color-white)' }}>Add a Video</Typography>
-        <Typography variant="body2" sx={{ mb: 2, color: 'color-mix(in srgb, var(--color-white) 66%, transparent)' }}>
-          Paste a YouTube link and we will fetch its transcript, summary, and study items.
-        </Typography>
 
         <TextField
           fullWidth
@@ -80,7 +85,7 @@ const VideoImportModal = ({ open, onClose, onImported }) => {
           onChange={(e) => { setUrl(e.target.value); setError(null); }}
           disabled={processing}
           placeholder="https://www.youtube.com/watch?v=..."
-          sx={{ mb: 1.5, '& .MuiOutlinedInput-root': { color: 'var(--color-white)', backgroundColor: 'color-mix(in srgb, var(--color-white) 4%, transparent)', '& fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 14%, transparent)' }, '&:hover fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 24%, transparent)' }, '&.Mui-focused fieldset': { borderColor: 'var(--color-danger-soft)' } }, '& .MuiInputLabel-root': { color: 'color-mix(in srgb, var(--color-white) 60%, transparent)' } }}
+          sx={{ mb: 1.5, '& .MuiOutlinedInput-root': { color: 'var(--color-white)', backgroundColor: 'color-mix(in srgb, var(--color-white) 4%, transparent)', '& fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 14%, transparent)' }, '&:hover fieldset': { borderColor: 'color-mix(in srgb, var(--color-white) 24%, transparent)' }, '&.Mui-focused fieldset': { borderColor: 'var(--color-teal)' } }, '& .MuiInputLabel-root': { color: 'color-mix(in srgb, var(--color-white) 60%, transparent)' } }}
         />
 
         <TextField
@@ -114,12 +119,12 @@ const VideoImportModal = ({ open, onClose, onImported }) => {
           sx={{
             borderRadius: '999px',
             py: 1.15,
-            background: 'var(--color-danger)',
-            color: '#fff',
+            background: 'var(--color-teal)',
+            color: 'var(--color-navy-deep)',
             fontWeight: 700,
             textTransform: 'none',
-            boxShadow: '0 10px 28px color-mix(in srgb, var(--color-danger) 30%, transparent)',
-            '&:hover': { background: 'var(--color-danger-deep)' },
+            boxShadow: '0 10px 28px color-mix(in srgb, var(--color-teal) 30%, transparent)',
+            '&:hover': { background: 'var(--color-teal-pale)' },
             '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-white) 8%, transparent)', color: 'color-mix(in srgb, var(--color-white) 36%, transparent)' },
           }}
         >

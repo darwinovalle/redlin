@@ -245,42 +245,22 @@ const Home = () => {
       {/* <div style={{ position: 'fixed', top: 10, right: 10, zIndex: 9999, background: 'var(--color-teal)', color: 'var(--color-white)', padding: '6px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700 }}>
         HOME MOUNTED
       </div> */}
-      {/* Header */}
+      {/* Header — unified welcome hero */}
       <div className="header" ref={welcomeRef}>
         <div className="welcome">
           <div className="user-avatar">{(user?.username || '?').charAt(0).toUpperCase()}</div>
           <div className="welcome-text">
-            <h2>Welcome{user?.username ? ',' : ''} {user?.username || ''}</h2>
+            <h2>Welcome back{user?.username ? `, ${user.username}` : ''}</h2>
+            <p>Your brain&apos;s in gear — keep the study flow going.</p>
             <div className="streak">
               <i className="ri-fire-fill" />
-              <span>Current streak: {streak} {streak === 1 ? 'day' : 'days'}</span>
+              <span>{streak} {streak === 1 ? 'day' : 'days'} current streak</span>
             </div>
           </div>
         </div>
         <div className="header-actions">
           <NotificationBell tone="light" />
           <ReviewCalendar />
-        </div>
-      </div>
-
-      {/* Learning Path */}
-      <div className="learning-path" ref={learningPathRef}>
-        <div className="path-header">
-          <div className="path-title">Your Learning Journey</div>
-        </div>
-        <p>Your study subjects, from planning to mastered — click one to open its board.</p>
-        <div className="path-timeline">
-          {journey.length === 0 ? (
-            <div className="milestone pending">
-              <div className="milestone-dot" />
-              <div className="milestone-label" title="No subjects yet">Create your first subject</div>
-            </div>
-          ) : journey.map(m => (
-            <div key={m.id} className={`milestone ${m.status}`} onClick={() => navigate(`/subjects/${m.id}`)} role="button" title={`${m.title} · ${m.mastered}/${m.total} mastered`}>
-              <div className="milestone-dot" />
-              <div className="milestone-label">{m.title}</div>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -298,11 +278,12 @@ const Home = () => {
                 return (
                   <div key={d} className="calendar-day">
                     <div className="day-label">{d}</div>
-                    <div className={`day-circle ${active ? 'active' : ''} ${completed ? 'completed' : ''}`}>{fire ? <i className="ri-fire-line" style={{ color: 'var(--color-purple)', fontStyle: 'normal', fontSize: 15 }} /> : dayNum}</div>
+                    <div className={`day-circle ${active ? 'active' : ''} ${completed ? 'completed' : ''}`}>{fire ? <i className="ri-fire-fill" style={{ color: 'var(--color-purple)', fontStyle: 'normal', fontSize: 22 }} /> : dayNum}</div>
                   </div>
                 );
               })}
             </div>
+            <div className="calendar-note">Keep the good work going!</div>
           </div>
         </div>
         <div className="card progress-card">

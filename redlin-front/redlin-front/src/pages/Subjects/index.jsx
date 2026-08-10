@@ -40,8 +40,10 @@ const NewSubjectDialog = ({ open, onClose, onCreated }) => {
     <Dialog
       open={open}
       onClose={creating ? null : onClose}
+      fullWidth
+      maxWidth="sm"
       PaperProps={{
-        style: { backgroundColor: '#1A2A3A' },
+        style: { background: 'linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%)' },
         sx: {
           width: { xs: '92vw', sm: 460 }, maxWidth: '92vw', borderRadius: '20px',
           boxShadow: '0 24px 80px rgba(0,0,0,0.5)', overflow: 'hidden', position: 'relative',
@@ -49,18 +51,27 @@ const NewSubjectDialog = ({ open, onClose, onCreated }) => {
       }}
       slotProps={{ backdrop: { sx: { backgroundColor: 'color-mix(in srgb, var(--color-black) 60%, transparent)' } } }}
     >
-      <Box sx={{ position: 'relative', p: { xs: 2.5, md: 3.5 } }}>
-        <IconButton aria-label="close" onClick={onClose} disabled={creating} size="small" sx={{ position: 'absolute', right: 12, top: 12, zIndex: 2, color: 'rgba(255,255,255,0.6)', '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)', color: 'var(--color-white)' } }}>
-          <CloseIcon fontSize="small" />
-        </IconButton>
+      {/* teal / blue glows */}
+      <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(circle at top left, color-mix(in srgb, var(--color-teal) 18%, transparent), transparent 45%), radial-gradient(circle at bottom right, color-mix(in srgb, var(--color-blue) 20%, transparent), transparent 48%)' }} />
 
-        <Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 52, height: 52, borderRadius: '14px', background: 'color-mix(in srgb, var(--color-teal) 16%, transparent)', mb: 1.25 }}>
-          <ViewKanbanIcon sx={{ fontSize: 26, color: 'var(--color-teal)' }} />
+      <Box sx={{ position: 'relative', p: { xs: 2.5, md: 3.5 } }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'color-mix(in srgb, var(--color-teal) 18%, transparent)', color: 'var(--color-teal)' }}>
+              <ViewKanbanIcon fontSize="small" />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 700, letterSpacing: '-0.01em' }}>New subject</Typography>
+              <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 62%, transparent)' }}>
+                Create a study subject to open its kanban board. Attach your documents, videos, books and lectures as study-material cards to track progress.
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={onClose} disabled={creating} size="small" sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white', backgroundColor: 'rgba(255,255,255,0.08)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
         </Box>
-        <Typography variant="h5" sx={{ mb: 0.5, letterSpacing: 0.2, color: 'var(--color-white)' }}>New subject</Typography>
-        <Typography variant="body2" sx={{ mb: 2, color: 'color-mix(in srgb, var(--color-white) 66%, transparent)' }}>
-          Create a study subject to open its kanban board. You can attach your documents, videos, books and lectures as study-material cards to track progress.
-        </Typography>
 
         <Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'center' }}>
           <TextField
@@ -134,21 +145,28 @@ const Subjects = () => {
     (topic?.board?.columns || []).map((c) => ({ title: c.title, count: (c.cards || []).length }));
 
   return (
-    <Box sx={{ minHeight: '100vh', width: '100%', background: 'var(--color-navy-deep)', p: { xs: 3, md: 6, lg: 7 }, color: 'var(--color-white)' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, flexWrap: 'wrap' }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: 0.3, mb: 0.5 }}>Subjects</Typography>
-          <Typography variant="body1" sx={{ color: 'color-mix(in srgb, var(--color-white) 66%, transparent)', maxWidth: 560 }}>
+    <Box sx={{ minHeight: '100vh', width: '100%', overflowX: 'hidden', background: 'radial-gradient(circle, color-mix(in srgb, var(--color-navy) 30%, transparent) 1px, transparent 1.5px), #FFFFFF', backgroundSize: '22px 22px' }}>
+      {/* Hero — full-width navy panel with decorative glow bubbles */}
+      <Box sx={{ position: 'relative', width: '100%', mb: { xs: 4, md: 6 }, overflow: 'hidden', background: 'var(--color-navy-deep)' }}>
+        <Box sx={{ position: 'absolute', top: -80, right: -40, width: 288, height: 288, borderRadius: '50%', background: 'radial-gradient(circle, rgba(127, 99, 244, 0.35), transparent 70%)', pointerEvents: 'none' }} />
+        <Box sx={{ position: 'absolute', bottom: -96, left: '33.33%', width: 288, height: 288, borderRadius: '50%', background: 'radial-gradient(circle, rgba(32, 201, 151, 0.3), transparent 70%)', pointerEvents: 'none' }} />
+        <Box sx={{ position: 'relative', maxWidth: 1500, mx: 'auto', px: { xs: '24px', md: '40px' }, py: { xs: '48px', md: '64px' } }}>
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--color-teal)', mb: 2 }}>
+            Your subjects
+          </Box>
+          <Typography component="h1" sx={{ fontFamily: "'Poppins', 'Titillium Web', sans-serif", fontWeight: 700, lineHeight: 1.1, fontSize: 'clamp(2.2rem, 5vw, 3.4rem)', color: 'var(--color-white)' }}>
+            Subjects
+          </Typography>
+          <Typography sx={{ color: '#B0B7C3', mt: 1.5, maxWidth: 672, fontSize: 15, lineHeight: 1.6 }}>
             Organize your study around subjects. Each subject has a kanban board where you attach your documents, videos, books and lectures as study-material cards to track progress.
           </Typography>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)} sx={{ mt: 3.5, height: 48, px: 3, borderRadius: '999px', backgroundColor: 'var(--color-teal)', color: 'var(--color-white)', fontWeight: 600, fontSize: 14, textTransform: 'none', boxShadow: '0 6px 20px rgba(32, 201, 151, 0.5)', transition: 'all .2s ease', '&:hover': { backgroundColor: 'var(--color-teal-hover)', transform: 'translateY(-2px)' } }}>
+            New subject
+          </Button>
         </Box>
-        <Button
-          variant="contained" onClick={() => setOpen(true)} startIcon={<AddIcon />}
-          sx={{ borderRadius: '999px', px: 3, py: 1.1, background: 'var(--color-teal)', color: 'var(--color-navy-deep)', fontWeight: 700, textTransform: 'none', boxShadow: '0 10px 28px color-mix(in srgb, var(--color-teal) 30%, transparent)', '&:hover': { background: 'var(--color-teal-pale)' } }}
-        >
-          New subject
-        </Button>
       </Box>
+
+      <Box sx={{ p: { xs: 3, md: 6, lg: 7 }, pt: 0 }}>
 
       {error && <Box sx={{ mt: 3, p: 2, borderRadius: 2, bgcolor: 'color-mix(in srgb, var(--color-danger-soft) 14%, transparent)' }}>{error}</Box>}
 
@@ -158,10 +176,10 @@ const Subjects = () => {
         <Box sx={{ mt: 6, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 3 }}>
           {[0, 1, 2].map((i) => (
             <button key={i} onClick={() => setOpen(true)} style={{ cursor: 'pointer', background: 'transparent', border: 'none', padding: 0 }}>
-              <Box sx={{ p: 3, borderRadius: 4, border: '1.5px dashed color-mix(in srgb, var(--color-white) 20%, transparent)', minHeight: 170, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', '&:hover': { borderColor: 'var(--color-teal)' } }}>
-                <AddIcon sx={{ fontSize: 40, color: 'color-mix(in srgb, var(--color-white) 40%, transparent)', mb: 1 }} />
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>New subject</Typography>
-                <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>
+              <Box sx={{ p: 3, borderRadius: 4, border: '2px dashed color-mix(in srgb, var(--color-navy) 45%, transparent)', background: 'var(--color-white)', minHeight: 170, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', boxShadow: '0 6px 18px color-mix(in srgb, var(--color-navy) 7%, transparent)', '&:hover': { borderColor: 'var(--color-teal)' } }}>
+                <AddIcon sx={{ fontSize: 40, color: 'color-mix(in srgb, var(--color-navy) 55%, transparent)', mb: 1 }} />
+                <Typography variant="h6" sx={{ fontWeight: 700, color: 'var(--color-text)' }}>New subject</Typography>
+                <Typography variant="body2" sx={{ color: 'var(--color-text-mid)' }}>
                   Start a kanban board for a subject you're studying.
                 </Typography>
               </Box>
@@ -177,7 +195,7 @@ const Subjects = () => {
               role="button"
               tabIndex={0}
               sx={{
-                cursor: 'pointer', borderRadius: 4, overflow: 'hidden', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)',
+                cursor: 'pointer', borderRadius: 4, overflow: 'hidden', background: 'linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%)',
                 border: '1px solid color-mix(in srgb, var(--color-white) 12%, transparent)',
                 transition: 'transform .2s, border .2s',
                 '&:hover': { transform: 'translateY(-3px)', borderColor: 'color-mix(in srgb, var(--color-teal) 55%, transparent)' },
@@ -200,12 +218,13 @@ const Subjects = () => {
               </Box>
             </Box>
           ))}
-          <Box onClick={() => setOpen(true)} sx={{ cursor: 'pointer', p: 3, borderRadius: 4, border: '1.5px dashed color-mix(in srgb, var(--color-white) 20%, transparent)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: 'none', '&:hover': { borderColor: 'var(--color-teal)' } }}>
-            <AddIcon sx={{ fontSize: 40, color: 'color-mix(in srgb, var(--color-white) 40%, transparent)' }} />
-            <Typography sx={{ fontWeight: 700 }}>New subject</Typography>
+          <Box onClick={() => setOpen(true)} sx={{ cursor: 'pointer', p: 3, borderRadius: 4, border: '2px dashed color-mix(in srgb, var(--color-navy) 45%, transparent)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: 'var(--color-white)', boxShadow: '0 6px 18px color-mix(in srgb, var(--color-navy) 7%, transparent)', '&:hover': { borderColor: 'var(--color-teal)' } }}>
+            <AddIcon sx={{ fontSize: 40, color: 'color-mix(in srgb, var(--color-navy) 55%, transparent)' }} />
+            <Typography sx={{ fontWeight: 700, color: 'var(--color-text)' }}>New subject</Typography>
           </Box>
         </Box>
       )}
+      </Box>
 
       {open && <NewSubjectDialog open onClose={() => setOpen(false)} onCreated={() => { setOpen(false); fetchTopics(); }} />}
     </Box>

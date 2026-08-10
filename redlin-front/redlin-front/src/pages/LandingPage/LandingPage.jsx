@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useNeuralNetworkAnimation } from '../../hooks/useNeuralNetworkAnimation';
 import { useGsapAnimations } from '../../hooks/useGsapAnimations';
 import { useLenisScroll } from '../../hooks/useLenisScroll';
+import dinoRedlin from '../../assets/redlin_logo/dino_redlin.png';
+import heroBanner from '../../assets/hero_banner_image.png';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -46,9 +48,7 @@ const LandingPage = () => {
             <nav className="navbar-landing">
                 <div className="logo-container-landing">
                     <div className="logo-landing">
-                        <div className="logo-icon-landing">
-                            <i className="ri-brain-line"></i>
-                        </div>
+                        <img src={dinoRedlin} alt="Redlin" style={{ width: 50, height: 50, objectFit: 'contain', display: 'block', marginRight: 12 }} />
                         Redlin 
                     </div>
                 </div>
@@ -57,7 +57,7 @@ const LandingPage = () => {
                     <a href="#features" className="nav-link-landing magnetic-target-landing">Features</a>
                     <a href="#benefits" className="nav-link-landing magnetic-target-landing">Benefits</a>
                     <a href="#how-it-works" className="nav-link-landing magnetic-target-landing">How It Works</a>
-                    <a href="#pricing" className="nav-link-landing magnetic-target-landing">Self-Host</a>
+                    {/* <a href="#pricing" className="nav-link-landing magnetic-target-landing">Self-Host</a> */}
                 </div>
                 
                 <div className="auth-buttons-landing">
@@ -140,6 +140,7 @@ const LandingPage = () => {
                         <Link to="/register" className="btn-landing btn-hero-landing magnetic-target-landing">Start Learning Now <i className="ri-arrow-right-line" style={{marginLeft: '8px'}}></i></Link>
                     </div>
                 </div>
+                <img src={heroBanner} alt="Redlin learning platform" className="hero-banner-image-landing" />
             </section>
 
             {/* Features Section */}
@@ -308,7 +309,8 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* Pricing Section */}
+            {/* Pricing Section (commented out) */}
+            {/*
             <section className="pricing-landing" id="pricing" ref={pricingRef}>
                 <h2 className="section-title-landing">Self-Host It Free</h2>
                 <div className="pricing-container-landing">
@@ -337,8 +339,10 @@ const LandingPage = () => {
                     </div>
                 </div>
             </section>
+            */}
 
-            {/* Final CTA Section */}
+            {/* Final CTA Section (commented out) */}
+            {/*
             <section className="final-cta-landing" ref={finalCtaRef}>
                 <div className="final-cta-content-landing">
                     <h2 className="final-cta-title-landing">Ready to Transform Your Learning?</h2>
@@ -349,6 +353,7 @@ const LandingPage = () => {
                     </form>
                 </div>
             </section>
+            */}
 
             </main>
 

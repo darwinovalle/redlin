@@ -6,12 +6,13 @@ import { srService } from '../../services/api/sr';
 import { useStudySection } from '../../hooks/useStudySession';
 import VideoClozeCard from './VideoClozeCard';
 import FocusToggle from '../common/FocusToggle';
+import dinoStudy from '../../assets/redlin_logo/dino_study.png';
 
 /**
  * VideoClozePanel handles listing & practice flow for video clozes.
  * Props: videoId, focus, onFocusChange, onStart, autoStart, title
  */
-const VideoClozePanel = ({ videoId, title = 'Cloze Practice', focus = false, onFocusChange, onStart, autoStart = false }) => {
+const VideoClozePanel = ({ videoId, title = 'Cloze Practice', focus = false, showStudyImage = false, onFocusChange, onStart, autoStart = false }) => {
   // Section timer: attribute Cloze practice time to this video source.
   useStudySection({ model: 'video', itemId: videoId, method: 'CLOZE' });
   const [clozes, setClozes] = useState([]);
@@ -125,6 +126,9 @@ const VideoClozePanel = ({ videoId, title = 'Cloze Practice', focus = false, onF
             Start Cloze Practice
           </Button>
           <FocusToggle focus={focus} onChange={onFocusChange} />
+          {showStudyImage && (
+            <img src={dinoStudy} alt="Start studying" style={{ width: 'auto', height: 300, maxWidth: '100%', objectFit: 'contain', display: 'block', margin: '20px auto 0' }} />
+          )}
         </Stack>
       </Box>
     );
