@@ -317,6 +317,29 @@ section[id] {
     will-change: transform, opacity;
 }
 
+/* Perspective mesh lines + white neural-dot field are replaced by the hero image. */
+.mesh-grid-landing,
+.neural-network-landing {
+    display: none;
+}
+
+.hero-banner-image-landing {
+    position: absolute;
+    top: 18px;
+    left: 39%;
+    width: 57%;
+    height: 1193px;
+    z-index: 0;
+    pointer-events: none;
+    filter: drop-shadow(0 30px 80px rgba(0, 0, 0, 0.5));
+    animation: heroBannerFloat 6s ease-in-out infinite;
+}
+
+@keyframes heroBannerFloat {
+    0%, 100% { transform: translateY(-8px); }
+    50% { transform: translateY(10px); }
+}
+
 .btn-hero-landing {
     padding: 16px 36px;
     font-size: 18px;
@@ -356,6 +379,7 @@ section[id] {
     left: 0;
     width: 100%;
     height: 100%;
+    z-index: 1;
     pointer-events: none;
 }
 
@@ -381,14 +405,14 @@ section[id] {
 .ui-card-2-landing {
     width: 180px;
     height: 100px;
-    bottom: 30%;
-    right: 25%;
+    right: 4%;
+    bottom: 14%;
 }
 
 .ui-card-3-landing {
     width: 160px;
     height: 90px;
-    top: 60%;
+    top: 76%;
     right: 40%;
 }
 

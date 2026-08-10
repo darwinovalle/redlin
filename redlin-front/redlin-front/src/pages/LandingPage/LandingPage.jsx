@@ -4,6 +4,7 @@ import { useNeuralNetworkAnimation } from '../../hooks/useNeuralNetworkAnimation
 import { useGsapAnimations } from '../../hooks/useGsapAnimations';
 import { useLenisScroll } from '../../hooks/useLenisScroll';
 import dinoRedlin from '../../assets/redlin_logo/dino_redlin.png';
+import heroBanner from '../../assets/hero_banner_image.png';
 import './LandingPage.css';
 
 const LandingPage = () => {
@@ -139,6 +140,7 @@ const LandingPage = () => {
                         <Link to="/register" className="btn-landing btn-hero-landing magnetic-target-landing">Start Learning Now <i className="ri-arrow-right-line" style={{marginLeft: '8px'}}></i></Link>
                     </div>
                 </div>
+                <img src={heroBanner} alt="Redlin learning platform" className="hero-banner-image-landing" />
             </section>
 
             {/* Features Section */}
