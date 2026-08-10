@@ -278,11 +278,12 @@ const Home = () => {
                 return (
                   <div key={d} className="calendar-day">
                     <div className="day-label">{d}</div>
-                    <div className={`day-circle ${active ? 'active' : ''} ${completed ? 'completed' : ''}`}>{fire ? <i className="ri-fire-line" style={{ color: 'var(--color-purple)', fontStyle: 'normal', fontSize: 15 }} /> : dayNum}</div>
+                    <div className={`day-circle ${active ? 'active' : ''} ${completed ? 'completed' : ''}`}>{fire ? <i className="ri-fire-fill" style={{ color: 'var(--color-purple)', fontStyle: 'normal', fontSize: 22 }} /> : dayNum}</div>
                   </div>
                 );
               })}
             </div>
+            <div className="calendar-note">Keep the good work going!</div>
           </div>
         </div>
         <div className="card progress-card">

@@ -29,11 +29,12 @@
 .progress-card { padding:0; overflow:hidden; }
 .progress-card-header { padding:2px 12px 8px; border-bottom:1px solid var(--color-surface-neutral); }
 .progress-card-header h3 { margin:0; line-height:1.2; }
-.progress-card-content { padding:12px 12px; }
-.calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.progress-card-content { padding:12px 12px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; }
+.calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
 .calendar-day { display:flex; flex-direction:column; align-items:center; }
-.day-label { font-size:12px; color:var(--color-text-mid); margin-bottom:5px; }
-.day-circle { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; background:var(--color-cloud); color:var(--color-text-mid); transition:.3s; }
+.day-label { font-size:13px; color:var(--color-text-mid); margin-bottom:6px; }
+.day-circle { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; background:var(--color-cloud); color:var(--color-text-mid); transition:.3s; }
+.calendar-note { text-align:center; font-size:12px; color:var(--color-text-mid); letter-spacing:.01em; }
 .day-circle.active { background:transparent; color:var(--color-blue); border:2px solid var(--color-blue); }
 .day-circle.completed { background:var(--color-teal-tint); color:var(--color-teal); }
 .goal-progress { display:flex; flex-direction:column; align-items:center; }
@@ -134,8 +135,8 @@
 .milestone-dot { width:26px; height:26px; border-width:4px; }
 .milestone-label { font-size:13px; color:var(--color-white); }
 
-.day-label { font-size:12.5px; }
-.day-circle { width:32px; height:32px; font-size:14px; }
+.day-label { font-size:14px; }
+.day-circle { width:44px; height:44px; font-size:16px; }
 
 /* Upcoming sessions: two-column gallery + real thumbnail on the left */
 .upcoming-section .timeline { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
@@ -149,8 +150,8 @@
 /* thumbnail fallback (missing/broken image -> soft icon tile) */
 .thumb-fallback { width:100%; height:100%; min-height:108px; display:flex; align-items:center; justify-content:center; color:var(--color-blue); font-size:28px; background:color-mix(in srgb, var(--color-blue) 8%, transparent); }
 
-/* Quick Access: biggish cover thumbnails */
-.access-cards { grid-template-columns:repeat(auto-fill, minmax(210px,1fr)); gap:18px; }
+/* Quick Access: biggish cover thumbnails, centered group */
+.access-cards { grid-template-columns:repeat(auto-fit, minmax(200px, 220px)); gap:18px; justify-content:center; }
 .access-card { overflow:hidden; }
 .access-thumbnail { height:122px; overflow:hidden; background:var(--color-surface-neutral); }
 .access-thumbnail img { width:100%; height:100%; object-fit:cover; display:block; }
