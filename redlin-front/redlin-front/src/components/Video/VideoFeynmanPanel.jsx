@@ -12,7 +12,7 @@ import dinoStudy from '../../assets/redlin_logo/dino_study.png';
 
 const VideoFeynmanPanel = ({ videoId, title = 'Feynman Session', focus = false, showStudyImage = false, onFocusChange, onStart, autoStart = false }) => {
   // Section timer: attribute Feynman practice time to this video source.
-  useStudySection({ model: 'video', itemId: videoId, method: 'FEYNMAN' });
+  
   const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -25,6 +25,7 @@ const VideoFeynmanPanel = ({ videoId, title = 'Feynman Session', focus = false, 
   const [countdownRemaining, setCountdownRemaining] = useState(60);
   const [questionDone, setQuestionDone] = useState(false); // submitted & evaluated
   const [sessionFinished, setSessionFinished] = useState(false);
+  useStudySection({ model: 'video', itemId: videoId, method: 'FEYNMAN', active: sessionActive && !sessionFinished });
   const [sessionKey, setSessionKey] = useState(Date.now());
   const COUNTDOWN = 210; // 3:30 per question
   const autoSubmittingRef = useRef(false);

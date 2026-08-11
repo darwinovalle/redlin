@@ -39,7 +39,7 @@ const StudyPanel = ({ documentId, title = '' }) => {
   const [focusKey, setFocusKey] = useState(0);
 
   // Auto-record study time while this panel stays open, and show a live counter.
-  const studyElapsed = useStudySession({ model: 'document', itemId: documentId });
+  const studyElapsed = useStudySession({ model: 'document', itemId: documentId, active: activeTab === 0 });
 
   useEffect(() => {
     try { localStorage.setItem('study:focusMode', focusMode ? '1' : '0'); } catch {}

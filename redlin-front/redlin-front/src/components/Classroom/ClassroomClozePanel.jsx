@@ -16,7 +16,7 @@ const shuffle = (arr) => {
 
 const ClassroomClozePanel = ({ clozes, focus = false, autoStart = false, onStart, sessionId }) => {
   // Section timer: attribute Cloze practice time to this lecture source.
-  useStudySection({ model: 'lecture', itemId: sessionId, method: 'CLOZE' });
+  
   const [practiceClozes, setPracticeClozes] = useState([]);
   const [started, setStarted] = useState(false);
   const [sessionKey, setSessionKey] = useState(Date.now());
@@ -33,6 +33,7 @@ const ClassroomClozePanel = ({ clozes, focus = false, autoStart = false, onStart
   const answeredIds = Object.keys(answeredMap);
   const answeredCount = answeredIds.length;
   const correctCount = answeredIds.reduce((accumulator, clozeId) => accumulator + (answeredMap[clozeId] ? 1 : 0), 0);
+  useStudySection({ model: 'lecture', itemId: sessionId, method: 'CLOZE', active: started && answeredCount < total });
 
   const handleStart = () => {
     setPracticeClozes((previous) => shuffle(previous));

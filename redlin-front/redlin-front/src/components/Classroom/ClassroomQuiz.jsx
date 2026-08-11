@@ -29,13 +29,14 @@ const UNANSWERED_SEGMENT_COLOR = 'color-mix(in srgb, var(--color-white) 18%, tra
 
 const ClassroomQuiz = ({ mcqs, focus = false, autoStart = false, onStart, onExit, sessionId }) => {
   // Section timer: attribute MCQ practice time to this lecture source.
-  useStudySection({ model: 'lecture', itemId: sessionId, method: 'MCQ' });
+  
   const [questions, setQuestions] = useState([]);
   const [active, setActive] = useState(false);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState({});
   const [feedback, setFeedback] = useState(null);
   const [finished, setFinished] = useState(false);
+  useStudySection({ model: 'lecture', itemId: sessionId, method: 'MCQ', active: active && !finished });
   const [score, setScore] = useState(0);
   const correctAudioRef = useRef(null);
   const wrongAudioRef = useRef(null);

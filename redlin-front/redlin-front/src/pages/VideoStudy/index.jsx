@@ -40,10 +40,11 @@ const VideoStudy = () => {
   const { videoId } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null); // { video, summary, mcqs }
+  const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   // Auto-record study time while this video study page stays open.
-  const studyElapsed = useStudySession({ model: 'video', itemId: videoId });
+  const studyElapsed = useStudySession({ model: 'video', itemId: videoId, active: activeTab === 0 });
   // Study notes below the player, auto-saved to this browser for the video.
   const [notes, setNotes] = useState(() => {
     try { return localStorage.getItem(`videos:notes:${videoId}`) || ''; } catch { return ''; }
@@ -154,7 +155,7 @@ const VideoStudy = () => {
           </Box>
         </Box>
         <div className="study-panel" style={{ width: 540, flexShrink: 0 }}>
-          <VideoStudyPanel video={video} summary={summary} mcqs={mcqs} />
+          <VideoStudyPanel video={video} summary={summary} mcqs={mcqs} onTabChange={setActiveTab} />
         </div>
       </Box>
     </div>
