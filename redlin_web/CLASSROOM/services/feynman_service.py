@@ -24,13 +24,8 @@ def _normalize_key_points(key_points) -> list[str]:
 
 
 def _prompt_language(f_obj: ClassSessionFeynman) -> str:
-    session_language = (getattr(f_obj.class_session, 'language', '') or '').lower()
-    if session_language in {'en', 'es'}:
-        return session_language
-
-    key_points_text = ' '.join(_normalize_key_points(f_obj.key_points))
-    detected = detect_language(f_obj.prompt + ' ' + key_points_text)
-    return detected if detected in {'en', 'es'} else 'en'
+    # English-only feedback for now (Spanish support deferred).
+    return "en"
 
 
 def evaluate_and_record_attempt(*, f_obj: ClassSessionFeynman, answer: str, user: User) -> ClassSessionFeynmanAttempt:
@@ -42,7 +37,7 @@ def evaluate_and_record_attempt(*, f_obj: ClassSessionFeynman, answer: str, user
     )
 
     language = _prompt_language(f_obj)
-    rubric_lang_prefix = 'Devuelve la respuesta en Español.' if language == 'es' else 'Return the feedback in English.'
+    rubric_lang_prefix = 'Return the feedback in English.'
 
     eval_prompt = f"""
 You are an expert tutor applying a strict Feynman explanation rubric.

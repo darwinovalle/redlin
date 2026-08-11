@@ -1,7 +1,7 @@
 import api from './index.jsx';
 
 export const classroomService = {
-  async createSession({ title, language = 'es' } = {}) {
+  async createSession({ title, language = 'en' } = {}) {
     if (!title) throw new Error('title is required');
     const response = await api.post('/classroom/sessions/start/', { title, language });
     return response.data;

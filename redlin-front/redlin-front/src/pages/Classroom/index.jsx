@@ -2,23 +2,23 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
   import { useStudySession } from '../../hooks/useStudySession';
   import StudyTimerBadge from '../../components/common/StudyTimerBadge';
-  import CaptureAudioModal from '../../components/Classroom/CaptureAudioModal';                                                                                                  
-  import Box from '@mui/material/Box';                                                                                                                        
-  import Button from '@mui/material/Button';                                                                                                                  
-  import Chip from '@mui/material/Chip';                                                                                                                      
-  import CircularProgress from '@mui/material/CircularProgress';                                                                                              
-  import Divider from '@mui/material/Divider';                                                                                                                
-  import Paper from '@mui/material/Paper';                                                                                                                    
+  import CaptureAudioModal from '../../components/Classroom/CaptureAudioModal';
+  import Box from '@mui/material/Box';
+  import Button from '@mui/material/Button';
+  import Chip from '@mui/material/Chip';
+  import CircularProgress from '@mui/material/CircularProgress';
+  import Divider from '@mui/material/Divider';
+  import Paper from '@mui/material/Paper';
   import Stack from '@mui/material/Stack';
   import LinearProgress from '@mui/material/LinearProgress';
-  import TextField from '@mui/material/TextField';                                                                                                            
+  import TextField from '@mui/material/TextField';
   import Typography from '@mui/material/Typography';
   import Tab from '@mui/material/Tab'; // You might need to import Tabs and Tab
   import Tabs from '@mui/material/Tabs';
-  import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';                                                                                  
-  import MicIcon from '@mui/icons-material/Mic';                                                                                                              
-  import PauseCircleIcon from '@mui/icons-material/PauseCircle';                                                                                              
-  import PlayArrowIcon from '@mui/icons-material/PlayArrow';                                                                                                  
+  import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+  import MicIcon from '@mui/icons-material/Mic';
+  import PauseCircleIcon from '@mui/icons-material/PauseCircle';
+  import PlayArrowIcon from '@mui/icons-material/PlayArrow';
   import RefreshIcon from '@mui/icons-material/Refresh';
   import UploadFileIcon from '@mui/icons-material/UploadFile';
   import DescriptionIcon from '@mui/icons-material/Description';
@@ -31,14 +31,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
   import LockOpenIcon from '@mui/icons-material/LockOpen';
   import OpenInFullIcon from '@mui/icons-material/OpenInFull';
   import ReactMarkdown from 'react-markdown';
-  import remarkGfm from 'remark-gfm';                                                                                                                         
-  import { classroomService } from '../../services/api/classroom';                                                                                            
+  import remarkGfm from 'remark-gfm';
+  import { classroomService } from '../../services/api/classroom';
   import ClassroomQuiz from '../../components/Classroom/ClassroomQuiz';
   import ClassroomClozePanel from '../../components/Classroom/ClassroomClozePanel';
   import ClassroomFeynmanPanel from '../../components/Classroom/ClassroomFeynmanPanel';
   import './Classroom.css';
   import TranscriptionWorker from '../../workers/transcription.worker.js?worker';
-                                                                                                                                                              
+
   // Poll only while the server is actively working (async transcription or
   // content generation) so we can surface results when they're ready. Idle
   // states (new / recording / stopped / failed / completed) do NOT poll — a
@@ -64,42 +64,43 @@ import { useEffect, useMemo, useRef, useState } from 'react';
       output[i] = input[i0] * (1 - frac) + input[i1] * frac;
     }
     return output;
-  };                                                                        
-                                                                                                                                                              
-  const statusTone = (status) => {                                                                                                                            
-    switch (status) {                                                                                                                                         
-      case 'recording':                                                                                                                                       
-        return 'error';                                                                                                                                     
-      case 'transcribing':                                                                                                                                    
-      case 'processing':                                                                                                                                      
-        return 'warning';                                                                                                                                     
-      case 'ready':                                                                                                                                           
-        return 'info';                                                                                                                                        
-      case 'completed':                                                                                                                                       
-        return 'success';                                                                                                                                     
-      case 'failed':                                                                                                                                          
-        return 'error';                                                                                                                                       
-      default:                                                                                                                                                
-        return 'default';                                                                                                                                     
-    }                                                                                                                                                         
-  };                                                                                                                                                          
-                                                                                                                                                              
+  };
+
+  const statusTone = (status) => {
+    switch (status) {
+      case 'recording':
+        return 'error';
+      case 'transcribing':
+      case 'processing':
+        return 'warning';
+      case 'ready':
+        return 'info';
+      case 'completed':
+        return 'success';
+      case 'failed':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
   const Classroom = () => {
     const { sessionId } = useParams();
     // Auto-record study time while this lecture study page stays open.
-    const studyElapsed = useStudySession({ model: 'lecture', itemId: sessionId });                                                                                                                        
-    const navigate = useNavigate();                                                                                                                           
+    const [activeTab, setActiveTab] = useState(0);
+    const studyElapsed = useStudySession({ model: 'lecture', itemId: sessionId , active: activeTab === 0 });
+    const navigate = useNavigate();
     const [session, setSession] = useState(null);
     const [results, setResults] = useState(null);
     const [captureInfoOpen, setCaptureInfoOpen] = useState(false);
     const [searchParams, setSearchParams] = useSearchParams();
-    const [loading, setLoading] = useState(true);                                                                                                             
-    const [error, setError] = useState(null);                                                                                                                 
-    const [recording, setRecording] = useState(false);                                                                                                        
-    const [liveTranscript, setLiveTranscript] = useState('');                                                                                                 
-    const [audioReady, setAudioReady] = useState(false);                                                                                                      
-    const [uploading, setUploading] = useState(false);                                                                                                        
-    const [processing, setProcessing] = useState(false);                                                                                                      
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [recording, setRecording] = useState(false);
+    const [liveTranscript, setLiveTranscript] = useState('');
+    const [audioReady, setAudioReady] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [processing, setProcessing] = useState(false);
     const [manualTranscript, setManualTranscript] = useState('');
     const [mediaError, setMediaError] = useState('');
     const [captureMode, setCaptureMode] = useState(null); // 'tab' | 'mic' | null
@@ -134,15 +135,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
       },
     };
 
-    const [activeTab, setActiveTab] = useState(0);
+    
     const [transcriptOpen, setTranscriptOpen] = useState(false);
     const [summaryOpen, setSummaryOpen] = useState(false);
     const tabs = ['MCQs', 'Clozes', 'Feynman'];
 
-    const mediaRecorderRef = useRef(null);                                                                                                                    
-    const streamRef = useRef(null);                                                                                                                           
-    const chunksRef = useRef([]);                                                                                                                             
-    const pollRef = useRef(null);                                                                                                                             
+    const mediaRecorderRef = useRef(null);
+    const streamRef = useRef(null);
+    const chunksRef = useRef([]);
+    const pollRef = useRef(null);
     const recognitionRef = useRef(null);
     const [, setIsModelReady] = useState(false);
     const workersRef = useRef([]);
@@ -152,9 +153,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
     const lastVoicedAtRef = useRef(Date.now());
     const silenceTimerRef = useRef(null);
     const recordingRef = useRef(false);
-                                                                                                                                                              
-    const canProcess = useMemo(() => Boolean(sessionId && audioReady && !recording && !uploading), [sessionId, audioReady, recording, uploading]);            
-                                                                                                                                                              
+
+    const canProcess = useMemo(() => Boolean(sessionId && audioReady && !recording && !uploading), [sessionId, audioReady, recording, uploading]);
+
     const stopStreamTracks = () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
@@ -181,19 +182,19 @@ import { useEffect, useMemo, useRef, useState } from 'react';
           stopCapture({ auto: true });
         }
       }, 2000);
-    };                                                                                                                                                        
-                                                                                                                                                              
-      const loadSession = async (id) => {           
-        setLoading(true);                                                                                                                                     
-        setError(null);                                                                                                                                       
-        try {                                                                                                                                                 
-          const data = await classroomService.getSessionStatus(id);                                                                                           
-          console.log("Fetched session data:", data); // DEBUG LOG                                                                                            
-          setSession(data);                                                                                                                                   
-          if (data?.status === 'completed') {                                                                                                                 
-            const full = await classroomService.getResults(id);                                                                                               
-            setResults(full);                                                                                                                                 
-          }                                                                                                                                                   
+    };
+
+      const loadSession = async (id) => {
+        setLoading(true);
+        setError(null);
+        try {
+          const data = await classroomService.getSessionStatus(id);
+          console.log("Fetched session data:", data); // DEBUG LOG
+          setSession(data);
+          if (data?.status === 'completed') {
+            const full = await classroomService.getResults(id);
+            setResults(full);
+          }
           if (typeof data?.transcript_text === 'string' && data.transcript_text.length > 0) {
             setManualTranscript(data.transcript_text);
           }
@@ -219,23 +220,23 @@ import { useEffect, useMemo, useRef, useState } from 'react';
           setSession(data);
           if (typeof data?.transcript_text === 'string' && data.transcript_text.length > 0) {
             setManualTranscript(data.transcript_text);
-          }                                                                                                                                                   
-          if (data?.status === 'completed') {                                                                                                                 
-            const full = await classroomService.getResults(sessionId);                                                                                        
-            if (!ignore) setResults(full);                                                                                                                    
-          }                                                                                                                                                   
-        } catch (err) {                                                                                                                                       
-          if (!ignore) setError(err?.response?.data?.detail || err?.message || 'Failed to load lecture');                                           
-        } finally {                                                                                                                                           
-          if (!ignore) setLoading(false);                                                                                                                     
-        }                                                                                                                                                     
-      })();                                                                                                                                                   
-                                                                                                                                                              
-      return () => {                                                                                                                                          
-        ignore = true;                                                                                                                                        
-      };                                                                                                                                                      
-    }, [sessionId]);                                                                                                                                          
-                                                                                                                                                              
+          }
+          if (data?.status === 'completed') {
+            const full = await classroomService.getResults(sessionId);
+            if (!ignore) setResults(full);
+          }
+        } catch (err) {
+          if (!ignore) setError(err?.response?.data?.detail || err?.message || 'Failed to load lecture');
+        } finally {
+          if (!ignore) setLoading(false);
+        }
+      })();
+
+      return () => {
+        ignore = true;
+      };
+    }, [sessionId]);
+
     // Show the capture-audio help the first time a user creates a space.
     useEffect(() => {
       if (searchParams.get('captureHelp') === '1') {
@@ -298,26 +299,26 @@ import { useEffect, useMemo, useRef, useState } from 'react';
           pollRef.current = null;
         }
       };
-    }, [session?.status, sessionId, tabVisible]);                                                                                                                         
-                                                                                                                                                              
+    }, [session?.status, sessionId, tabVisible]);
+
     useEffect(() => () => {
       stopSilenceWatch();
       if (pollRef.current) clearInterval(pollRef.current);
       stopStreamTracks();
       recordingRef.current = false;
-    }, []);                                                                                                                                                   
-                                                                                                                                                              
-    // 1. Add a ref for the worker at the top of the component                                                                                              
-                                                                                                                                                              
-      const startListening = async () => {                                      
+    }, []);
+
+    // 1. Add a ref for the worker at the top of the component
+
+      const startListening = async () => {
         setMediaError('');
         setError(null);
         setLiveTranscript('');
         setIsModelReady(false);
         isModelReadyRef.current = false;
         setSilenceDialogOpen(false);
-        lastVoicedAtRef.current = Date.now();                                        
-                                                                                
+        lastVoicedAtRef.current = Date.now();
+
         try {
           // Firefox cannot capture tab/screen audio, so it records via the
           // microphone instead. Chrome/Edge share a tab/window/screen and keep
@@ -330,55 +331,55 @@ import { useEffect, useMemo, useRef, useState } from 'react';
           }
           setCaptureMode(isFirefox ? 'mic' : 'tab');
           streamRef.current = stream;
-          chunksRef.current = [];                                               
-                                                                                
-          // 1. Initialize WORKER POOL (3 Workers for Parallelism)
-            const POOL_SIZE = 3;                                                
-            const workers = [];                                                 
-                                                                                
-            console.log(`[Classroom] Initializing worker pool with ${POOL_SIZE} workers...`);                                                                 
-                                                                                
-            for (let i = 0; i < POOL_SIZE; i++) {                               
-              try {
-                const worker = new TranscriptionWorker();                       
-                console.log(`[Classroom] Worker ${i} created successfully`);    
-                                                                                
-                worker.onmessage = (e) => {                                     
-                  if (e.data.type === 'ready') {                                
-                    console.log(`[Classroom] Worker ${i} reported READY`);      
-                    if (i === 0) {                                              
-                      isModelReadyRef.current = true;                           
-                      setIsModelReady(true);                                    
-                    }                                                           
-                  } else if (e.data.type === 'result') {                        
-                    setLiveTranscript(prev => prev + ' ' + e.data.text);        
-                  } else if (e.data.type === 'error') {                         
-                    console.error(`[Classroom] Worker ${i} reported ERROR:`, e.data.message);                                                              
-                  }                                                             
-                };                                                              
-                  
-                worker.postMessage({                                            
-                  type: 'init',
-                  language: session?.language || 'en'                           
-                });                                                             
-                                                                                
-                workers.push(worker);                                           
-              } catch (err) {
-                console.error(`[Classroom] Failed to spawn worker ${i}:`, err); 
-              }                                                                 
-            }                                                                   
+          chunksRef.current = [];
 
-          workersRef.current = workers;                                         
-                                                                                
+          // 1. Initialize WORKER POOL (3 Workers for Parallelism)
+            const POOL_SIZE = 3;
+            const workers = [];
+
+            console.log(`[Classroom] Initializing worker pool with ${POOL_SIZE} workers...`);
+
+            for (let i = 0; i < POOL_SIZE; i++) {
+              try {
+                const worker = new TranscriptionWorker();
+                console.log(`[Classroom] Worker ${i} created successfully`);
+
+                worker.onmessage = (e) => {
+                  if (e.data.type === 'ready') {
+                    console.log(`[Classroom] Worker ${i} reported READY`);
+                    if (i === 0) {
+                      isModelReadyRef.current = true;
+                      setIsModelReady(true);
+                    }
+                  } else if (e.data.type === 'result') {
+                    setLiveTranscript(prev => prev + ' ' + e.data.text);
+                  } else if (e.data.type === 'error') {
+                    console.error(`[Classroom] Worker ${i} reported ERROR:`, e.data.message);
+                  }
+                };
+
+                worker.postMessage({
+                  type: 'init',
+                  language: session?.language || 'en'
+                });
+
+                workers.push(worker);
+              } catch (err) {
+                console.error(`[Classroom] Failed to spawn worker ${i}:`, err);
+              }
+            }
+
+          workersRef.current = workers;
+
           // 2. Use AudioContext for LIVE transcription. Let the context use its
           // native sample rate (Firefox rejects forcing a rate that differs
           // from the captured stream) and resample to 16k for the worker.
           const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
           const source = audioCtx.createMediaStreamSource(stream);
-          const processor = audioCtx.createScriptProcessor(4096, 1, 1);         
-                                                                                
-          audioBufferRef.current = [];                                          
-                                                                                
+          const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+
+          audioBufferRef.current = [];
+
           processor.onaudioprocess = (e) => {
             const inputData = e.inputBuffer.getChannelData(0);
 
@@ -430,54 +431,54 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
               audioBufferRef.current = [];
             }
-          };                                                                    
-                                                                                
-          source.connect(processor);                                            
-          processor.connect(audioCtx.destination);                              
-                                                                                
-          // 3. Keep MediaRecorder for final upload                             
-          const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });                                                  
+          };
+
+          source.connect(processor);
+          processor.connect(audioCtx.destination);
+
+          // 3. Keep MediaRecorder for final upload
+          const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
           mediaRecorderRef.current = recorder;
-                                                                                
-          recorder.ondataavailable = async (event) => {                         
-            if (event.data && event.data.size > 0) {                            
-              chunksRef.current.push(event.data);                               
-            }                                                                   
-          };                                                                    
-                                                                                
-          recorder.onstop = async () => {                                       
-            const blob = new Blob(chunksRef.current, { type: 'audio/webm' });   
-            stopStreamTracks();                                                 
-            if (!blob.size) {                                                   
-              setAudioReady(false);                                             
-              return;                                                           
-            }                                                                   
-            setUploading(true);                                                 
-            try {                                                               
-              const file = new File([blob], `classroom-${sessionId || 'session'}.webm`, { type: 'audio/webm' });                                    
-              await classroomService.uploadAudio(sessionId, file);              
-              setAudioReady(true);                                              
-              await loadSession(sessionId);                                     
-            } catch (err) {                                                     
+
+          recorder.ondataavailable = async (event) => {
+            if (event.data && event.data.size > 0) {
+              chunksRef.current.push(event.data);
+            }
+          };
+
+          recorder.onstop = async () => {
+            const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+            stopStreamTracks();
+            if (!blob.size) {
+              setAudioReady(false);
+              return;
+            }
+            setUploading(true);
+            try {
+              const file = new File([blob], `classroom-${sessionId || 'session'}.webm`, { type: 'audio/webm' });
+              await classroomService.uploadAudio(sessionId, file);
+              setAudioReady(true);
+              await loadSession(sessionId);
+            } catch (err) {
               setError(err?.response?.data?.detail || err?.message || 'Failed to upload audio');
-            } finally {                                                         
-              setUploading(false);                                              
-            }                                                                   
-          };                                                                    
-                                                                                
+            } finally {
+              setUploading(false);
+            }
+          };
+
           recorder.start();
           setRecording(true);
           recordingRef.current = true;
           setAudioReady(false);
           setResults(null);
-          startSilenceWatch();                                                     
-                                                                                
-        } catch (err) {                                                         
-          console.error("Microphone access error:", err);                       
+          startSilenceWatch();
+
+        } catch (err) {
+          console.error("Microphone access error:", err);
           setMediaError(err?.message || 'Microphone access is required to record the class');
-        }                                                                       
-      }; 
-      
+        }
+      };
+
       const stopCapture = async ({ auto = false } = {}) => {
         stopSilenceWatch();
         recordingRef.current = false;
@@ -520,56 +521,56 @@ import { useEffect, useMemo, useRef, useState } from 'react';
         if (auto) setSilenceDialogOpen(true);
       };
 
-      const stopListening = () => stopCapture({ auto: false });                                                                                                                                                
-                                                                                                                                                              
-    const processTranscript = async () => {                                                                                                                   
-      if (!sessionId) return;                                                                                                                                 
-      setProcessing(true);                                                                                                                                    
-      setError(null);                                                                                                                                         
-      try {                                                                                                                                                   
-        await classroomService.finishSession(sessionId, manualTranscript.trim());                                                                             
-        await loadSession(sessionId);                                                                                                                         
-      } catch (err) {                                                                                                                                         
-        setError(err?.response?.data?.detail || err?.message || 'Failed to queue transcription');                                                             
-      } finally {                                                                                                                                             
-        setProcessing(false);                                                                                                                                 
-      }                                                                                                                                                       
-    };                                                                                                                                                        
-                                                                                                                                                              
-    const refreshResults = async () => {                                                                                                                      
-      try {                                                                                                                                                   
-        await loadSession(sessionId);                                                                                                                         
-        const full = await classroomService.getResults(sessionId);                                                                                            
-        setResults(full);                                                                                                                                     
-      } catch (err) {                                                                                                                                         
-        setError(err?.response?.data?.detail || err?.message || 'Failed to refresh session');                                                                 
-      }                                                                                                                                                       
-    };                                                                                                                                                        
-                                                                                                                                                              
-    if (loading) {                                                                                                                                            
-      return (                                                                                                                                                
-        <Box sx={{ width: '100%', display: 'grid', placeItems: 'center', minHeight: '100vh' }}>                                                               
-          <Stack alignItems="center" spacing={2}>                                                                                                             
-            <CircularProgress />                                                                                                                              
-            <Typography variant="body2">Loading lecture...</Typography>                                                                               
-          </Stack>                                                                                                                                            
-        </Box>                                                                                                                                                
-      );                                                                                                                                                      
-    }                                                                                                                                                         
-                                                                                                                                                              
-    if (error && !session) {                                                                                                                                  
-      return (                                                                                                                                                
-        <Box sx={{ p: 4 }}>                                                                                                                                   
-          <Typography color="error.main" variant="h6">{error}</Typography>                                                                                    
-          <Button sx={{ mt: 2 }} variant="contained" onClick={() => navigate('/home')}>                                                                       
-            Back to Home                                                                                                                                      
-          </Button>                                                                                                                                           
-        </Box>                                                                                                                                                
-      );                                                                                                                                                      
-    }                                                                                                                                                         
-                                                                                                                                                              
-   return (                                                                                                                                                  
-      <div className="classroom-root">                                                                                                                        
+      const stopListening = () => stopCapture({ auto: false });
+
+    const processTranscript = async () => {
+      if (!sessionId) return;
+      setProcessing(true);
+      setError(null);
+      try {
+        await classroomService.finishSession(sessionId, manualTranscript.trim());
+        await loadSession(sessionId);
+      } catch (err) {
+        setError(err?.response?.data?.detail || err?.message || 'Failed to queue transcription');
+      } finally {
+        setProcessing(false);
+      }
+    };
+
+    const refreshResults = async () => {
+      try {
+        await loadSession(sessionId);
+        const full = await classroomService.getResults(sessionId);
+        setResults(full);
+      } catch (err) {
+        setError(err?.response?.data?.detail || err?.message || 'Failed to refresh session');
+      }
+    };
+
+    if (loading) {
+      return (
+        <Box sx={{ width: '100%', display: 'grid', placeItems: 'center', minHeight: '100vh' }}>
+          <Stack alignItems="center" spacing={2}>
+            <CircularProgress />
+            <Typography variant="body2">Loading lecture...</Typography>
+          </Stack>
+        </Box>
+      );
+    }
+
+    if (error && !session) {
+      return (
+        <Box sx={{ p: 4 }}>
+          <Typography color="error.main" variant="h6">{error}</Typography>
+          <Button sx={{ mt: 2 }} variant="contained" onClick={() => navigate('/home')}>
+            Back to Home
+          </Button>
+        </Box>
+      );
+    }
+
+   return (
+      <div className="classroom-root">
         <div className="classroom-mesh classroom-mesh-top" />
         <div className="classroom-mesh classroom-mesh-bottom" />
         <Box sx={{ position: 'absolute', top: 24, right: 32, zIndex: 5 }}><StudyTimerBadge seconds={studyElapsed} /></Box>
@@ -582,7 +583,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
               <Typography variant="body1" className="classroom-subtitle">
                 Share the meeting tab, window or screen to capture the speaker's voice; stop when the class ends, then queue the transcription pipeline.
               </Typography>
-            </div>                                                                                                                                            
+            </div>
               {!isCompleted && (
               <Stack
                 direction="row"
@@ -702,67 +703,67 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                 </>
               ) : (
                 <>
-              <div className="classroom-wave" data-active={recording ? 'true' : 'false'}>                                                                     
-                {[0, 1, 2, 3, 4, 5].map((bar) => (<span key={bar} style={{ animationDelay: `${bar * 120}ms` }} />))}                                          
-              </div>                                                                                                                                          
-              {recording && (                                                                                                                                 
-                <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: 'color-mix(in srgb, var(--color-white) 5%, transparent)', borderRadius: 2, border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)' }}>              
-                  <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 50%, transparent)', display: 'block', mb: 1 }}>Live Captions:</Typography>                  
-                  <Typography variant="body2" sx={{ color: 'var(--color-white)', fontStyle: 'italic' }}>{liveTranscript || 'Listening...'}</Typography>                     
-                </Box>                                                                                                                                         
-              )}                                                                                                                                              
-              <Stack spacing={1.5} sx={{ mt: 3 }}>                                                                                                            
-                <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>                                                                         
+              <div className="classroom-wave" data-active={recording ? 'true' : 'false'}>
+                {[0, 1, 2, 3, 4, 5].map((bar) => (<span key={bar} style={{ animationDelay: `${bar * 120}ms` }} />))}
+              </div>
+              {recording && (
+                <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: 'color-mix(in srgb, var(--color-white) 5%, transparent)', borderRadius: 2, border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)' }}>
+                  <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 50%, transparent)', display: 'block', mb: 1 }}>Live Captions:</Typography>
+                  <Typography variant="body2" sx={{ color: 'var(--color-white)', fontStyle: 'italic' }}>{liveTranscript || 'Listening...'}</Typography>
+                </Box>
+              )}
+              <Stack spacing={1.5} sx={{ mt: 3 }}>
+                <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
                   {recording
                   ? (captureMode === 'mic' ? 'Recording your microphone now. Stop when the speaker finishes.' : 'Capturing the shared tab audio now. Stop when the speaker finishes.')
                   : audioReady
                     ? 'Audio uploaded. Press Process transcription to start STT and content generation.'
                     : (isFirefox
                       ? 'Firefox: press Capture audio, then allow the microphone. Firefox cannot capture the tab/meeting sound directly, so it records your microphone instead.'
-                      : 'Press Capture audio and pick the tab, window or screen that is playing the meeting.')}                                          
-                </Typography>                                                                                                                                 
-                {mediaError && <Typography variant="body2" color="error.main">{mediaError}</Typography>}                                                      
-                {session?.status === 'failed' && <Typography variant="body2" color="error.main" sx={{ fontWeight: 'bold' }}>Error: {session.error_message ||  
-  'Transcription failed.'}</Typography>}                                                                                                                      
-                {error && <Typography variant="body2" color="error.main">{error}</Typography>}                                                                
-                <Divider sx={{ borderColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' }} />                                                                                    
-                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">                                                                                
-                  <Chip label={`Language: ${session?.language || 'es'}`} variant="outlined" sx={{ color: 'var(--color-white)' }} />                                         
-                  <Chip label={`Uploaded: ${audioReady ? 'Yes' : 'No'}`} variant="outlined" sx={{ color: 'var(--color-white)' }} />                                         
-                  <Chip label={`Status: ${session?.status || 'unknown'}`} variant="outlined" sx={{ color: 'var(--color-white)' }} />                                        
-                </Stack>                                                                                                                                      
-              </Stack>                                                                                                                                         
-              <Stack direction="row" spacing={1.5} sx={{ mt: 4, flexWrap: 'wrap' }}>                                                                          
-                <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={refreshResults} sx={{ borderRadius: 999 }}>Refresh</Button>                
-                <Button variant="contained" onClick={processTranscript} disabled={!canProcess || processing} sx={{ borderRadius: 999 }}>{processing ?         
-  'Queueing...' : 'Queue transcription'}</Button>                                                                                                             
-              </Stack>                                                                                                                                         
+                      : 'Press Capture audio and pick the tab, window or screen that is playing the meeting.')}
+                </Typography>
+                {mediaError && <Typography variant="body2" color="error.main">{mediaError}</Typography>}
+                {session?.status === 'failed' && <Typography variant="body2" color="error.main" sx={{ fontWeight: 'bold' }}>Error: {session.error_message ||
+  'Transcription failed.'}</Typography>}
+                {error && <Typography variant="body2" color="error.main">{error}</Typography>}
+                <Divider sx={{ borderColor: 'color-mix(in srgb, var(--color-white) 8%, transparent)' }} />
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  <Chip label={`Language: ${session?.language || 'en'}`} variant="outlined" sx={{ color: 'var(--color-white)' }} />
+                  <Chip label={`Uploaded: ${audioReady ? 'Yes' : 'No'}`} variant="outlined" sx={{ color: 'var(--color-white)' }} />
+                  <Chip label={`Status: ${session?.status || 'unknown'}`} variant="outlined" sx={{ color: 'var(--color-white)' }} />
+                </Stack>
+              </Stack>
+              <Stack direction="row" spacing={1.5} sx={{ mt: 4, flexWrap: 'wrap' }}>
+                <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={refreshResults} sx={{ borderRadius: 999 }}>Refresh</Button>
+                <Button variant="contained" onClick={processTranscript} disabled={!canProcess || processing} sx={{ borderRadius: 999 }}>{processing ?
+  'Queueing...' : 'Queue transcription'}</Button>
+              </Stack>
                 </>
               )}
             </Paper>
             </div>
 
             <Paper className="classroom-card classroom-card-output" elevation={0}>
-              <div className="classroom-card-header">                                                                                                         
-                <div>                                                                                                                                         
-                  <Typography variant="overline" sx={{ letterSpacing: 3, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>Generated study space</Typography>                
-                  <Typography variant="h5" sx={{ color: 'var(--color-white)', mt: 0.5 }}>Transcript and Learning Materials</Typography>                                     
-                </div>                                                                                                                                        
-                <Button size="small" variant="outlined" onClick={refreshResults} sx={{ borderRadius: 999 }}><RefreshIcon fontSize="small" /></Button>         
-              </div>                                                                                                                                          
-                                                                                                                                                              
-              <div className="classroom-output-stack">                                                                                                        
-                {!isCompleted && <div className="classroom-output-block">                                                                                     
-                  <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>Transcript</Typography>                                      
-                  <TextField                                                                                                                                  
-                    value={manualTranscript}                                                                                                                  
-                    onChange={(event) => setManualTranscript(event.target.value)}                                                                             
-                    placeholder="Optional manual transcript fallback if the recording is not usable."                                                         
-                    minRows={6} multiline fullWidth variant="outlined"                                                                                        
-                    sx={{ '& .MuiInputBase-root': { color: 'var(--color-white)' }, '& .MuiOutlinedInput-notchedOutline': { borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)' } }}       
-                  />                                                                                                                                          
-                </div>}                                                                                                                                       
-                                                                                                                                                              
+              <div className="classroom-card-header">
+                <div>
+                  <Typography variant="overline" sx={{ letterSpacing: 3, color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>Generated study space</Typography>
+                  <Typography variant="h5" sx={{ color: 'var(--color-white)', mt: 0.5 }}>Transcript and Learning Materials</Typography>
+                </div>
+                <Button size="small" variant="outlined" onClick={refreshResults} sx={{ borderRadius: 999 }}><RefreshIcon fontSize="small" /></Button>
+              </div>
+
+              <div className="classroom-output-stack">
+                {!isCompleted && <div className="classroom-output-block">
+                  <Typography variant="subtitle2" sx={{ color: 'color-mix(in srgb, var(--color-white) 70%, transparent)', mb: 1 }}>Transcript</Typography>
+                  <TextField
+                    value={manualTranscript}
+                    onChange={(event) => setManualTranscript(event.target.value)}
+                    placeholder="Optional manual transcript fallback if the recording is not usable."
+                    minRows={6} multiline fullWidth variant="outlined"
+                    sx={{ '& .MuiInputBase-root': { color: 'var(--color-white)' }, '& .MuiOutlinedInput-notchedOutline': { borderColor: 'color-mix(in srgb, var(--color-white) 12%, transparent)' } }}
+                  />
+                </div>}
+
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, mt: 2.5, mb: 0.5 }}>
                   {focusMode
                     ? <LockIcon sx={{ fontSize: 15, color: 'var(--color-teal)' }} />
@@ -785,16 +786,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                 <Box sx={{ mt: 1, borderBottom: 1, borderColor: 'color-mix(in srgb, var(--color-white) 10%, transparent)' }}>
                   <Tabs
                     value={activeTab}
-                    onChange={(e, newVal) => setActiveTab(newVal)}                                                                                            
-                    textColor="var(--color-white)"                                                                                                                          
-                    indicatorColor="primary"                                                                                                                  
-                    sx={{ '& .MuiTab-root': { color: 'color-mix(in srgb, var(--color-white) 60%, transparent)', fontSize: 14, fontWeight: 500 } }}                                              
-                  >                                                                                                                                           
-                    {tabs.map((tab, index) => <Tab key={tab} label={tab} sx={{ color: activeTab === index ? 'var(--color-white)' : 'color-mix(in srgb, var(--color-white) 60%, transparent)' }} />)}          
-                  </Tabs>                                                                                                                                     
-                </Box>                                                                                                                                        
-                                                                                                                                                              
-                <div className="classroom-tab-content" style={{ mt: 2 }}>                                                                                     
+                    onChange={(e, newVal) => setActiveTab(newVal)}
+                    textColor="var(--color-white)"
+                    indicatorColor="primary"
+                    sx={{ '& .MuiTab-root': { color: 'color-mix(in srgb, var(--color-white) 60%, transparent)', fontSize: 14, fontWeight: 500 } }}
+                  >
+                    {tabs.map((tab, index) => <Tab key={tab} label={tab} sx={{ color: activeTab === index ? 'var(--color-white)' : 'color-mix(in srgb, var(--color-white) 60%, transparent)' }} />)}
+                  </Tabs>
+                </Box>
+
+                <div className="classroom-tab-content" style={{ mt: 2 }}>
                   {results ? (
                     <>
                       {activeTab === 0 && (
@@ -813,17 +814,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
                           <ClassroomFeynmanPanel sessionId={session.id} prompts={results.feynmans} language={session.language || 'en'} focus={focusMode} onStart={() => openFocus('feynman')} />
                         </div>
                       )}
-                    </>                                                                                                                                       
-                  ) : (                                                                                                                                       
-                    <div className="classroom-empty-state">                                                                                                   
-                      <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>                                                                   
-                        {session?.status === 'completed' ? 'No materials found.' : 'Once transcription completes, the summary and learning items will appear  here.'}                                                                                                                                                     
-                      </Typography>                                                                                                                           
-                    </div>                                                                                                                                    
-                  )}                                                                                                                                          
-                </div>                                                                                                                                        
-              </div>                                                                                                                                          
-            </Paper>                                                                                                                                          
+                    </>
+                  ) : (
+                    <div className="classroom-empty-state">
+                      <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--color-white) 72%, transparent)' }}>
+                        {session?.status === 'completed' ? 'No materials found.' : 'Once transcription completes, the summary and learning items will appear  here.'}
+                      </Typography>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Paper>
           </div>
 
           <Dialog
@@ -1051,4 +1052,4 @@ import { useEffect, useMemo, useRef, useState } from 'react';
     );
   };
 
-export default Classroom;      
+export default Classroom;

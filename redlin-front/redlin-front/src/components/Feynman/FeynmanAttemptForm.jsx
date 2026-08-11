@@ -57,7 +57,7 @@ const FeynmanAttemptForm = ({ value, onChange, onSubmit, disabled, countdownSeco
     stopRequestedRef.current = false;
     accumulatedRef.current = ` ${value || ''}`;
     interimRef.current = '';
-    recognition.lang = language === 'es' ? 'es-ES' : 'en-US';
+    recognition.lang = 'en-US';  // English-only voice capture
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.onresult = (event) => {

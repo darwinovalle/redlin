@@ -16,8 +16,8 @@ def evaluate_document_feynman_attempt(f_obj: Feynman, answer: str, user: User) -
         user=user,
         answer_text=' '.join(answer.strip().split()),
     )
-    lang = detect_language(f_obj.prompt + ' ' + ' '.join(kp.get('point','') if isinstance(kp, dict) else str(kp) for kp in f_obj.key_points))
-    rubric_lang_prefix = 'Devuelve la respuesta en Español.' if lang == 'es' else 'Return the feedback in English.'
+    # English-only feedback (Spanish support deferred).
+    rubric_lang_prefix = 'Return the feedback in English.'
     eval_prompt = f"""
 You are an expert tutor applying a strict Feynman explanation rubric.
 {rubric_lang_prefix}

@@ -70,7 +70,7 @@ class ClassSessionViewSet(viewsets.ModelViewSet):
         session = ClassSession.objects.create(
             user=request.user,
             title=title,
-            language=serializer.validated_data.get("language", "es") or "es",
+            language=serializer.validated_data.get("language", "en") or "en",
             # Start neutral: the session exists but is not "recording" until the
             # client actually starts capture and delivers audio.
             status=ClassSession.STATUS_NEW,

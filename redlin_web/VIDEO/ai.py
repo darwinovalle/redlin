@@ -90,7 +90,8 @@ def _video_feynman_prompt(source_text: str, *, lang_label: str, soft_cap: int | 
         f"Aim for at most ~{soft_cap} prompts if justified; stop early when coverage complete." if soft_cap and soft_cap>0
         else "Generate exhaustive distinct Feynman explanation prompts covering ALL non-trivial concepts; stop ONLY when further prompts would be redundant."
     )
-    language_line = "Idioma de salida: Español" if lang_label == "Spanish" else "Output language: English"
+    # English-only output (Spanish support deferred).
+    language_line = "Output language: English. All generated text MUST be in English."
     return (
         "You are an expert learning assistant.\n"
         "TASK: Derive concise Feynman explanation prompts from the VIDEO TRANSCRIPT.\n"
@@ -214,7 +215,8 @@ def evaluate_video_feynman_attempt(f_obj: VideoFeynman, answer: str, user) -> Vi
         answer_text=' '.join(answer.strip().split())
     )
     lang = detect_language(f_obj.prompt + ' ' + ' '.join(k['point'] for k in f_obj.key_points))
-    rubric_lang_prefix = 'Devuelve la respuesta en Español.' if lang=='es' else 'Return the feedback in English.'
+    # English-only feedback.
+    rubric_lang_prefix = 'Return the feedback in English.'
     prompt = f"""
 You are an expert tutor applying a strict explanation rubric.
 {rubric_lang_prefix}
@@ -333,7 +335,8 @@ def _clean_ai_json(raw: str) -> dict | None:
     return None
 
 def _ai_video_cloze_prompt(source_text: str, *, desired_count: int, words_per_item: int, lang_label: str) -> str:
-    language_line = "Idioma de salida: Español" if lang_label == "Spanish" else "Output language: English"
+    # English-only output.
+    language_line = "Output language: English. All generated text MUST be in English."
     snippet = source_text[:16000]
     return (
         "You are an expert educational content generator.\n"
@@ -460,17 +463,11 @@ def process_video(video_id_db: int, languages: List[str] | None = None):
         if not full_text.strip():
             raise ValueError("Transcript vacío")
 
-        # Detectar idioma dominante
-        dominant = detect_language(full_text)
-        if dominant in ("en", "es"):
-            target_lang = dominant
-        else:
-            target_lang = "en"
-
-        lang_label = "English" if target_lang == "en" else "Spanish"
-        summary_heading_note = (
-            "Produce la salida en Español." if target_lang == "es" else "Produce the output in English."
-        )
+        # English-only output (Spanish support deferred): the model may read foreign
+        # transcripts but every generated item is English.
+        target_lang = "en"
+        lang_label = "English"
+        summary_heading_note = "Produce the output in English. All generated text MUST be in English."
         target_mcq_count = _compute_target_mcq_count(full_text)
 
         # ---------------- Summary ----------------
