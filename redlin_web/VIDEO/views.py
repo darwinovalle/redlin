@@ -93,8 +93,9 @@ class VideoViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def full_details(self, request, pk=None):
         video = self.get_object()
+        ctx = self.get_serializer_context()  # gives request → absolute media URLs
         data = {
-            "video": VideoSerializer(video).data,
+            "video": VideoSerializer(video, context=ctx).data,
             "summary": VideoSummarySerializer(video.summary).data if hasattr(video,'summary') else None,
             "mcqs": VideoMCQSerializer(video.mcqs.all(), many=True).data,
             "clozes": VideoClozeSerializer(video.clozes.all(), many=True).data,

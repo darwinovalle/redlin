@@ -81,7 +81,9 @@ const VideoStudy = () => {
   const takeaways = getKeyTakeaways(summary?.content);
   const embedSrc = videoService.embedUrl(video);
   // Uploaded MP4s have no YouTube id — play the uploaded file directly.
-  const localSrc = video?.audio_file_url || null;
+  // audio_file_url is absolute from the backend, but resolve defensively in
+  // case a client returns a relative path (media lives on the API origin).
+  const localSrc = video?.audio_file_url ? videoService.mediaUrl(video.audio_file_url) : null;
 
   return (
     <div className="dashboard-root">
