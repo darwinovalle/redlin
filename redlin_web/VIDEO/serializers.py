@@ -8,18 +8,32 @@ class VideoSerializer(serializers.ModelSerializer):
         required=False,
         help_text="Lista de códigos de idioma preferidos (opcional)."
     )
+    # Absolute URL of the uploaded file (for MP4 uploads) so the frontend can
+    # render a <video> player without knowing the media base URL itself.
+    audio_file_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Video
         fields = [
             'id', 'url', 'video_id', 'title', 'created_at',
             'processing_status', 'snippet_count', 'transcript_text',
-            'audio_file', 'languages'
+            'audio_file', 'audio_file_url', 'languages'
         ]
         read_only_fields = [
             'id', 'video_id', 'created_at', 'processing_status',
             'snippet_count', 'transcript_text', 'audio_file'
         ]
+
+    def get_audio_file_url(self, obj):
+        if not obj.audio_file:
+            return None
+        try:
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.audio_file.url)
+            return obj.audio_file.url
+        except Exception:
+            return None
 
 class VideoSummarySerializer(serializers.ModelSerializer):
     class Meta:

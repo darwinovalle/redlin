@@ -80,6 +80,8 @@ const VideoStudy = () => {
   const { video, summary, mcqs } = data;
   const takeaways = getKeyTakeaways(summary?.content);
   const embedSrc = videoService.embedUrl(video);
+  // Uploaded MP4s have no YouTube id — play the uploaded file directly.
+  const localSrc = video?.audio_file_url || null;
 
   return (
     <div className="dashboard-root">
@@ -116,6 +118,17 @@ const VideoStudy = () => {
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+              />
+            </Box>
+          )}
+          {!embedSrc && localSrc && (
+            <Box sx={{ position: 'relative', pb: '56.25%', height: 0, overflow: 'hidden', background: '#000' }}>
+              <video
+                controls
+                preload="metadata"
+                src={localSrc}
+                title={video.title || 'Uploaded video'}
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
               />
             </Box>

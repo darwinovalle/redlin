@@ -53,9 +53,80 @@ def _split_text(text: str, chunk_chars: int = 3500) -> list[str]:
 
 
 def _parse_mcq_blocks(raw: str) -> list[dict]:
-    """Parse Q:/A:/B:/C:/D: blocks from a video MCQ response (lenient — skips malformed)."""
-    items = []
-    for block in re.split(r"\n\s*\n", raw or ""):
+    """Parse MCQs from a video generation response.
+
+    Primary: the JSON array format the generation prompt requests:
+        [{"question": "...", "correct_answer": "...", "options": ["...","...","...","..."]}]
+    (also accepted wrapped in an object like {"items": [...]} or inside markdown fences).
+    Fallback: legacy Q:/A:/B:/C:/D: line blocks (lenient — skips malformed).
+    """
+    text = raw or ""
+    items: list[dict] = []
+
+    def _from_json(it) -> dict | None:
+        q = str(it.get("question") or "").strip()
+        ca = str(it.get("correct_answer") or "").strip()
+        opts = it.get("options") or []
+        if not isinstance(opts, list):
+            return None
+        # options holds the 4 choices; the correct answer is one of them. Keep the
+        # remaining 3 as the option_1/2/3 distractors the VideoMCQ model expects.
+        distractors = [
+            str(o).strip() for o in opts
+            if str(o).strip() and str(o).strip().lower() != ca.lower()
+        ][:3]
+        if q and ca and len(distractors) == 3:
+            return {
+                "question": q,
+                "correct_answer": ca,
+                "option_1": distractors[0],
+                "option_2": distractors[1],
+                "option_3": distractors[2],
+            }
+        return None
+
+    # 1) Whole-body JSON: top-level array, or {"items"|"mcqs"|"questions": [...]}
+    try:
+        data = json.loads(text.strip())
+        cands = None
+        if isinstance(data, list):
+            cands = data
+        elif isinstance(data, dict):
+            for key in ("items", "mcqs", "questions"):
+                if isinstance(data.get(key), list):
+                    cands = data[key]
+                    break
+        if cands is not None:
+            for it in cands:
+                if isinstance(it, dict):
+                    item = _from_json(it)
+                    if item:
+                        items.append(item)
+            if items:
+                return items
+    except Exception:
+        pass
+
+    # 2) JSON array embedded in the response (e.g. inside markdown fences)
+    if not items:
+        try:
+            start = text.find("[")
+            end = text.rfind("]")
+            if start != -1 and end > start:
+                data = json.loads(text[start:end + 1])
+                if isinstance(data, list):
+                    for it in data:
+                        if isinstance(it, dict):
+                            item = _from_json(it)
+                            if item:
+                                items.append(item)
+                    if items:
+                        return items
+        except Exception:
+            pass
+
+    # 3) Legacy Q:/A:/B:/C:/D: block format
+    for block in re.split(r"\n\s*\n", text):
         lines = [line.strip() for line in block.splitlines() if line.strip()]
         if len(lines) != 5:
             continue
@@ -442,6 +513,60 @@ def generate_ai_video_clozes(video: Video, source_text: str, lang_label: str, *,
 
 
 
+def _generate_video_mcqs(video, full_text: str, lang_label: str) -> int:
+    """Generate and persist VideoMCQs for a video from its transcript.
+
+    Chunks long transcripts (see _split_text) so each LLM call stays small, and
+    bounds the total with _compute_target_mcq_count (capped at 25). Parses the
+    JSON array the prompt requests (see _parse_mcq_blocks). Returns how many
+    MCQs were created.
+    """
+    mcq_prompt_template = """
+You are an expert assessment designer specializing in educational content analysis.
+
+TASK: Create up to {limit} multiple-choice questions based ONLY on the provided video transcript.
+Language: {lang_label}
+
+CRITICAL REQUIREMENTS:
+1. Focus on the MOST IMPORTANT concepts, facts, or principles in the text.
+2. The correct answer MUST be 100% verifiable from the transcript.
+3. Distractors must be plausible but definitively wrong.
+4. No "All/None of the above", no negatively-phrased questions.
+5. Each question must be self-contained.
+
+OUTPUT FORMAT — RETURN ONLY A VALID JSON ARRAY. NO PREAMBLE. NO MARKDOWN FENCES.
+Each item: {{"question": "...", "correct_answer": "...", "options": ["...","...","...","..."]}}
+
+TRANSCRIPT CHUNK:
+{chunk}
+"""
+    seen = set()
+    created = []
+    target = max(5, min(_compute_target_mcq_count(full_text), 25))
+    chunks = _split_text(full_text)
+    for chunk_index, c in enumerate(chunks):
+        if len(created) >= target:
+            break
+        prompt = mcq_prompt_template.format(limit=8, lang_label=lang_label, chunk=c)
+        try:
+            resp = generate_with_retry(prompt, user_id=video.user_id)
+        except Exception:
+            continue
+        for item in _parse_mcq_blocks(resp.text):
+            q = (item.get("question") or "").casefold()
+            if not q or q in seen:
+                continue
+            seen.add(q)
+            created.append(VideoMCQ(video=video, **item))
+            if len(created) >= target:
+                break
+    if created:
+        with transaction.atomic():
+            VideoMCQ.objects.filter(video=video).delete()
+            VideoMCQ.objects.bulk_create(created)
+    return len(created)
+
+
 def _generate_video_content(video, full_text: str, lang_label: str):
     """Generate Summary + MCQs + Feynman + Clozes for a Video from its transcript.
 
@@ -486,49 +611,7 @@ VIDEO TRANSCRIPT (for analysis; paraphrase in output)
 
     # ---------------- MCQs (chunked + bounded) ----------------
     try:
-        mcq_prompt_template = """
-You are an expert assessment designer specializing in educational content analysis.
-
-TASK: Create up to {limit} multiple-choice questions based ONLY on the provided video transcript.
-Language: {lang_label}
-
-CRITICAL REQUIREMENTS:
-1. Focus on the MOST IMPORTANT concepts, facts, or principles in the text.
-2. The correct answer MUST be 100% verifiable from the transcript.
-3. Distractors must be plausible but definitively wrong.
-4. No "All/None of the above", no negatively-phrased questions.
-5. Each question must be self-contained.
-
-OUTPUT FORMAT — RETURN ONLY A VALID JSON ARRAY. NO PREAMBLE. NO MARKDOWN FENCES.
-Each item: {{"question": "...", "correct_answer": "...", "options": ["...","...","...","..."]}}
-
-TRANSCRIPT CHUNK:
-{chunk}
-"""
-        seen = set()
-        created = []
-        target = max(5, min(_compute_target_mcq_count(full_text), 25))
-        chunks = _split_text(full_text)
-        for chunk_index, c in enumerate(chunks):
-            if len(created) >= target:
-                break
-            prompt = mcq_prompt_template.format(limit=8, lang_label=lang_label, chunk=c)
-            try:
-                resp = generate_with_retry(prompt, user_id=video.user_id)
-            except Exception:
-                continue
-            for item in _parse_mcq_blocks(resp.text):
-                q = (item.get("question") or "").casefold()
-                if not q or q in seen:
-                    continue
-                seen.add(q)
-                created.append(VideoMCQ(video=video, **item))
-                if len(created) >= target:
-                    break
-        if created:
-            with transaction.atomic():
-                VideoMCQ.objects.filter(video=video).delete()
-                VideoMCQ.objects.bulk_create(created)
+        _generate_video_mcqs(video, full_text, lang_label)
     except Exception as e:
         print(f"[Video Error] MCQs: {e}")
 
