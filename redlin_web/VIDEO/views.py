@@ -1,4 +1,6 @@
 from rest_framework import viewsets, status
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from VIDEO.tasks import process_video_task, process_video_file_task
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -10,11 +12,12 @@ from .serializers import (
     VideoSerializer, VideoSummarySerializer, VideoMCQSerializer, VideoClozeSerializer,
     VideoFeynmanSerializer, VideoFeynmanAttemptSerializer, VideoFeynmanAttemptCreateSerializer
 )
-from .ai import process_video, evaluate_video_feynman_attempt
+from .ai import evaluate_video_feynman_attempt
 
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all().order_by('-id')
     serializer_class = VideoSerializer
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -24,10 +27,14 @@ class VideoViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         languages = serializer.validated_data.pop('languages', None)
         video = serializer.save(user=self.request.user)
-        try:
-            process_video(video.id, languages=languages)
-        except Exception:
-            pass
+        uploaded = self.request.FILES.get('video_file')
+        if uploaded:
+            video.audio_file = uploaded
+            video.title = getattr(uploaded, 'name', '') or video.title
+            video.save(update_fields=['audio_file', 'title'])
+            process_video_file_task.delay(video.id)
+        else:
+            process_video_task.delay(video.id, languages=languages)
 
     def list(self, request, *args, **kwargs):
         """Custom list to bypass full ModelSerializer in case of hidden serialization error.

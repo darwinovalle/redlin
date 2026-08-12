@@ -4,7 +4,8 @@ from API.models import User  # Reusa el User existente
 
 class Video(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='videos')
-    url = models.URLField()
+    # Empty for uploaded MP4s (they use audio_file instead); required for YouTube URLs.
+    url = models.URLField(blank=True)
     video_id = models.CharField(max_length=32, db_index=True, blank=True, null=True)
     title = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -15,6 +16,8 @@ class Video(models.Model):
     )
     snippet_count = models.PositiveIntegerField(default=0)
     transcript_text = models.TextField(blank=True, default='')
+    # MP4 upload path (YouTube videos keep url + video_id; uploaded files set this).
+    audio_file = models.FileField(upload_to='video_files/', null=True, blank=True)
 
     def __str__(self):
         return self.title or self.video_id or f"Video {self.pk}"

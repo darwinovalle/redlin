@@ -14,11 +14,11 @@ class VideoSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'url', 'video_id', 'title', 'created_at',
             'processing_status', 'snippet_count', 'transcript_text',
-            'languages'
+            'audio_file', 'languages'
         ]
         read_only_fields = [
             'id', 'video_id', 'created_at', 'processing_status',
-            'snippet_count', 'transcript_text'
+            'snippet_count', 'transcript_text', 'audio_file'
         ]
 
 class VideoSummarySerializer(serializers.ModelSerializer):

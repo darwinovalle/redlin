@@ -34,7 +34,7 @@ def get_whisper_model():
     global _MODEL_INSTANCE                                                                                                                                  
     if _MODEL_INSTANCE is None:                                                                                                                             
         try:                                                                                                                                                
-            model_size = os.getenv("STT_MODEL_SIZE", "tiny")                                                                                                
+            model_size = os.getenv("STT_MODEL_SIZE", "base")                                                                                                
             device = os.getenv("STT_DEVICE", "cpu")                                                                                                         
             # CHANGE: Using float32 instead of int8 for maximum compatibility                                                                               
             compute_type = "float32"                                                                                                                        

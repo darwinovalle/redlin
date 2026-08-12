@@ -28,6 +28,16 @@ export const videoService = {
     return resp.data; // returns video object
   },
 
+  // Upload an MP4 file — the backend transcribes it with Whisper and generates
+  // the same summary/MCQs/clozes/Feynman content as YouTube videos.
+  uploadVideo: async (file) => {
+    if (!file) throw new Error('A video file is required');
+    const form = new FormData();
+    form.append('video_file', file);
+    const resp = await api.post('/video/videos/', form);
+    return resp.data;
+  },
+
   listVideos: async () => {
     const resp = await api.get('/video/videos/');
     return Array.isArray(resp.data) ? resp.data : [];
