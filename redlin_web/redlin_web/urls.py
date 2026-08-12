@@ -7,7 +7,8 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 from django.conf import settings
-from django.conf.urls.static import static
+
+from redlin_web.media_serve import serve_media
 
 
 
@@ -25,5 +26,8 @@ urlpatterns = [
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Media files are served with HTTP Range support (needed for HTML5 <video>
+# playback and seeking; Django's static() ignores Range headers).
+urlpatterns += [
+    path(f"{settings.MEDIA_URL.lstrip('/')}<path:path>", serve_media, name="media"),
+]
