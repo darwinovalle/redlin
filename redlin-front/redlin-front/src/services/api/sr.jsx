@@ -20,9 +20,19 @@ export const srService = {
     return resp.data;
   },
 
-  // GET /api/reminders/due/ -> { count, items:[{content_type_id, object_id, method, question, status, interval_days}] }
+  // GET /api/reminders/due/ -> { count, groups:[{source, source_id, title, subtitle, items:[{progress_id, content_type_id, object_id, method, question, status, interval_days, due_at, detail}]}] }
+  // Items are grouped by study source (video / document / book-chapter / lecture)
+  // and each carries a full graded `detail` payload for the review quiz.
   getDue: async () => {
     const resp = await api.get('/reminders/due/');
+    return resp.data;
+  },
+
+  // POST /api/review/feynman-evaluate/ { content_type_id, object_id, answer }
+  // -> { score, passed, feedback, breakdown } — grades a Feynman prompt during
+  // an active-recall review session and records its SM-2 schedule.
+  evaluateReviewFeynman: async (payload) => {
+    const resp = await api.post('/review/feynman-evaluate/', payload || {});
     return resp.data;
   },
 

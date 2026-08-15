@@ -2,6 +2,7 @@ import json
 from typing import Optional
 from .models import Feynman, FeynmanAttempt, User
 from .services.processing_common import detect_language, extract_json_block, generate_with_retry
+from CORE.services.srs import record_feynman_review
 
 def evaluate_document_feynman_attempt(f_obj: Feynman, answer: str, user: User) -> FeynmanAttempt:
     """Create + evaluate a FeynmanAttempt for a Document Feynman prompt.
@@ -85,6 +86,11 @@ NO markdown fences. NO commentary outside JSON.
         if total > 0 and isinstance(matched, list):
             attempt.key_points_coverage = max(0.0, min(1.0, len(matched)/total))
         attempt.save()
+        # Feed the graded answer into the SM-2 schedule (progress keyed on the
+        # Feynman prompt so it appears in due reviews like MCQ/Cloze items).
+        record_feynman_review(
+            user=user, prompt=f_obj, answer_text=attempt.answer_text, score=attempt.score,
+        )
     except Exception as e:
         print(f"[DocFeynmanEval] Error: {e}")
     return attempt

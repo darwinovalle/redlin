@@ -9,6 +9,7 @@ from .models import Video, VideoSummary, VideoMCQ, VideoCloze, VideoFeynman, Vid
 from .transcript_yt_dlp import fetch_transcript_yt_dlp, TranscriptError
 from CORE.services.cloze_generator import VideoClozeGenerator
 from CLASSROOM.services.stt_service import transcribe_audio_file, STTServiceError
+from CORE.services.srs import record_feynman_review
 # Shared per-user LLM dispatch (provider resolution, retry, Ollama fallback).
 from API.services.processing_common import detect_language, extract_json_block, generate_with_retry
 
@@ -360,6 +361,11 @@ STRICT JSON ONLY:
         if total > 0 and isinstance(matched, list):
             attempt.key_points_coverage = max(0.0, min(1.0, len(matched)/total))
         attempt.save()
+        # Feed the graded answer into the SM-2 schedule (keyed on the prompt so
+        # it appears in due reviews like MCQ/Cloze items).
+        record_feynman_review(
+            user=user, prompt=f_obj, answer_text=attempt.answer_text, score=attempt.score,
+        )
     except Exception as e:
         print(f"[VideoFeynmanEval] Error: {e}")
         attempt.breakdown = {'error': str(e)}

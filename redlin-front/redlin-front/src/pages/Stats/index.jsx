@@ -57,8 +57,6 @@ const StatCard = ({ icon, tint, label, value, sub }) => (
 
 const Stats = () => {
   const [stats, setStats] = useState(null);
-  const [due, setDue] = useState({ items: [], count: 0 });
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [chartRange, setChartRange] = useState('week'); // 'week' | 'month'
 
@@ -77,45 +75,14 @@ const Stats = () => {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [s, d] = await Promise.all([srService.getStats(), srService.getDue()]);
+      const s = await srService.getStats();
       setStats(s);
-      setDue(d || { items: [], count: 0 });
     } catch (e) {
       setError(e?.message || 'Could not load your stats.');
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
-
-  const answer = async (item) => {
-    setBusy(true);
-    try {
-      await srService.submitAttempt({
-        content_type_id: item.content_type_id,
-        object_id: item.object_id,
-        method: item.method,
-        correct: true,
-      });
-      await load();
-    } catch (e) {
-      window.alert(e?.response?.data?.error || 'Failed to record answer');
-    } finally { setBusy(false); }
-  };
-
-  const answerWrong = async (item) => {
-    setBusy(true);
-    try {
-      await srService.submitAttempt({
-        content_type_id: item.content_type_id,
-        object_id: item.object_id,
-        method: item.method,
-        correct: false,
-      });
-      await load();
-    } catch (e) {
-      window.alert(e?.response?.data?.error || 'Failed to record answer');
-    } finally { setBusy(false); }
-  };
 
   if (!stats) {
     // A failed load shouldn't hang on an infinite spinner — surface the error
@@ -148,7 +115,7 @@ const Stats = () => {
             Study time, per-quiz accuracy, your streak — and the reviews the spaced-repetition engine has scheduled for you.
           </Typography>
         </Box>
-        <Button onClick={load} disabled={busy} sx={{ borderRadius: 999, px: 3, py: 1, color: 'var(--color-teal)', border: '1px solid color-mix(in srgb, var(--color-teal) 45%, transparent)', textTransform: 'none', fontWeight: 700 }}>Refresh</Button>
+        <Button onClick={load} sx={{ borderRadius: 999, px: 3, py: 1, color: 'var(--color-teal)', border: '1px solid color-mix(in srgb, var(--color-teal) 45%, transparent)', textTransform: 'none', fontWeight: 700 }}>Refresh</Button>
       </Box>
 
       {/* Toppline cards */}
@@ -270,29 +237,6 @@ const Stats = () => {
         )}
       </Box>
 
-      {/* due reviews */}
-      <Box sx={{ p: 3, borderRadius: 3, border: '1px solid color-mix(in srgb, var(--color-teal) 30%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-navy-700) 70%, transparent)' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>Due for review</Typography>
-          <Chip size="small" label={`${due.count} due`} sx={{ color: 'var(--color-white)', bgcolor: 'color-mix(in srgb, var(--color-teal) 20%, transparent)' }} />
-          <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--color-white) 55%, transparent)' }}>Mark each as correct or wrong to advance its spaced-repetition schedule.</Typography>
-        </Box>
-        {due.items.length === 0 ? (
-          <Typography sx={{ color: 'color-mix(in srgb, var(--color-white) 55%, transparent)', fontStyle: 'italic' }}>Nothing due right now. The engine will schedule reviews as you study.</Typography>
-        ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {due.items.map((it) => (
-              <Box key={it.progress_id} sx={{ p: 2, borderRadius: 2, border: '1px solid color-mix(in srgb, var(--color-white) 10%, transparent)', bgcolor: 'color-mix(in srgb, var(--color-white) 5%, transparent)', display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                <Chip size="small" label={it.method} sx={{ color: 'var(--color-teal)', bgcolor: 'color-mix(in srgb, var(--color-teal) 16%, transparent)', fontSize: 11 }} />
-                <Typography sx={{ flex: 1, minWidth: 180, fontSize: 14 }}>{it.question}</Typography>
-                <Chip size="small" label={`every ${it.interval_days}d`} sx={{ color: 'color-mix(in srgb, var(--color-white) 60%, transparent)', fontSize: 11 }} />
-                <Button size="small" disabled={busy} onClick={() => answer(it)} sx={{ borderRadius: '999px', px: 2, color: 'var(--color-navy-deep)', bgcolor: 'var(--color-teal)', fontWeight: 700, textTransform: 'none', '&:hover': { bgcolor: 'var(--color-teal-pale)' } }}>Got it</Button>
-                <Button size="small" disabled={busy} onClick={() => answerWrong(it)} sx={{ borderRadius: '999px', px: 2, color: 'var(--color-white)', border: '1px solid color-mix(in srgb, var(--color-white) 25%, transparent)', textTransform: 'none', fontWeight: 700 }}>Again</Button>
-              </Box>
-            ))}
-          </Box>
-        )}
-      </Box>
     </Box>
   );
 };

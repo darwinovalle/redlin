@@ -6,8 +6,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from API.jwt_auth import JWTAuthentication
 from .models import Video, VideoSummary, VideoMCQ, VideoCloze, VideoFeynman, VideoFeynmanAttempt
-from CORE.models import CoreAttempt
-from django.contrib.contenttypes.models import ContentType
 from .serializers import (
     VideoSerializer, VideoSummarySerializer, VideoMCQSerializer, VideoClozeSerializer,
     VideoFeynmanSerializer, VideoFeynmanAttemptSerializer, VideoFeynmanAttemptCreateSerializer
@@ -131,21 +129,7 @@ class VideoViewSet(viewsets.ModelViewSet):
         if not f_obj:
             return Response({'detail':'Feynman not found'}, status=404)
         attempt = evaluate_video_feynman_attempt(f_obj, answer, request.user)
-        # CoreAttempt registro
-        try:
-            ct = ContentType.objects.get_for_model(VideoFeynmanAttempt)
-            CoreAttempt.objects.create(
-                user=request.user,
-                method='FEYNMAN',
-                content_type=ct,
-                object_id=attempt.id,
-                raw_answer=attempt.answer_text,
-                ai_score=attempt.score,
-                ai_feedback=attempt.breakdown or {},
-                correct=(attempt.score or 0) >= 60,
-            )
-        except Exception as e:
-            print(f"[CoreAttempt] Error creando registro: {e}")
+        # SR scheduling + CoreAttempt + XP + streak happen inside the evaluator.
         return Response(VideoFeynmanAttemptSerializer(attempt).data, status=201)
 
 

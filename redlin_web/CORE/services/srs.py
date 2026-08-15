@@ -6,6 +6,7 @@ dormant CORE models (CoreLearningProgress, CoreAttempt, CoreXpAccount) at the
 same time, so the whole "answer a question -> schedule next review -> streak
 advances" loop is one transactional step.
 """
+from django.db import transaction
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 
@@ -13,6 +14,10 @@ from CORE.services.timezone import user_now
 
 
 INTERVAL_LADDER = [3, 8, 15, 30]
+
+# A failed review comes back within hours (same-day re-test), not days. Once the
+# lapse is passed, the item graduates back onto the day ladder via next_interval.
+LAPSE_HOURS = 6
 
 
 def clamp_quality(q: int) -> int:
@@ -80,8 +85,15 @@ def apply_progress(progress, correct: bool, latency_ms=None, now=None, quality=N
         progress.consecutive_passes = 0
         progress.repetitions = 0
 
-    progress.interval = next_interval(progress.interval, passed)
-    progress.next_review_at = now + timezone.timedelta(days=progress.interval)
+    if passed:
+        progress.interval = next_interval(progress.interval, passed)
+        progress.next_review_at = now + timezone.timedelta(days=progress.interval)
+    else:
+        # Sub-day lapse: a failed review is re-tested within hours. `interval`
+        # is 0 as a sentinel, so next_interval(0, passed=True) returns 3 on the
+        # next pass — the item graduates back onto the normal day ladder.
+        progress.interval = 0
+        progress.next_review_at = now + timezone.timedelta(hours=LAPSE_HOURS)
 
     prev_score = progress.score or 0.0
     progress.score = round(prev_score * 0.9 + (quality / 5.0) * 0.1, 4)
@@ -176,3 +188,26 @@ def record_attempt(*, user, method, content_type_id, object_id, correct,
         "longest_streak": longest,
         "xp_total": xp.xp_total,
     }
+
+
+def record_feynman_review(*, user, prompt, answer_text, score):
+    """Feed a graded Feynman answer into the SM-2 schedule.
+
+    Feynman is scored by AI (0-100), so its SM-2 quality comes from
+    `quality_from_score` rather than the raw correct flag. The progress row is
+    keyed on the *prompt* object (not the attempt) so it shows up in the due
+    review lists exactly like MCQ/Cloze items. Awards XP + advances the streak
+    like any other answer.
+    """
+    ct = ContentType.objects.get_for_model(prompt)
+    with transaction.atomic():
+        return record_attempt(
+            user=user,
+            method="FEYNMAN",
+            content_type_id=ct.id,
+            object_id=prompt.id,
+            correct=(score or 0) >= 60,
+            raw_answer=answer_text,
+            ai_score=score,
+            quality=quality_from_score(score),
+        )
