@@ -14,7 +14,8 @@ def _ai_feynman_prompt(source_text: str, *, lang_label: str, soft_cap: int | Non
         if soft_cap and soft_cap > 0
         else "Generate as many distinct prompts as needed for full coverage; stop when concepts become redundant."
     )
-    language_line = "Idioma de salida: Español" if lang_label == "Spanish" else "Output language: English"
+    # English-only output (Spanish support deferred).
+    language_line = "Output language: English. All prompts MUST be in English."
     return (
         "You are an expert learning science assistant.\n"
         "TASK: Derive high-quality Feynman explanation prompts from the SOURCE TEXT.\n"

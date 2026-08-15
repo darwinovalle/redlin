@@ -12,7 +12,7 @@ import GearSvg from '../../assets/Gear@1x-0.2s-200px-200px (1).svg';
 
 const FeynmanPanel = ({ documentId, focus = false, autoStart = false, showStudyImage = false, onStart, onFocusChange }) => {
   // Section timer: attribute Feynman practice time to this document source.
-  useStudySection({ model: 'document', itemId: documentId, method: 'FEYNMAN' });
+  
   const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -25,6 +25,7 @@ const FeynmanPanel = ({ documentId, focus = false, autoStart = false, showStudyI
   const [countdownRemaining, setCountdownRemaining] = useState(60);
   const [questionDone, setQuestionDone] = useState(false); // submitted & evaluated
   const [sessionFinished, setSessionFinished] = useState(false);
+  useStudySection({ model: 'document', itemId: documentId, method: 'FEYNMAN', active: sessionActive && !sessionFinished });
   const [sessionKey, setSessionKey] = useState(Date.now());
   const COUNTDOWN = 210; // 3:30 per question
   const autoSubmittingRef = useRef(false);

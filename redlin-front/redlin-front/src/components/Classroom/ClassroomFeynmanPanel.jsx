@@ -33,7 +33,7 @@ const Metric = ({ label, value, color }) => (
 
 const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 'en', focus = false, autoStart = false, onStart }) => {
   // Section timer: attribute Feynman practice time to this lecture source.
-  useStudySection({ model: 'lecture', itemId: sessionId, method: 'FEYNMAN' });
+  
   const [prompts, setPrompts] = useState(Array.isArray(initialPrompts) ? initialPrompts : []);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -45,6 +45,7 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
   const [countdownRemaining, setCountdownRemaining] = useState(COUNTDOWN);
   const [questionDone, setQuestionDone] = useState(false);
   const [sessionFinished, setSessionFinished] = useState(false);
+  useStudySection({ model: 'lecture', itemId: sessionId, method: 'FEYNMAN', active: sessionActive && !sessionFinished });
   const [sessionKey, setSessionKey] = useState(Date.now());
   const [recording, setRecording] = useState(false);
   const [micError, setMicError] = useState('');
@@ -191,7 +192,7 @@ const ClassroomFeynmanPanel = ({ sessionId, prompts: initialPrompts, language = 
     // pause or silence can never clear the words already captured.
     interimRef.current = '';
     accumulatedRef.current = ` ${answers[current.id] || ''}`;
-    recognition.lang = language === 'es' ? 'es-ES' : 'en-US';
+    recognition.lang = 'en-US';  // English-only voice capture
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.onresult = (event) => {

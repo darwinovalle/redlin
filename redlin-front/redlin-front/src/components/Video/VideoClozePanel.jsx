@@ -14,13 +14,14 @@ import dinoStudy from '../../assets/redlin_logo/dino_study.png';
  */
 const VideoClozePanel = ({ videoId, title = 'Cloze Practice', focus = false, showStudyImage = false, onFocusChange, onStart, autoStart = false }) => {
   // Section timer: attribute Cloze practice time to this video source.
-  useStudySection({ model: 'video', itemId: videoId, method: 'CLOZE' });
+  
   const [clozes, setClozes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [started, setStarted] = useState(false);
   const [sessionKey, setSessionKey] = useState(null);
   const [answeredMap, setAnsweredMap] = useState({});
+  useStudySection({ model: 'video', itemId: videoId, method: 'CLOZE', active: started && Object.keys(answeredMap).length < clozes.length });
 
   const shuffle = useCallback((arr) => {
     const a = [...arr];

@@ -16,13 +16,14 @@ const UNANSWERED_SEGMENT_COLOR = 'color-mix(in srgb, var(--color-white) 18%, tra
 
 const VideoQuiz = ({ mcqs, title = 'Test Your Knowledge', focus = false, showStudyImage = false, onFocusChange, onStart, autoStart = false, videoId }) => {
   // Section timer: attribute MCQ practice time to this video source.
-  useStudySection({ model: 'video', itemId: videoId, method: 'MCQ' });
+  
   const [questions, setQuestions] = useState([]);
   const [active, setActive] = useState(false);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState({}); // {questionIndex: optionIndex}
   const [feedback, setFeedback] = useState(null); // 'correct' | 'incorrect' | null
   const [finished, setFinished] = useState(false);
+  useStudySection({ model: 'video', itemId: videoId, method: 'MCQ', active: active && !finished });
   const [score, setScore] = useState(0);
   const correctAudioRef = useRef(null);
   const startedAtRef = useRef(null);

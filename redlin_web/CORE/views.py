@@ -632,20 +632,66 @@ def stats_view(request):
 	return Response(_stats_payload(request.user, request))
 
 
+def _question_detail(target):
+	"""Full graded payload for a due quiz item so the review UI can actually
+	test the user: MCQ options + answer, cloze blank + answer, Feynman prompt.
+
+	The three apps share the same field shapes (option_1..3 / text_with_blank /
+	prompt), so a single helper covers document, video and classroom items.
+	"""
+	if hasattr(target, "correct_answer") and hasattr(target, "option_1"):
+		return {
+			"type": "mcq",
+			"options": [target.correct_answer, target.option_1, target.option_2, target.option_3],
+			"correct_answer": target.correct_answer,
+		}
+	if hasattr(target, "text_with_blank") and hasattr(target, "answer"):
+		return {"type": "cloze", "text_with_blank": target.text_with_blank, "answer": target.answer}
+	if hasattr(target, "prompt"):
+		return {"type": "feynman", "prompt": target.prompt, "feynman_id": target.id}
+	return None
+
+
 @api_view(["GET"])
 def reminders_due_view(request):
-	"""Ítems de SR vencidos (next_review_at <= now) con su texto para revisar."""
+	"""SR items due (next_review_at <= now), grouped by source with full graded
+	question payloads.
+
+	One group per video / document / book-chapter / lecture so the Subjects page
+	can render a table per source, each with its own "Play review" quiz.
+	"""
 	from CORE.services.srs import resolve_target
 
 	now = timezone.now()
 	rows = CoreLearningProgress.objects.filter(
 		user=request.user, next_review_at__lte=now
 	).order_by("next_review_at")
-	items = []
+
+	groups = {}
+	count = 0
 	for p in rows:
 		target = resolve_target(p.content_type_id, p.object_id)
 		if target is None:
 			continue
+		src = _source_of_qi(target)
+		if src is None:
+			continue
+		kind, sid, title = src
+		subtitle = None
+		if kind == "document":
+			doc = getattr(target, "document", None)
+			if getattr(doc, "kind", None) == "chapter" and getattr(doc, "parent", None) is not None:
+				subtitle = getattr(doc.parent, "title", "") or None
+		key = (kind, sid)
+		group = groups.get(key)
+		if group is None:
+			group = groups[key] = {
+				"source": kind, "source_id": sid,
+				"title": title, "subtitle": subtitle, "items": [],
+			}
+		elif subtitle and not group["subtitle"]:
+			group["subtitle"] = subtitle
+
 		question = (
 			getattr(target, "question", None)
 			or getattr(target, "text_with_blank", None)
@@ -654,13 +700,72 @@ def reminders_due_view(request):
 		)
 		model = p.content_type.model if p.content_type_id else ""
 		method = "FEYNMAN" if "feynman" in model else ("CLOZE" if "cloze" in model else "MCQ")
-		items.append({
+		group["items"].append({
 			"progress_id": p.id, "content_type": model, "content_type_id": p.content_type_id,
 			"object_id": p.object_id,
 			"method": method, "question": question, "status": p.status,
 			"interval_days": p.interval, "due_at": p.next_review_at,
+			"detail": _question_detail(target),
 		})
-	return Response({"count": len(items), "items": items})
+		count += 1
+
+	order = {"video": 0, "document": 1, "lecture": 2}
+	ordered = sorted(groups.values(), key=lambda g: (order.get(g["source"], 9), g["title"] or ""))
+	return Response({"count": count, "groups": ordered})
+
+
+@api_view(["POST"])
+def review_feynman_evaluate_view(request):
+	"""Grade one Feynman answer during an active-recall review session.
+
+	Body: {content_type_id, object_id (the Feynman prompt), answer}. Resolves
+	the prompt across the three apps and runs the matching evaluator, which also
+	records the SM-2 schedule + XP + streak. Returns the AI score + feedback.
+	"""
+	from CORE.services.srs import resolve_target
+
+	data = request.data
+	ct_id, oid = data.get("content_type_id"), data.get("object_id")
+	answer = data.get("answer") or ""
+	if not ct_id or oid is None:
+		return Response({"error": "content_type_id+object_id are required"}, status=400)
+	try:
+		ct_id, oid = int(ct_id), int(oid)
+	except (TypeError, ValueError):
+		return Response({"error": "invalid ids"}, status=400)
+
+	target = resolve_target(ct_id, oid)
+	if target is None:
+		return Response({"error": "unknown Feynman prompt"}, status=404)
+
+	from API.models import Feynman as DocFeynman
+	from VIDEO.models import VideoFeynman
+	from CLASSROOM.models import ClassSessionFeynman
+
+	try:
+		if isinstance(target, DocFeynman):
+			from API.feynman_ai import evaluate_document_feynman_attempt
+			attempt = evaluate_document_feynman_attempt(target, answer, request.user)
+		elif isinstance(target, VideoFeynman):
+			from VIDEO.ai import evaluate_video_feynman_attempt
+			attempt = evaluate_video_feynman_attempt(target, answer, request.user)
+		elif isinstance(target, ClassSessionFeynman):
+			from CLASSROOM.services.feynman_service import evaluate_and_record_attempt
+			attempt = evaluate_and_record_attempt(f_obj=target, answer=answer, user=request.user)
+		else:
+			return Response({"error": "not a Feynman prompt"}, status=400)
+	except Exception as exc:
+		print(f"[ReviewFeynmanEval] Error: {exc}")
+		return Response({"error": "evaluation failed"}, status=500)
+
+	score = getattr(attempt, "score", None)
+	breakdown = getattr(attempt, "breakdown", None) or {}
+	return Response({
+		"score": score,
+		"passed": bool(score is not None and score >= 60),
+		"feedback": breakdown.get("feedback", ""),
+		"breakdown": breakdown,
+	})
 
 
 @api_view(["GET"])

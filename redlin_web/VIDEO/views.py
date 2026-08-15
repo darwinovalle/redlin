@@ -1,20 +1,21 @@
 from rest_framework import viewsets, status
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from VIDEO.tasks import process_video_task, process_video_file_task
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from API.jwt_auth import JWTAuthentication
 from .models import Video, VideoSummary, VideoMCQ, VideoCloze, VideoFeynman, VideoFeynmanAttempt
-from CORE.models import CoreAttempt
-from django.contrib.contenttypes.models import ContentType
 from .serializers import (
     VideoSerializer, VideoSummarySerializer, VideoMCQSerializer, VideoClozeSerializer,
     VideoFeynmanSerializer, VideoFeynmanAttemptSerializer, VideoFeynmanAttemptCreateSerializer
 )
-from .ai import process_video, evaluate_video_feynman_attempt
+from .ai import evaluate_video_feynman_attempt
 
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all().order_by('-id')
     serializer_class = VideoSerializer
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -24,10 +25,14 @@ class VideoViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         languages = serializer.validated_data.pop('languages', None)
         video = serializer.save(user=self.request.user)
-        try:
-            process_video(video.id, languages=languages)
-        except Exception:
-            pass
+        uploaded = self.request.FILES.get('video_file')
+        if uploaded:
+            video.audio_file = uploaded
+            video.title = getattr(uploaded, 'name', '') or video.title
+            video.save(update_fields=['audio_file', 'title'])
+            process_video_file_task.delay(video.id)
+        else:
+            process_video_task.delay(video.id, languages=languages)
 
     def list(self, request, *args, **kwargs):
         """Custom list to bypass full ModelSerializer in case of hidden serialization error.
@@ -86,8 +91,9 @@ class VideoViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def full_details(self, request, pk=None):
         video = self.get_object()
+        ctx = self.get_serializer_context()  # gives request → absolute media URLs
         data = {
-            "video": VideoSerializer(video).data,
+            "video": VideoSerializer(video, context=ctx).data,
             "summary": VideoSummarySerializer(video.summary).data if hasattr(video,'summary') else None,
             "mcqs": VideoMCQSerializer(video.mcqs.all(), many=True).data,
             "clozes": VideoClozeSerializer(video.clozes.all(), many=True).data,
@@ -123,21 +129,7 @@ class VideoViewSet(viewsets.ModelViewSet):
         if not f_obj:
             return Response({'detail':'Feynman not found'}, status=404)
         attempt = evaluate_video_feynman_attempt(f_obj, answer, request.user)
-        # CoreAttempt registro
-        try:
-            ct = ContentType.objects.get_for_model(VideoFeynmanAttempt)
-            CoreAttempt.objects.create(
-                user=request.user,
-                method='FEYNMAN',
-                content_type=ct,
-                object_id=attempt.id,
-                raw_answer=attempt.answer_text,
-                ai_score=attempt.score,
-                ai_feedback=attempt.breakdown or {},
-                correct=(attempt.score or 0) >= 60,
-            )
-        except Exception as e:
-            print(f"[CoreAttempt] Error creando registro: {e}")
+        # SR scheduling + CoreAttempt + XP + streak happen inside the evaluator.
         return Response(VideoFeynmanAttemptSerializer(attempt).data, status=201)
 
 

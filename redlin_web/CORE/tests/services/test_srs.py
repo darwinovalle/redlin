@@ -135,3 +135,49 @@ def test_feynman_attempt_advances_schedule():
     assert res["interval_days"] == 3
     progress = CoreLearningProgress.objects.get(user=u, content_type=ct, object_id=f.id)
     assert progress.status == "learning" and progress.next_review_at is not None
+
+
+# ----- sub-day lapse (failed reviews come back within hours) -----
+
+@pytest.mark.django_db
+def test_fail_schedules_subday_lapse():
+    u = User.objects.create()
+    d = Document.objects.create(user=u, title="Lapse doc")
+    p = _progress(u, d, interval=8)
+    p, passed, q = srs.apply_progress(p, False)
+    assert passed is False
+    assert p.interval == 0  # sub-day sentinel
+    assert srs.LAPSE_HOURS == 6
+    expected = timezone.now() + timedelta(hours=6)
+    assert abs((p.next_review_at - expected).total_seconds()) < 60
+
+
+@pytest.mark.django_db
+def test_passing_lapsed_item_returns_to_day_ladder():
+    u = User.objects.create()
+    d = Document.objects.create(user=u, title="Recover doc")
+    p = _progress(u, d)  # interval 0 (lapsed)
+    p, passed, q = srs.apply_progress(p, True)
+    assert passed is True
+    assert p.interval == 3  # graduates back onto the day ladder
+
+
+# ----- record_feynman_review (Feynman now feeds the schedule) -----
+
+@pytest.mark.django_db
+def test_record_feynman_review_schedules_from_score():
+    u = User.objects.create()
+    d = Document.objects.create(user=u, title="Feynman doc")
+    f = Feynman.objects.create(document=d, prompt="Explain X")
+    res = srs.record_feynman_review(user=u, prompt=f, answer_text="X because Y", score=85)
+    assert res["passed"] is True
+    assert res["quality"] == 4
+    assert res["interval_days"] == 3
+    ct = ContentType.objects.get_for_model(Feynman)
+    progress = CoreLearningProgress.objects.get(user=u, content_type=ct, object_id=f.id)
+    assert progress.interval == 3
+    attempt = CoreAttempt.objects.filter(
+        user=u, content_type=ct, object_id=f.id, method="FEYNMAN"
+    ).first()
+    assert attempt is not None and attempt.ai_score == 85
+    assert u.xp_account.xp_total == 20

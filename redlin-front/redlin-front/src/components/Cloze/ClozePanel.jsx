@@ -15,7 +15,7 @@ import dinoStudy from '../../assets/redlin_logo/dino_study.png';
  */
 const ClozePanel = ({ documentId, focus = false, autoStart = false, showStudyImage = false, onStart, onFocusChange }) => {
   // Section timer: attribute Cloze practice time to this document source.
-  useStudySection({ model: 'document', itemId: documentId, method: 'CLOZE' });
+  
   const [clozes, setClozes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -26,6 +26,7 @@ const ClozePanel = ({ documentId, focus = false, autoStart = false, showStudyIma
   const [clozePage, setClozePage] = useState(1);
   const [clozeTotal, setClozeTotal] = useState(0);
   const [clozeHasMore, setClozeHasMore] = useState(false);
+  useStudySection({ model: 'document', itemId: documentId, method: 'CLOZE', active: started && !(Object.keys(answeredMap).length >= clozes.length && !clozeHasMore) });
   const [loadingMore, setLoadingMore] = useState(false);
 
   // Simple Fisher-Yates shuffle

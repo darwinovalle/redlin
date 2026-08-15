@@ -13,7 +13,7 @@ from .models import (
 
 class ClassSessionStartSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255)
-    language = serializers.CharField(max_length=8, required=False, default="es")
+    language = serializers.CharField(max_length=8, required=False, default="en")
 
 
 class ClassSessionUploadAudioSerializer(serializers.Serializer):

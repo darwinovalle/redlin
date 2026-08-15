@@ -21,11 +21,34 @@ function extractVideoId(url) {
   return m ? m[1] : null;
 }
 
+// Resolve a media path (e.g. "/media/video_files/x.mp4") to an absolute URL
+// against the API origin. Media is served by the backend, not the Vite dev
+// server, so a bare relative path would resolve to the wrong origin.
+export function mediaUrl(path) {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  if (path.startsWith('/')) {
+    const origin = (api.defaults.baseURL || '').replace(/\/api\/?$/, '');
+    return `${origin}${path}`;
+  }
+  return path;
+}
+
 export const videoService = {
   createVideo: async ({ url, languages } = {}) => {
     if (!url) throw new Error('URL is required');
     const resp = await api.post('/video/videos/', { url, languages });
     return resp.data; // returns video object
+  },
+
+  // Upload an MP4 file — the backend transcribes it with Whisper and generates
+  // the same summary/MCQs/clozes/Feynman content as YouTube videos.
+  uploadVideo: async (file) => {
+    if (!file) throw new Error('A video file is required');
+    const form = new FormData();
+    form.append('video_file', file);
+    const resp = await api.post('/video/videos/', form);
+    return resp.data;
   },
 
   listVideos: async () => {
@@ -76,7 +99,8 @@ export const videoService = {
   embedUrl: (video) => {
     const id = typeof video === 'string' ? video : (video?.video_id || extractVideoId(video?.url));
     return id ? `https://www.youtube.com/embed/${id}` : null;
-  }
+  },
+  mediaUrl
 };
 
 export default videoService;

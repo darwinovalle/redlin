@@ -106,13 +106,13 @@ def fetch_transcript_yt_dlp(
 ) -> Dict[str, Any]:
     """Obtiene transcript usando SOLO modo directo.
 
-    languages: lista de raíces preferidas (por defecto ['es','en']).
+    languages: list of preferred subtitle roots (English-first, default ['en']).
     """
     video_id = extract_video_id(url_or_id)
     req = [l.strip().lower() for l in (languages or []) if l and l.strip()]
     if not req:
-        req = ['es','en']
-    extended = list(dict.fromkeys(req + ['es','en']))
+        req = ['en']  # English-only subtitle preference
+    extended = list(dict.fromkeys(req + ['en','es']))
 
     client_variants_env = os.getenv('TRANSCRIPT_CLIENT_VARIANTS', 'web,android,ios,tv')
     variants = [c.strip() for c in client_variants_env.split(',') if c.strip()] or [None]

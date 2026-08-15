@@ -29,7 +29,8 @@ const ClassroomModal = ({ open, onClose, onImported }) => {
     setError(null);
     setCreating(true);
     try {
-      const session = await classroomService.createSession({ title: title.trim(), language: 'es' });
+      // English-only for now (Spanish support deferred).
+      const session = await classroomService.createSession({ title: title.trim(), language: 'en' });
       if (cover) {
         try { await classroomService.uploadCover(session.id, cover); } catch (e) { console.error('cover upload failed', e); }
       }

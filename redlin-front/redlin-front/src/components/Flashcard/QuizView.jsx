@@ -39,6 +39,7 @@ const QuizView = ({ documentId, focus = false, autoStart = false, showStudyImage
   const [error, setError] = useState(null);
   const [feedback, setFeedback] = useState(null); // 'correct' | 'incorrect' | null
   const [finished, setFinished] = useState(false);
+  useStudySection({ model: 'document', itemId: documentId, method: 'MCQ', active: isQuizActive && !finished });
   const [score, setScore] = useState(0);
 
   // Audio refs
@@ -46,7 +47,7 @@ const QuizView = ({ documentId, focus = false, autoStart = false, showStudyImage
   const wrongAudioRef = useRef(null);
   const startedAtRef = useRef(null);
   // Section timer: attribute MCQ practice time to this document source.
-  useStudySection({ model: 'document', itemId: documentId, method: 'MCQ' });
+  
 
   useEffect(() => {
     if (!documentId) {

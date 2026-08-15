@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { topicsService } from '../../services/api/topics';
+import { srService } from '../../services/api/sr';
+import ActiveReviewModal from '../../components/Review/ActiveReviewModal';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -11,10 +13,20 @@ import Dialog from '@mui/material/Dialog';
 import TextField from '@mui/material/TextField';
 import CircularProgress from '@mui/material/CircularProgress';
 import Chip from '@mui/material/Chip';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useNavigate } from 'react-router-dom';
 
 // Accent swatches for a New subject. #20C997 is the app's teal (--color-teal).
 const PALETTE = ['#20C997', '#38BDF8', '#6366F1', '#A855F7', '#F43F5E', '#F59E0B', '#22C55E'];
+
+const SOURCE_LABEL = (s) => ({ video: 'Video', document: 'Document', lecture: 'Lecture' }[s] || s);
+
+// "MCQ: 3 · CLOZE: 2 · FEYNMAN: 1" summary for a review group.
+const methodCounts = (g) => {
+  const counts = {};
+  for (const it of g.items || []) counts[it.method] = (counts[it.method] || 0) + 1;
+  return Object.entries(counts).map(([m, n]) => `${m}: ${n}`).join(' · ') || '—';
+};
 
 const NewSubjectDialog = ({ open, onClose, onCreated }) => {
   const [name, setName] = useState('');
@@ -128,6 +140,10 @@ const Subjects = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(false);
+  // Due-for-review groups (one per study source), each with its own quiz.
+  const [due, setDue] = useState({ count: 0, groups: [] });
+  const [dueLoading, setDueLoading] = useState(false);
+  const [activeGroup, setActiveGroup] = useState(null);
 
   const fetchTopics = useCallback(async () => {
     setLoading(true); setError(null);
@@ -140,6 +156,18 @@ const Subjects = () => {
   }, []);
 
   useEffect(() => { fetchTopics(); }, [fetchTopics]);
+
+  const fetchDue = useCallback(async () => {
+    setDueLoading(true);
+    try {
+      const d = await srService.getDue();
+      setDue(d || { count: 0, groups: [] });
+    } catch {
+      setDue({ count: 0, groups: [] });
+    } finally { setDueLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchDue(); }, [fetchDue]);
 
   const columnCount = (topic) =>
     (topic?.board?.columns || []).map((c) => ({ title: c.title, count: (c.cards || []).length }));
@@ -224,9 +252,51 @@ const Subjects = () => {
           </Box>
         </Box>
       )}
+
+      {/* Due for review — one graded review table per study source */}
+      <Box sx={{ mt: 7 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: 'var(--color-text)' }}>Due for review</Typography>
+          {due.count > 0 && <Chip size="small" label={`${due.count} due`} sx={{ color: 'var(--color-teal)', bgcolor: 'color-mix(in srgb, var(--color-teal) 16%, transparent)', fontSize: 12 }} />}
+        </Box>
+        <Typography variant="body2" sx={{ color: 'var(--color-text-mid)', mb: 2 }}>
+          The spaced-repetition engine scheduled these for you. Each source has its own graded review — real questions, tested against real answers.
+        </Typography>
+
+        {dueLoading ? (
+          <Box sx={{ display: 'grid', placeItems: 'center', py: 6 }}><CircularProgress sx={{ color: 'var(--color-teal)' }} /></Box>
+        ) : (due.groups || []).length === 0 ? (
+          <Box sx={{ p: 3, borderRadius: 3, border: '1px dashed color-mix(in srgb, var(--color-navy) 35%, transparent)', bgcolor: 'var(--color-white)', color: 'var(--color-text-mid)', fontStyle: 'italic' }}>
+            Nothing due right now. Answer MCQs, Cloze and Feynman questions while you study — the engine schedules the reviews for you.
+          </Box>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {(due.groups || []).map((g) => (
+              <Box key={`${g.source}-${g.source_id}`} sx={{ p: 2.5, borderRadius: 3, border: '1px solid color-mix(in srgb, var(--color-navy) 14%, transparent)', bgcolor: 'var(--color-white)', boxShadow: '0 6px 18px color-mix(in srgb, var(--color-navy) 7%, transparent)' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                  <Chip size="small" label={SOURCE_LABEL(g.source)} sx={{ color: 'var(--color-teal)', bgcolor: 'color-mix(in srgb, var(--color-teal) 14%, transparent)', fontSize: 11 }} />
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.title}</Typography>
+                    {g.subtitle && <Typography variant="caption" sx={{ color: 'var(--color-text-mid)' }}>{g.subtitle}</Typography>}
+                  </Box>
+                  <Typography variant="caption" sx={{ color: 'var(--color-text-mid)' }}>{methodCounts(g)}</Typography>
+                  <Button
+                    onClick={() => setActiveGroup(g)}
+                    startIcon={<PlayArrowIcon />}
+                    sx={{ borderRadius: 999, px: 2.5, background: 'var(--color-teal)', color: 'var(--color-white)', fontWeight: 700, textTransform: 'none', '&:hover': { background: 'var(--color-teal-hover)' } }}
+                  >
+                    Play review
+                  </Button>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Box>
       </Box>
 
       {open && <NewSubjectDialog open onClose={() => setOpen(false)} onCreated={() => { setOpen(false); fetchTopics(); }} />}
+      <ActiveReviewModal open={!!activeGroup} group={activeGroup} onClose={() => setActiveGroup(null)} onRefresh={fetchDue} />
     </Box>
   );
 };

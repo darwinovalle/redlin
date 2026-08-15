@@ -3,66 +3,85 @@ import { srService } from '../services/api/sr';
 
 const MIN_SECONDS = 3;
 
-// Commits the time elapsed since the last commit (a delta), then advances the
-// boundary. Deltas (not cumulative totals) mean a second is reported at most
-// once, so the backend can award XP without double-counting even when both a
-// hide-event and an unmount commit fire for the same session.
-function commitTime(lastCommitRef, payload) {
-  const now = Date.now();
-  const seconds = Math.round((now - lastCommitRef.current) / 1000);
-  lastCommitRef.current = now;
-  if (seconds >= MIN_SECONDS) {
-    srService.recordStudy(payload(seconds)).catch(() => {});
-  }
+function send(payloadFor, seconds) {
+  if (seconds >= MIN_SECONDS) srService.recordStudy(payloadFor(seconds)).catch(() => {});
 }
 
-// Overall study-page timer: silently records total time on leave/hide AND
-// returns the live elapsed seconds so the page can display a visible counter.
-export function useStudySession({ model, itemId, topic } = {}) {
-  const startRef = useRef(Date.now()); // drives the visible counter
-  const commitRef = useRef(Date.now()); // last-committed delta boundary
-  const [elapsed, setElapsed] = useState(0);
+// Record a study-time interval ONLY while `active` is true. Each activation
+// resets the baseline; when it ends (finish, unmount, tab-hide) the elapsed
+// active interval is committed. Idle/planning/result-screen and "other tab"
+// time is never attributed, and each minute is reported at most once, so stats
+// stop over-reporting wall-clock time.
+function useGatedStudyTime({ active, payloadFor }) {
+  const baselineRef = useRef(Date.now());
+  const startedRef = useRef(false);
+  const activeRef = useRef(!!active);
+  activeRef.current = !!active;
+  const payloadRef = useRef(payloadFor);
+  payloadRef.current = payloadFor;
 
+  const commit = () => {
+    if (!startedRef.current) return;
+    const seconds = Math.round((Date.now() - baselineRef.current) / 1000);
+    startedRef.current = false;
+    send(payloadRef.current, seconds);
+  };
+
+  // Start/stop the interval as `active` toggles.
   useEffect(() => {
-    startRef.current = Date.now();
-    commitRef.current = Date.now();
-    setElapsed(0);
-    const tick = window.setInterval(() => {
-      setElapsed(Math.round((Date.now() - startRef.current) / 1000));
-    }, 1000);
-    const onVisibility = () => { if (document.hidden) commitTime(commitRef, (s) => ({ model, item_id: itemId, seconds: s, topic })); };
-    const onPageHide = () => commitTime(commitRef, (s) => ({ model, item_id: itemId, seconds: s, topic }));
+    if (activeRef.current && !startedRef.current) {
+      baselineRef.current = Date.now();
+      startedRef.current = true;
+    } else if (!activeRef.current && startedRef.current) {
+      commit();
+    }
+  });
+
+  // Commit on tab-hide / page-leave; re-arm on return; final commit on unmount.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden) {
+        if (startedRef.current) commit();
+      } else if (activeRef.current && !startedRef.current) {
+        baselineRef.current = Date.now();
+        startedRef.current = true;
+      }
+    };
+    const onPageHide = () => commit();
     window.addEventListener('pagehide', onPageHide);
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
-      window.clearInterval(tick);
       window.removeEventListener('pagehide', onPageHide);
       document.removeEventListener('visibilitychange', onVisibility);
-      commitTime(commitRef, (s) => ({ model, item_id: itemId, seconds: s, topic }));
+      commit();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [model, itemId, topic]);
+  }, []);
+}
+
+// Overall study-page timer: returns the live elapsed seconds for the visible
+// counter (always ticking), but only RECORDS study seconds while `active` —
+// e.g. on the Summary tab — so practice minutes (recorded by the section
+// timers) are not double-counted.
+export function useStudySession({ model, itemId, topic, active = true } = {}) {
+  const startRef = useRef(Date.now()); // drives the visible counter only
+  const [elapsed, setElapsed] = useState(0);
+  useGatedStudyTime({ active, payloadFor: (s) => ({ model, item_id: itemId, seconds: s, topic }) });
+
+  useEffect(() => {
+    const tick = window.setInterval(() => {
+      setElapsed(Math.round((Date.now() - startRef.current) / 1000));
+    }, 1000);
+    return () => window.clearInterval(tick);
+  }, []);
 
   return elapsed;
 }
 
-// Per-section timer: silently records study time for one activity (MCQ / CLOZE
-// / FEYNMAN) on a source, attributed with that method for the per-source split.
-export function useStudySection({ model, itemId, method, topic } = {}) {
-  const commitRef = useRef(Date.now());
-
-  useEffect(() => {
-    commitRef.current = Date.now();
-    const onVisibility = () => { if (document.hidden) commitTime(commitRef, (s) => ({ model, item_id: itemId, seconds: s, method, topic })); };
-    const onPageHide = () => commitTime(commitRef, (s) => ({ model, item_id: itemId, seconds: s, method, topic }));
-    window.addEventListener('pagehide', onPageHide);
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      window.removeEventListener('pagehide', onPageHide);
-      document.removeEventListener('visibilitychange', onVisibility);
-      commitTime(commitRef, (s) => ({ model, item_id: itemId, seconds: s, method, topic }));
-    };
-  }, [model, itemId, method, topic]);
+// Per-section timer: attributes ACTIVE practice time (MCQ / CLOZE / FEYNMAN)
+// to a source. The panel passes active = session is actually running (started
+// and not finished), so only real practice minutes are recorded.
+export function useStudySection({ model, itemId, method, topic, active = true } = {}) {
+  useGatedStudyTime({ active, payloadFor: (s) => ({ model, item_id: itemId, seconds: s, method, topic }) });
 }
 
 export default useStudySession;

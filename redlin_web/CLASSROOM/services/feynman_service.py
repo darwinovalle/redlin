@@ -1,10 +1,8 @@
 import json
 
-from django.contrib.contenttypes.models import ContentType
-
 from API.models import User
 from API.services.processing_common import detect_language, extract_json_block, generate_with_retry
-from CORE.models import CoreAttempt
+from CORE.services.srs import record_feynman_review
 
 from ..models import ClassSessionFeynman, ClassSessionFeynmanAttempt
 
@@ -24,13 +22,8 @@ def _normalize_key_points(key_points) -> list[str]:
 
 
 def _prompt_language(f_obj: ClassSessionFeynman) -> str:
-    session_language = (getattr(f_obj.class_session, 'language', '') or '').lower()
-    if session_language in {'en', 'es'}:
-        return session_language
-
-    key_points_text = ' '.join(_normalize_key_points(f_obj.key_points))
-    detected = detect_language(f_obj.prompt + ' ' + key_points_text)
-    return detected if detected in {'en', 'es'} else 'en'
+    # English-only feedback for now (Spanish support deferred).
+    return "en"
 
 
 def evaluate_and_record_attempt(*, f_obj: ClassSessionFeynman, answer: str, user: User) -> ClassSessionFeynmanAttempt:
@@ -42,7 +35,7 @@ def evaluate_and_record_attempt(*, f_obj: ClassSessionFeynman, answer: str, user
     )
 
     language = _prompt_language(f_obj)
-    rubric_lang_prefix = 'Devuelve la respuesta en Español.' if language == 'es' else 'Return the feedback in English.'
+    rubric_lang_prefix = 'Return the feedback in English.'
 
     eval_prompt = f"""
 You are an expert tutor applying a strict Feynman explanation rubric.
@@ -109,7 +102,6 @@ NO markdown fences. NO commentary outside JSON.
                     data = None
 
         if not data or 'score' not in data:
-            _register_core_attempt(user=user, attempt=attempt)
             return attempt
 
         attempt.score = int(max(1, min(100, data.get('score', 1))))
@@ -119,25 +111,11 @@ NO markdown fences. NO commentary outside JSON.
         if total > 0 and isinstance(matched, list):
             attempt.key_points_coverage = max(0.0, min(1.0, len(matched) / total))
         attempt.save()
+        # Feed the graded answer into the SM-2 schedule (keyed on the prompt).
+        record_feynman_review(
+            user=user, prompt=f_obj, answer_text=attempt.answer_text, score=attempt.score,
+        )
     except Exception as exc:
         print(f"[ClassroomFeynmanEval] Error: {exc}")
 
-    _register_core_attempt(user=user, attempt=attempt)
     return attempt
-
-
-def _register_core_attempt(*, user: User, attempt: ClassSessionFeynmanAttempt) -> None:
-    try:
-        content_type = ContentType.objects.get_for_model(ClassSessionFeynmanAttempt)
-        CoreAttempt.objects.create(
-            user=user,
-            method='FEYNMAN',
-            content_type=content_type,
-            object_id=attempt.id,
-            raw_answer=attempt.answer_text,
-            ai_score=attempt.score,
-            ai_feedback=attempt.breakdown or {},
-            correct=(attempt.score or 0) >= 60,
-        )
-    except Exception as exc:
-        print(f"[CoreAttempt] Error creando registro: {exc}")

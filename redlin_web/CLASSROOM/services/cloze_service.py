@@ -3,7 +3,9 @@ from API.services.processing_common import generate_with_retry, extract_json_blo
 from CLASSROOM.models import ClassSession, ClassSessionCloze
 
 def generate_session_clozes(class_session: ClassSession, source_text: str, lang_label: str, summary_content: str, max_items: int = 10) -> int:
-    language_line = "Idioma de salida: Español" if lang_label == "Spanish" else "Output language: English"
+    # English-only output (Spanish support deferred). The model may read source
+    # text in any language, but every generated item must be English.
+    language_line = "Output language: English. All generated text (sentences, answers, distractors) MUST be in English."
     snippet = source_text[:16000]
     prompt = (
         f"You are an expert educational content generator.\n"

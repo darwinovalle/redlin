@@ -17,7 +17,7 @@ import '../../pages/Dashboard/dashboard.css';
 
 // Video study panel (Summary / MCQs / Cloze / Feynman) + Focus Mode, mirroring
 // the document StudyPanel exactly (same tabs, hero, and focus dialog).
-const VideoStudyPanel = ({ video, summary, mcqs }) => {
+const VideoStudyPanel = ({ video, summary, mcqs, onTabChange }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [focusMode, setFocusMode] = useState(() => {
     try {
@@ -40,7 +40,7 @@ const VideoStudyPanel = ({ video, summary, mcqs }) => {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0 }}>
       {/* Tabs */}
       <div className="study-header" style={{ padding: '0 16px' }}>
-        <Tabs value={activeTab} onChange={(_e, v) => setActiveTab(v)}>
+        <Tabs value={activeTab} onChange={(_e, v) => { setActiveTab(v); onTabChange?.(v); }}>
           <Tab label="SUMMARY" />
           <Tab label="MCQS" />
           <Tab label="CLOZE" />

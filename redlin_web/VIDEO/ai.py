@@ -8,6 +8,8 @@ from django.db import transaction
 from .models import Video, VideoSummary, VideoMCQ, VideoCloze, VideoFeynman, VideoFeynmanAttempt
 from .transcript_yt_dlp import fetch_transcript_yt_dlp, TranscriptError
 from CORE.services.cloze_generator import VideoClozeGenerator
+from CLASSROOM.services.stt_service import transcribe_audio_file, STTServiceError
+from CORE.services.srs import record_feynman_review
 # Shared per-user LLM dispatch (provider resolution, retry, Ollama fallback).
 from API.services.processing_common import detect_language, extract_json_block, generate_with_retry
 
@@ -52,9 +54,80 @@ def _split_text(text: str, chunk_chars: int = 3500) -> list[str]:
 
 
 def _parse_mcq_blocks(raw: str) -> list[dict]:
-    """Parse Q:/A:/B:/C:/D: blocks from a video MCQ response (lenient — skips malformed)."""
-    items = []
-    for block in re.split(r"\n\s*\n", raw or ""):
+    """Parse MCQs from a video generation response.
+
+    Primary: the JSON array format the generation prompt requests:
+        [{"question": "...", "correct_answer": "...", "options": ["...","...","...","..."]}]
+    (also accepted wrapped in an object like {"items": [...]} or inside markdown fences).
+    Fallback: legacy Q:/A:/B:/C:/D: line blocks (lenient — skips malformed).
+    """
+    text = raw or ""
+    items: list[dict] = []
+
+    def _from_json(it) -> dict | None:
+        q = str(it.get("question") or "").strip()
+        ca = str(it.get("correct_answer") or "").strip()
+        opts = it.get("options") or []
+        if not isinstance(opts, list):
+            return None
+        # options holds the 4 choices; the correct answer is one of them. Keep the
+        # remaining 3 as the option_1/2/3 distractors the VideoMCQ model expects.
+        distractors = [
+            str(o).strip() for o in opts
+            if str(o).strip() and str(o).strip().lower() != ca.lower()
+        ][:3]
+        if q and ca and len(distractors) == 3:
+            return {
+                "question": q,
+                "correct_answer": ca,
+                "option_1": distractors[0],
+                "option_2": distractors[1],
+                "option_3": distractors[2],
+            }
+        return None
+
+    # 1) Whole-body JSON: top-level array, or {"items"|"mcqs"|"questions": [...]}
+    try:
+        data = json.loads(text.strip())
+        cands = None
+        if isinstance(data, list):
+            cands = data
+        elif isinstance(data, dict):
+            for key in ("items", "mcqs", "questions"):
+                if isinstance(data.get(key), list):
+                    cands = data[key]
+                    break
+        if cands is not None:
+            for it in cands:
+                if isinstance(it, dict):
+                    item = _from_json(it)
+                    if item:
+                        items.append(item)
+            if items:
+                return items
+    except Exception:
+        pass
+
+    # 2) JSON array embedded in the response (e.g. inside markdown fences)
+    if not items:
+        try:
+            start = text.find("[")
+            end = text.rfind("]")
+            if start != -1 and end > start:
+                data = json.loads(text[start:end + 1])
+                if isinstance(data, list):
+                    for it in data:
+                        if isinstance(it, dict):
+                            item = _from_json(it)
+                            if item:
+                                items.append(item)
+                    if items:
+                        return items
+        except Exception:
+            pass
+
+    # 3) Legacy Q:/A:/B:/C:/D: block format
+    for block in re.split(r"\n\s*\n", text):
         lines = [line.strip() for line in block.splitlines() if line.strip()]
         if len(lines) != 5:
             continue
@@ -90,7 +163,8 @@ def _video_feynman_prompt(source_text: str, *, lang_label: str, soft_cap: int | 
         f"Aim for at most ~{soft_cap} prompts if justified; stop early when coverage complete." if soft_cap and soft_cap>0
         else "Generate exhaustive distinct Feynman explanation prompts covering ALL non-trivial concepts; stop ONLY when further prompts would be redundant."
     )
-    language_line = "Idioma de salida: Español" if lang_label == "Spanish" else "Output language: English"
+    # English-only output (Spanish support deferred).
+    language_line = "Output language: English. All generated text MUST be in English."
     return (
         "You are an expert learning assistant.\n"
         "TASK: Derive concise Feynman explanation prompts from the VIDEO TRANSCRIPT.\n"
@@ -214,7 +288,8 @@ def evaluate_video_feynman_attempt(f_obj: VideoFeynman, answer: str, user) -> Vi
         answer_text=' '.join(answer.strip().split())
     )
     lang = detect_language(f_obj.prompt + ' ' + ' '.join(k['point'] for k in f_obj.key_points))
-    rubric_lang_prefix = 'Devuelve la respuesta en Español.' if lang=='es' else 'Return the feedback in English.'
+    # English-only feedback.
+    rubric_lang_prefix = 'Return the feedback in English.'
     prompt = f"""
 You are an expert tutor applying a strict explanation rubric.
 {rubric_lang_prefix}
@@ -286,6 +361,11 @@ STRICT JSON ONLY:
         if total > 0 and isinstance(matched, list):
             attempt.key_points_coverage = max(0.0, min(1.0, len(matched)/total))
         attempt.save()
+        # Feed the graded answer into the SM-2 schedule (keyed on the prompt so
+        # it appears in due reviews like MCQ/Cloze items).
+        record_feynman_review(
+            user=user, prompt=f_obj, answer_text=attempt.answer_text, score=attempt.score,
+        )
     except Exception as e:
         print(f"[VideoFeynmanEval] Error: {e}")
         attempt.breakdown = {'error': str(e)}
@@ -333,7 +413,8 @@ def _clean_ai_json(raw: str) -> dict | None:
     return None
 
 def _ai_video_cloze_prompt(source_text: str, *, desired_count: int, words_per_item: int, lang_label: str) -> str:
-    language_line = "Idioma de salida: Español" if lang_label == "Spanish" else "Output language: English"
+    # English-only output.
+    language_line = "Output language: English. All generated text MUST be in English."
     snippet = source_text[:16000]
     return (
         "You are an expert educational content generator.\n"
@@ -436,6 +517,132 @@ def generate_ai_video_clozes(video: Video, source_text: str, lang_label: str, *,
     print(f"[AI Video Cloze] Created {len(created)} (requested {max_items}).")
     return created
 
+
+
+def _generate_video_mcqs(video, full_text: str, lang_label: str) -> int:
+    """Generate and persist VideoMCQs for a video from its transcript.
+
+    Chunks long transcripts (see _split_text) so each LLM call stays small, and
+    bounds the total with _compute_target_mcq_count (capped at 25). Parses the
+    JSON array the prompt requests (see _parse_mcq_blocks). Returns how many
+    MCQs were created.
+    """
+    mcq_prompt_template = """
+You are an expert assessment designer specializing in educational content analysis.
+
+TASK: Create up to {limit} multiple-choice questions based ONLY on the provided video transcript.
+Language: {lang_label}
+
+CRITICAL REQUIREMENTS:
+1. Focus on the MOST IMPORTANT concepts, facts, or principles in the text.
+2. The correct answer MUST be 100% verifiable from the transcript.
+3. Distractors must be plausible but definitively wrong.
+4. No "All/None of the above", no negatively-phrased questions.
+5. Each question must be self-contained.
+
+OUTPUT FORMAT — RETURN ONLY A VALID JSON ARRAY. NO PREAMBLE. NO MARKDOWN FENCES.
+Each item: {{"question": "...", "correct_answer": "...", "options": ["...","...","...","..."]}}
+
+TRANSCRIPT CHUNK:
+{chunk}
+"""
+    seen = set()
+    created = []
+    target = max(5, min(_compute_target_mcq_count(full_text), 25))
+    chunks = _split_text(full_text)
+    for chunk_index, c in enumerate(chunks):
+        if len(created) >= target:
+            break
+        prompt = mcq_prompt_template.format(limit=8, lang_label=lang_label, chunk=c)
+        try:
+            resp = generate_with_retry(prompt, user_id=video.user_id)
+        except Exception:
+            continue
+        for item in _parse_mcq_blocks(resp.text):
+            q = (item.get("question") or "").casefold()
+            if not q or q in seen:
+                continue
+            seen.add(q)
+            created.append(VideoMCQ(video=video, **item))
+            if len(created) >= target:
+                break
+    if created:
+        with transaction.atomic():
+            VideoMCQ.objects.filter(video=video).delete()
+            VideoMCQ.objects.bulk_create(created)
+    return len(created)
+
+
+def _generate_video_content(video, full_text: str, lang_label: str):
+    """Generate Summary + MCQs + Feynman + Clozes for a Video from its transcript.
+
+    Shared by the YouTube path (process_video) and the uploaded-MP4 path
+    (process_video_file). Bounded/chunked so long transcripts (20-60min) stay
+    within output-token limits and never break JSON parsing.
+    """
+    summary_text = ""
+    # ---------------- Summary ----------------
+    try:
+        summary_heading_note = "Produce the output in English. All generated text MUST be in English."
+        target_mcq_count = _compute_target_mcq_count(full_text)
+        summary_prompt = f"""
+You are an expert academic summarizer. {summary_heading_note}
+
+GOAL
+Produce a high-signal, chapter/section-structured summary that captures the core intellectual substance of the source.
+
+OUTPUT FORMAT (Pure Markdown only)
+- First line MUST be exactly an H1 with the video title.
+- After the title, output the structured summary only. No preamble, no meta text.
+- Use section headings as H2 (##), each starting with ONE emoji + space + concise heading.
+- Under each heading, use dense bullets ("- ") OR tight mini paragraphs.
+- Final section must be:
+  ## ⭐ Key Takeaways
+  - 5-12 distilled bullets (no redundancy).
+
+CONTENT RULES (Absolute)
+- Omit front matter: copyright notices, ISBN, disclaimers, dedications, acknowledgments.
+- Preserve the source logic; no hallucinations; only facts supported by the transcript.
+- Output language: {lang_label}
+- If negligible substance after filtering, output:  (No substantive content found in provided excerpt.)
+
+VIDEO TRANSCRIPT (for analysis; paraphrase in output)
+{full_text[:24000]}
+"""
+        summary_resp = generate_with_retry(summary_prompt, user_id=video.user_id)
+        summary_text = summary_resp.text
+        VideoSummary.objects.update_or_create(video=video, defaults={"content": summary_text})
+    except Exception as e:
+        print(f"[Video Error] Summary: {e}")
+
+    # ---------------- MCQs (chunked + bounded) ----------------
+    try:
+        _generate_video_mcqs(video, full_text, lang_label)
+    except Exception as e:
+        print(f"[Video Error] MCQs: {e}")
+
+    # ---------------- Feynman Prompts ----------------
+    try:
+        if os.getenv("VIDEO_FEYNMAN_ENABLED", "1").lower() in {"1", "true", "yes", "on"}:
+            words = full_text.split()
+            max_env = os.getenv("VIDEO_FEYNMAN_MAX", "").strip()
+            unlimited = (max_env == "0") or (max_env == "")
+            est = None if unlimited else max(6, min(len(words) // 280, 60))
+            generate_video_feynman(video, full_text, lang_label, soft_cap=est, regenerate=False)
+    except Exception as e:
+        print(f"[Video Error] Feynman: {e}")
+
+    # ---------------- Clozes ----------------
+    try:
+        approx_items = max(5, min(len(full_text.split()) // 180, 20))
+        generate_ai_video_clozes(video, full_text, lang_label, max_items=approx_items, words_per_item=5)
+    except Exception as e:
+        print(f"[Video Error] Clozes: {e}")
+
+    video.processing_status = "completed"
+    video.save()
+    print(f"[Video] Procesado OK {video.id}")
+
 def process_video(video_id_db: int, languages: List[str] | None = None):
     video = Video.objects.get(id=video_id_db)
     if video.processing_status == 'completed':
@@ -460,232 +667,43 @@ def process_video(video_id_db: int, languages: List[str] | None = None):
         if not full_text.strip():
             raise ValueError("Transcript vacío")
 
-        # Detectar idioma dominante
-        dominant = detect_language(full_text)
-        if dominant in ("en", "es"):
-            target_lang = dominant
-        else:
-            target_lang = "en"
-
-        lang_label = "English" if target_lang == "en" else "Spanish"
-        summary_heading_note = (
-            "Produce la salida en Español." if target_lang == "es" else "Produce the output in English."
-        )
-        target_mcq_count = _compute_target_mcq_count(full_text)
-
-        # ---------------- Summary ----------------
-        summary_text = ""
-        summary_prompt = f"""
-
-You are an expert academic summarizer. {summary_heading_note}
-
-GOAL
-Produce a high-signal, chapter/section-structured summary that captures the core intellectual substance of the source.
-
-OUTPUT FORMAT (Pure Markdown only)
-- First line MUST be exactly an H1 with the video title:
-- After the title, output the structured summary only. No preamble, no meta text, no “analysis”.
-- Use section headings as H2 (“##”), each starting with ONE emoji + space + concise heading (no trailing punctuation).
-- Under each heading, use dense bullets ("- ") OR tight mini paragraphs.
-- Final section must be:
-  ## ⭐ Key Takeaways
-  - 5–12 distilled bullets (no redundancy).
-
-CONTENT RULES (Absolute)
-- Omit front matter: copyright notices, ISBN, disclaimers, dedications, acknowledgments (unless containing indispensable definitions).
-- Preserve the source’s logic and argument flow; merge or skip low-value sections.
-- No hallucinations. Only include concepts supported by the source.
-- Remove repetition and ornamental filler; keep mechanisms, definitions, claims, evidence, results, implications, limitations.
-- Include concrete numbers, definitions, and conditions when present; keep units and constraints.
-- Use brief emphasis for pivotal terms (bold) sparingly. Use inline code `like_this` for terms, variables, or API names when appropriate.
-- Tables are allowed if they clarify comparisons or taxonomies.
-- Forbidden phrases anywhere: "Here is", "This video", "The video", "This segment".
-- Output language: {lang_label}
-- If negligible substance after filtering: output:
-
-  (No substantive content found in provided excerpt.)
-
-STRUCTURE GUIDANCE (Use as applicable)
-- Start with the most structural or conceptual sections first (map to chapters/sections if present).
-- For empirical work: Methods, Data, Results, Interpretation, Limitations.
-- For theory: Core Claims, Definitions, Mechanisms, Propositions, Implications.
-- For math/proofs: Theorem/Claim, Assumptions, Sketch of Proof, Corollaries, Scope.
-- For code/APIs: Components, Interfaces, Invariants, Complexity, Example Usage.
-- For dialogues/debates: Positions by speaker/side, Points of agreement, Disagreements, Evidence.
-- For literature/essays: Thesis, Motifs/Themes, Structure/Arc, Key Passages (quoted minimally), Interpretation.
-
-DENSITY & LENGTH
-- Favor high information density; avoid sentence padding.
-- Generally 4–10 sections total; 2–8 bullets per section depending on source length.
-
-QUALITY CHECK (silent, do not output)
-- H1 title present and correct.
-- Headings are “## ” + one emoji + space + concise title.
-- No preamble/meta/explanations.
-- No forbidden phrases.
-- No unsupported claims; numbers/definitions preserved.
-- Ends with “## ⭐ Key Takeaways” (5–12 bullets).
-
-VIDEO TRANSCRIPT (for analysis; paraphrase in output)
-{full_text}
-
-"""
-        try:
-            summary_resp = generate_with_retry(summary_prompt, user_id=video.user_id)
-            summary_text = summary_resp.text
-            VideoSummary.objects.update_or_create(
-                video=video,
-                defaults={"content": summary_text},
-            )
-        except Exception as e:
-            print(f"[Video Error] Summary: {e}")
-
-        # ---------------- MCQs ----------------
-        # Bounded + chunked: large transcripts used to produce an exhaustive
-        # Q:/A:/B:/C:/D: dump that got truncated -> blocks lost -> few/no MCQs.
-        mcq_prompt_template = """
-You are an expert assessment designer specializing in educational content analysis.
-
-TASK: Create up to {limit} multiple-choice questions based ONLY on the provided video transcript.
-Language: {lang_label}
-
-CRITICAL REQUIREMENTS:
-
-1. Focus on the MOST IMPORTANT concepts, facts, relationships, or principles in the video — quality over exhaustiveness.
-2. **ACCURACY GUARANTEE**:
-   - Double-check each correct answer against the transcript
-   - The correct answer must be 100% verifiable from the transcript
-   - If uncertain about factual accuracy, skip that question
-
-3. **QUESTION TYPES** (use a mix):
-   - Definitional: "What is X?"
-   - Causal: "Why does X lead to Y?"
-   - Comparative: "How does X differ from Y?"
-   - Applied: "In situation Z, what would happen?"
-   - Analytical: "Which statement best explains X?"
-
-4. **DISTRACTOR RULES**:
-   - Each incorrect option must be plausible but definitively wrong
-   - Use common misconceptions, partial truths, or related-but-different concepts
-
-5. **FORBIDDEN CONTENT**:
-   - NO questions about: publication dates, ISBN, publisher, author bio, dedications, acknowledgments
-   - NO "All/None of the above" or combination options
-   - NO negatively-phrased questions ("Which is NOT...")
-   - NEVER phrase questions as if read from a "text", "document", "passage", or "file".
-   - Questions MUST be self-contained and NOT begin with a source preface like "In the video", "In the text", "In the paragraph", "According to", or "Based on". Ask directly (e.g., "What is the primary definition of software architecture?").
-
-6. **EXACT FORMAT** (no deviations):
-   Q: <Question text>
-   A: <Correct Answer>
-   B: <Incorrect Option 1>
-   C: <Incorrect Option 2>
-   D: <Incorrect Option 3>
-
-   [blank line between each question block]
-
-VIDEO TRANSCRIPT:
-{chunk}
-"""
-        try:
-            mcq_chunks = _split_text(full_text)
-            per_chunk_limit = 8
-            target_mcq_count = max(5, min(target_mcq_count, 25))
-            new_mcqs = []
-            seen_questions = set()
-            for chunk_index, chunk in enumerate(mcq_chunks):
-                prompt = mcq_prompt_template.format(
-                    limit=per_chunk_limit,
-                    lang_label=lang_label,
-                    chunk=chunk,
-                )
-                try:
-                    mcq_resp = generate_with_retry(prompt, user_id=video.user_id)
-                except Exception as chunk_err:
-                    print(f"[Video] MCQ chunk {chunk_index + 1}/{len(mcq_chunks)} failed: {chunk_err}")
-                    continue
-                for item in _parse_mcq_blocks(mcq_resp.text):
-                    key = item["question"].casefold()
-                    if key in seen_questions:
-                        continue
-                    seen_questions.add(key)
-                    new_mcqs.append(VideoMCQ(video=video, **item))
-            if len(new_mcqs) > target_mcq_count:
-                new_mcqs = new_mcqs[:target_mcq_count]
-            if new_mcqs:
-                with transaction.atomic():
-                    VideoMCQ.objects.filter(video=video).delete()
-                    VideoMCQ.objects.bulk_create(new_mcqs)
-                print(f"[Video] MCQs creados: {len(new_mcqs)} (objetivo {target_mcq_count})")
-            else:
-                print("[Video] No se parsearon MCQs válidos.")
-        except Exception as e:
-            print(f"[Video Error] MCQs: {e}")
-
-        # ---------------- Feynman Prompts ----------------
-        try:
-            fe_enabled = os.getenv("VIDEO_FEYNMAN_ENABLED", "1").lower() in {"1","true","yes","on"}
-            if fe_enabled:
-                print("[Video] Generating Feynman prompts...")
-                regenerate = os.getenv("VIDEO_FEYNMAN_REGENERATE", "0").lower() in {"1","true","yes","on"}
-                words = full_text.split()
-                max_env = os.getenv("VIDEO_FEYNMAN_MAX", "").strip()
-                unlimited = (max_env == "0") or (max_env == "")
-                if unlimited:
-                    est = None  # pasamos ilimitado
-                else:
-                    # Heurística: ~1 prompt cada 280 palabras, límites 6..60 antes de aplicar max
-                    est_calc = max(6, min(60, len(words)//280 or 6))
-                    if max_env.isdigit():
-                        est_calc = min(est_calc, int(max_env))
-                    est = est_calc
-                f_created = generate_video_feynman(
-                    video,
-                    source_text=full_text,
-                    lang_label=lang_label,
-                    soft_cap=est,
-                    regenerate=regenerate
-                )
-                goal_txt = 'unlimited' if est is None else est
-                print(f"[Video] Feynman prompts creados: {len(f_created)} (objetivo {goal_txt})")
-            else:
-                print("[Video] Feynman generation disabled by VIDEO_FEYNMAN_ENABLED.")
-        except Exception as e:
-            print(f"[Video Error] Feynman: {e}")
-
-        # -------------------------------------------------------------------
-        # Cloze (AI-first con fallback local)
-        # -------------------------------------------------------------------
-        try:
-            print("[Video] Generating Cloze items (AI-first)...")
-            ai_enabled = os.getenv("AI_CLOZE_ENABLED", "true").lower() in {"1","true","yes","on"}
-            words = full_text.split()
-            words_per_item = int(os.getenv("AI_CLOZE_WORDS_PER_ITEM", "120"))
-            unlimited = os.getenv("AI_CLOZE_MAX", "").strip() == "0"
-            estimated = max(4, len(words)//words_per_item) if not unlimited else 0
-            max_cap_env = os.getenv("AI_CLOZE_MAX", "")
-            if max_cap_env.isdigit() and int(max_cap_env) > 0:
-                estimated = min(estimated, int(max_cap_env))
-            approx_items = estimated if estimated else 0  # 0 => ilimitado
-            created_ai: list[VideoCloze] = []
-            if ai_enabled:
-                combined_source = (summary_text or "") + "\n\n" + full_text[:10000]
-                created_ai = generate_ai_video_clozes(video, combined_source, lang_label, max_items=approx_items, words_per_item=words_per_item)
-            if approx_items > 0 and len(created_ai) < max(1, approx_items // 2):
-                print("[AI Video Cloze] Fallback local generation...")
-                remaining = approx_items - len(created_ai)
-                if remaining > 0:
-                    vgen = VideoClozeGenerator(video, max_items=remaining)
-                    local_items = vgen.generate()
-                    print(f"[VideoCloze Fallback] Added {len(local_items)} local items.")
-            print(f"[Video] Cloze total: {video.clozes.count()}")
-        except Exception as e:
-            print(f"[Video Error] Cloze gen: {e}")
-
-        video.processing_status = "completed"
-        video.save()
-        print(f"[Video] Procesado OK {video.id}")
+        # English-only output (Spanish support deferred): the model may read foreign
+        # transcripts but every generated item is English.
+        _generate_video_content(video, full_text, lang_label="English")
     except (TranscriptError, Exception) as e:
         print(f"[Video Fatal] {e}")
+        video.processing_status = "failed"
+        video.save()
+
+
+def process_video_file(video_id_db: int, language_hint: str = "en"):
+    """Transcribe an uploaded video file (MP4) with Whisper and generate the
+    same Summary / MCQs / Clozes / Feynman content as YouTube videos.
+    """
+    video = Video.objects.get(id=video_id_db)
+    if video.processing_status == 'completed':
+        print(f"[Video] {video.id} ya procesado.")
+        return
+    video.processing_status = 'processing'
+    video.save()
+    try:
+        if not video.audio_file:
+            raise ValueError("No audio file uploaded for this video")
+        print(f"[Video] Transcribiendo archivo (whisper) {video.audio_file.name}")
+        result = transcribe_audio_file(video.audio_file.path, language_hint=language_hint)
+        full_text = "\n".join(seg.text for seg in result.segments)
+        video.transcript_text = full_text
+        video.snippet_count = len(result.segments)
+        if not video.title:
+            video.title = (video.audio_file.name or f"Video {video.id}")[:255]
+        video.save()
+
+        if not full_text.strip():
+            raise ValueError("Transcript vacío")
+
+        # English-only output (Spanish support deferred).
+        _generate_video_content(video, full_text, lang_label="English")
+    except (TranscriptError, STTServiceError, Exception) as e:
+        print(f"[Video File Fatal] {e}")
         video.processing_status = "failed"
         video.save()

@@ -40,10 +40,11 @@ const VideoStudy = () => {
   const { videoId } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null); // { video, summary, mcqs }
+  const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   // Auto-record study time while this video study page stays open.
-  const studyElapsed = useStudySession({ model: 'video', itemId: videoId });
+  const studyElapsed = useStudySession({ model: 'video', itemId: videoId, active: activeTab === 0 });
   // Study notes below the player, auto-saved to this browser for the video.
   const [notes, setNotes] = useState(() => {
     try { return localStorage.getItem(`videos:notes:${videoId}`) || ''; } catch { return ''; }
@@ -79,6 +80,10 @@ const VideoStudy = () => {
   const { video, summary, mcqs } = data;
   const takeaways = getKeyTakeaways(summary?.content);
   const embedSrc = videoService.embedUrl(video);
+  // Uploaded MP4s have no YouTube id — play the uploaded file directly.
+  // audio_file_url is absolute from the backend, but resolve defensively in
+  // case a client returns a relative path (media lives on the API origin).
+  const localSrc = video?.audio_file_url ? videoService.mediaUrl(video.audio_file_url) : null;
 
   return (
     <div className="dashboard-root">
@@ -119,6 +124,17 @@ const VideoStudy = () => {
               />
             </Box>
           )}
+          {!embedSrc && localSrc && (
+            <Box sx={{ position: 'relative', pb: '56.25%', height: 0, overflow: 'hidden', background: '#000' }}>
+              <video
+                controls
+                preload="metadata"
+                src={localSrc}
+                title={video.title || 'Uploaded video'}
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+              />
+            </Box>
+          )}
 
           {/* Key takeaways below the player */}
           {takeaways.length > 0 && (
@@ -154,7 +170,7 @@ const VideoStudy = () => {
           </Box>
         </Box>
         <div className="study-panel" style={{ width: 540, flexShrink: 0 }}>
-          <VideoStudyPanel video={video} summary={summary} mcqs={mcqs} />
+          <VideoStudyPanel video={video} summary={summary} mcqs={mcqs} onTabChange={setActiveTab} />
         </div>
       </Box>
     </div>

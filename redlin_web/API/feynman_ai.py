@@ -2,6 +2,7 @@ import json
 from typing import Optional
 from .models import Feynman, FeynmanAttempt, User
 from .services.processing_common import detect_language, extract_json_block, generate_with_retry
+from CORE.services.srs import record_feynman_review
 
 def evaluate_document_feynman_attempt(f_obj: Feynman, answer: str, user: User) -> FeynmanAttempt:
     """Create + evaluate a FeynmanAttempt for a Document Feynman prompt.
@@ -16,8 +17,8 @@ def evaluate_document_feynman_attempt(f_obj: Feynman, answer: str, user: User) -
         user=user,
         answer_text=' '.join(answer.strip().split()),
     )
-    lang = detect_language(f_obj.prompt + ' ' + ' '.join(kp.get('point','') if isinstance(kp, dict) else str(kp) for kp in f_obj.key_points))
-    rubric_lang_prefix = 'Devuelve la respuesta en Español.' if lang == 'es' else 'Return the feedback in English.'
+    # English-only feedback (Spanish support deferred).
+    rubric_lang_prefix = 'Return the feedback in English.'
     eval_prompt = f"""
 You are an expert tutor applying a strict Feynman explanation rubric.
 {rubric_lang_prefix}
@@ -85,6 +86,11 @@ NO markdown fences. NO commentary outside JSON.
         if total > 0 and isinstance(matched, list):
             attempt.key_points_coverage = max(0.0, min(1.0, len(matched)/total))
         attempt.save()
+        # Feed the graded answer into the SM-2 schedule (progress keyed on the
+        # Feynman prompt so it appears in due reviews like MCQ/Cloze items).
+        record_feynman_review(
+            user=user, prompt=f_obj, answer_text=attempt.answer_text, score=attempt.score,
+        )
     except Exception as e:
         print(f"[DocFeynmanEval] Error: {e}")
     return attempt

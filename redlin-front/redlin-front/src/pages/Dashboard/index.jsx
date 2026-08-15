@@ -51,7 +51,7 @@ function TabPanel(props) {
       id={`simple-tabpanel-${index}`}
       aria-labelledby={`simple-tab-${index}`}
       {...other}
-      style={{ height: '100%' }} 
+      style={{ height: '100%' }}
     >
       {value === index && (
         <Box sx={{ p: 0 }}>
@@ -69,7 +69,7 @@ const LoadingPanel = () => (
 );
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = React.useState(0); 
+  const [activeTab, setActiveTab] = React.useState(0);
 
   const [selectedDocumentId, setSelectedDocumentId] = useState(null);
   const [documents, setDocuments] = useState([]);
@@ -94,7 +94,7 @@ const Dashboard = () => {
 
   // Auto-record study time for the whole document page (reading the PDF +
   // MCQs/Cloze/Feynman), since the Dashboard doesn't use the shared StudyPanel.
-  const studyElapsed = useStudySession({ model: 'document', itemId: selectedDocumentId });
+  const studyElapsed = useStudySession({ model: 'document', itemId: selectedDocumentId, active: activeTab === 0 });
 
   useEffect(() => {
     let cancelled = false;
