@@ -185,7 +185,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         return Response(
             {
                 "document": DocumentSerializer(document).data,
-                "summary": SummarySerializer(document.summary).data,
+                "summary": SummarySerializer(document.summary).data if hasattr(document, "summary") else None,
                 "flashcards": FlashcardSerializer(
                     document.flashcards.all().order_by("next_review_at", "score", "times_shown", "id"),
                     many=True,
@@ -233,6 +233,10 @@ class DocumentViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get"])
     def summary(self, request, pk=None):
         document = self.get_object()
+        # Freshly added documents have no Summary row yet (async generation);
+        # return null instead of raising RelatedObjectDoesNotExist.
+        if not hasattr(document, "summary"):
+            return Response(None)
         return Response(SummarySerializer(document.summary).data)
 
     @action(detail=True, methods=["get"])

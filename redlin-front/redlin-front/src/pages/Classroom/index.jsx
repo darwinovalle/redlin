@@ -573,11 +573,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
       <div className="classroom-root">
         <div className="classroom-mesh classroom-mesh-top" />
         <div className="classroom-mesh classroom-mesh-bottom" />
-        <Box sx={{ position: 'absolute', top: 24, right: 32, zIndex: 5 }}><StudyTimerBadge seconds={studyElapsed} /></Box>
         <div className="classroom-shell">
           <div className="classroom-grid">
             <div className="classroom-column">
               <div className="classroom-hero">
+            {/* Study timer: anchored to the hero's top-right so it lines up
+                with the status chip column below (same 24px inset), on the
+                hero title's horizontal line. */}
+            <Box sx={{ position: 'absolute', top: 12, right: 24, zIndex: 5 }}><StudyTimerBadge seconds={studyElapsed} /></Box>
             <div>
               <Typography variant="h3" className="classroom-title">{session?.title || 'Classroom space'}</Typography>
               <Typography variant="body1" className="classroom-subtitle">
