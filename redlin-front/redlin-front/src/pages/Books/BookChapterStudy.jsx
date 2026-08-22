@@ -7,6 +7,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PdfViewer from '../../components/PdfViewer/PdfViewer';
 import StudyPanel from '../../components/Study/StudyPanel';
+import StudyTimerBadge from '../../components/common/StudyTimerBadge';
+import { useStudySession } from '../../hooks/useStudySession';
 import { documentService } from '../../services/api';
 
 const BookChapterStudy = () => {
@@ -14,6 +16,11 @@ const BookChapterStudy = () => {
   const navigate = useNavigate();
   const [chapter, setChapter] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState(0);
+
+  // Auto-record study time while the chapter stays open (Summary tab only) and
+  // drive the live counter in the page header — same placement as the Documents timer.
+  const studyElapsed = useStudySession({ model: 'document', itemId: chapter?.id, active: activeTab === 0 });
 
   useEffect(() => {
     let cancelled = false;
@@ -57,6 +64,7 @@ const BookChapterStudy = () => {
             </Typography>
           )}
         </Box>
+        <Box sx={{ ml: 'auto' }}><StudyTimerBadge seconds={studyElapsed} /></Box>
       </Box>
 
       {loading ? (
@@ -77,7 +85,7 @@ const BookChapterStudy = () => {
             />
           </Box>
           <Box sx={{ width: 700, flexShrink: 0, borderLeft: '1px solid color-mix(in srgb, var(--color-white) 8%, transparent)' }}>
-            <StudyPanel documentId={chapter.id} title={chapter.title} />
+            <StudyPanel documentId={chapter.id} title={chapter.title} activeTab={activeTab} onTabChange={setActiveTab} />
           </Box>
         </Box>
       )}

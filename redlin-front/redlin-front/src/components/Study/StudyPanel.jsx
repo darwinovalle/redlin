@@ -1,6 +1,4 @@
 import React, { useEffect, lazy, Suspense, useState } from 'react';
-import { useStudySession } from '../../hooks/useStudySession';
-import StudyTimerBadge from '../common/StudyTimerBadge';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Tabs from '@mui/material/Tabs';
@@ -23,10 +21,10 @@ const LoadingPanel = () => (
   </Box>
 );
 
-// Study tabs (Summary / MCQs / Cloze / Feynman) + Focus Mode, shared by the
-// document study view and Book chapter study views.
-const StudyPanel = ({ documentId, title = '' }) => {
-  const [activeTab, setActiveTab] = useState(0);
+// Study tabs (Summary / MCQs / Cloze / Feynman) + Focus Mode, used by the
+// Book chapter study view. Tabs are controlled from the parent page (which owns
+// the study-time hook + page-header timer), so activeTab/onTabChange are props.
+const StudyPanel = ({ documentId, title = '', activeTab = 0, onTabChange }) => {
   const [focusMode, setFocusMode] = useState(() => {
     try {
       const stored = localStorage.getItem('study:focusMode');
@@ -38,9 +36,6 @@ const StudyPanel = ({ documentId, title = '' }) => {
   const [focusSession, setFocusSession] = useState(null);
   const [focusKey, setFocusKey] = useState(0);
 
-  // Auto-record study time while this panel stays open, and show a live counter.
-  const studyElapsed = useStudySession({ model: 'document', itemId: documentId, active: activeTab === 0 });
-
   useEffect(() => {
     try { localStorage.setItem('study:focusMode', focusMode ? '1' : '0'); } catch {}
   }, [focusMode]);
@@ -50,13 +45,12 @@ const StudyPanel = ({ documentId, title = '' }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0 }}>
       <div className="study-header" style={{ padding: '0 16px' }}>
-        <Tabs value={activeTab} onChange={(_e, v) => setActiveTab(v)}>
+        <Tabs value={activeTab} onChange={(_e, v) => onTabChange?.(v)}>
           <Tab label="SUMMARY" />
           <Tab label="MCQS" />
           <Tab label="CLOZE" />
           <Tab label="FEYNMAN" />
         </Tabs>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', pb: 1 }}><StudyTimerBadge seconds={studyElapsed} /></Box>
         <div className="study-divider" aria-hidden="true" />
       </div>
 
