@@ -148,14 +148,21 @@ const Login = () => {
               <span>Don't have an account? </span>
               <Link to="/register">Sign up</Link>
             </div>
-            <div className="divider">
+            {/* TODO(deploy): Social OAuth (Google / Facebook / Apple) is disabled for the open project.
+                To enable at deployment, configure it server-side first:
+                  1. Create provider app credentials and set client IDs / secrets in the backend env
+                     (Google Cloud Console, Facebook for Developers, Apple Developer).
+                  2. Add backend OAuth endpoints (django-allauth or a custom OAuth2 flow) that exchange
+                     the provider code for a Redlin JWT.
+                  3. Point these buttons at those endpoints, then uncomment the block below. */}
+            {/* <div className="divider">
               <span className="divider-text">or continue with</span>
             </div>
             <div className="social-buttons">
               <button type="button" className="social-btn google-btn" aria-label="Continue with Google"><i className="ri-google-fill" /></button>
               <button type="button" className="social-btn facebook-btn" aria-label="Continue with Facebook"><i className="ri-facebook-fill" /></button>
               <button type="button" className="social-btn apple-btn" aria-label="Continue with Apple"><i className="ri-apple-fill" /></button>
-            </div>
+            </div> */}
           </form>
         </div>
       </div>

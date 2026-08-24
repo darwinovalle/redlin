@@ -120,12 +120,16 @@ const Register = () => {
             </div>
             <button type="submit" className="register-btn" disabled={loading}>{loading ? 'Creating Account...' : 'Create Account'}</button>
             <div className="login-link">Already have an account? <Link to="/login">Sign in</Link></div>
-            <div className="divider"><span>or register with</span></div>
+            {/* TODO(deploy): Social OAuth (Google / Facebook / Apple) is disabled for the open project.
+                To enable at deployment, configure it server-side first — same steps as the Login form:
+                provider credentials in the backend env, backend OAuth endpoints that issue a Redlin JWT,
+                then point these buttons at them and uncomment the block below. */}
+            {/* <div className="divider"><span>or register with</span></div>
             <div className="social-buttons">
               <button type="button" className="social-btn google-btn" aria-label="Register with Google"><i className="ri-google-fill" /></button>
               <button type="button" className="social-btn facebook-btn" aria-label="Register with Facebook"><i className="ri-facebook-fill" /></button>
               <button type="button" className="social-btn apple-btn" aria-label="Register with Apple"><i className="ri-apple-fill" /></button>
-            </div>
+            </div> */}
           </form>
         </div>
       </div>
