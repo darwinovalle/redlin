@@ -1,10 +1,11 @@
 import { lazy, Suspense, useEffect, useRef } from 'react';
-import { Route, Routes, BrowserRouter, useLocation } from 'react-router-dom';
+import { Route, Routes, BrowserRouter, Navigate, useLocation } from 'react-router-dom';
 import { gsap } from 'gsap';
 import ProtectRoute from "./components/ProtectRoute";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AppLayout from './layouts/AppLayout';
-import LandingPage from './pages/LandingPage/LandingPage';
+// LandingPage is intentionally not routed — "/" now serves the Login template.
+// import LandingPage from './pages/LandingPage/LandingPage';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Documents = lazy(() => import('./pages/Documents'));
@@ -48,7 +49,8 @@ const RouterContent = () => {
       <RouteTransitionOverlay />
       <Suspense fallback={<div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>Loading...</div>}>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          {/* "/" is the login template (not a landing hero). Signed-in users go straight to /home. */}
+          <Route path="/" element={user ? <Navigate to="/home" replace /> : <Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/register" element={<Register />} />
