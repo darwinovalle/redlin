@@ -74,3 +74,17 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focu
 }
 .input-with-icon:has(.toggle-password) .toggle-password i { position:static; transform:none; font-size:18px; line-height:1; }
 .input-with-icon:has(.toggle-password) .toggle-password:hover { color:var(--color-teal); background:color-mix(in srgb, var(--color-white) 6%, transparent); }
+
+/* Password field styled to match the Sign up (Register) form: an .input-group
+   flex wrapper with an in-flow eye toggle (54px, radius 10) instead of the
+   older absolutely-positioned toggle. */
+.input-group { position:relative; background:var(--color-navy-600); border:1px solid var(--color-border-navy); border-radius:10px; }
+.input-group input { width:100%; height:54px; background:transparent; border:none; border-radius:10px; padding:0 16px 0 48px; color:var(--color-white); font-size:16px; transition:.3s; box-sizing:border-box; }
+.input-group input:focus { outline:none; }
+.input-group:focus-within { border-color:var(--color-teal); box-shadow:0 0 0 2px color-mix(in srgb, var(--color-teal) 20%, transparent); }
+.input-group.no-left-icon input { padding:0 48px 0 16px; }
+.input-group.with-toggle { display:flex; align-items:center; padding:0 12px 0 0; }
+.input-group.with-toggle input { padding:0 12px 0 16px; flex:1; }
+.password-toggle { position:static; transform:none; background:none; border:none; color:var(--color-text-muted-on-dark); cursor:pointer; font-size:20px; padding:4px 6px; display:flex; align-items:center; justify-content:center; transition:.3s; margin-left:4px; }
+.password-toggle:hover { color:var(--color-teal); }
+.password-toggle i { position:static !important; left:auto !important; top:auto !important; transform:none !important; font-size:20px; }

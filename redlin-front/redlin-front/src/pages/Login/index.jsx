@@ -115,7 +115,7 @@ const Login = () => {
             </div>
             <div className="form-group">
               <label htmlFor="password">Password</label>
-              <div className="input-with-icon no-left-icon">
+              <div className="input-group no-left-icon with-toggle">
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -127,7 +127,7 @@ const Login = () => {
                 />
                 <button
                   type="button"
-                  className="toggle-password"
+                  className="password-toggle"
                   onClick={togglePassword}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
