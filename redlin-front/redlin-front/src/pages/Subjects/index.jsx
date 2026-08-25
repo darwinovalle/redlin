@@ -7,9 +7,10 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import AddIcon from '@mui/icons-material/Add';
-import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import CloseIcon from '@mui/icons-material/Close';
 import Dialog from '@mui/material/Dialog';
+import Popover from '@mui/material/Popover';
 import TextField from '@mui/material/TextField';
 import CircularProgress from '@mui/material/CircularProgress';
 import Chip from '@mui/material/Chip';
@@ -18,6 +19,14 @@ import { useNavigate } from 'react-router-dom';
 
 // Accent swatches for a New subject. #20C997 is the app's teal (--color-teal).
 const PALETTE = ['#20C997', '#38BDF8', '#6366F1', '#A855F7', '#F43F5E', '#F59E0B', '#22C55E'];
+
+// Study-related emoji shown in the icon picker for a New subject.
+const STUDY_EMOJIS = [
+  '🧠', '📚', '📖', '✏️', '📝', '🎓',
+  '🏫', '🎒', '🧪', '🔬', '🧬', '⚗️',
+  '🔭', '🪐', '🌍', '🗂️', '🧮', '📐',
+  '📊', '💻', '💡', '🎯', '🕐', '🏛️',
+];
 
 const SOURCE_LABEL = (s) => ({ video: 'Video', document: 'Document', lecture: 'Lecture' }[s] || s);
 
@@ -35,6 +44,8 @@ const NewSubjectDialog = ({ open, onClose, onCreated }) => {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
   const [disabled, setDisabled] = useState(false);
+  const [emojiAnchor, setEmojiAnchor] = useState(null); // anchor for the icon picker popover
+  const emojiOpen = Boolean(emojiAnchor);
 
   const handleCreate = async () => {
     if (!name.trim() || disabled) return;
@@ -70,8 +81,8 @@ const NewSubjectDialog = ({ open, onClose, onCreated }) => {
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box sx={{ width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'color-mix(in srgb, var(--color-teal) 18%, transparent)', color: 'var(--color-teal)' }}>
-              <ViewKanbanIcon fontSize="small" />
+            <Box sx={{ width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'color-mix(in srgb, var(--color-teal) 18%, transparent)', fontSize: 20 }}>
+              {emoji || '🧠'}
             </Box>
             <Box>
               <Typography variant="h6" sx={{ color: 'var(--color-white)', fontWeight: 700, letterSpacing: '-0.01em' }}>New subject</Typography>
@@ -86,13 +97,55 @@ const NewSubjectDialog = ({ open, onClose, onCreated }) => {
         </Box>
 
         <Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'center' }}>
-          <TextField
-            inputProps={{ maxLength: 3, style: { textAlign: 'center' } }}
-            value={emoji}
-            onChange={(e) => setEmoji(e.target.value)}
+          <Button
+            onClick={(e) => setEmojiAnchor(e.currentTarget)}
             disabled={creating}
-            sx={{ width: 76 }}
-          />
+            title="Choose an icon"
+            aria-label="Choose an icon"
+            sx={{
+              width: 76, minWidth: 76, height: 56, p: 0, borderRadius: '8px', flexShrink: 0,
+              background: 'color-mix(in srgb, var(--color-white) 4%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--color-white) 14%, transparent)',
+              color: 'var(--color-white)',
+              '&:hover': { background: 'color-mix(in srgb, var(--color-white) 8%, transparent)', borderColor: 'color-mix(in srgb, var(--color-white) 24%, transparent)' },
+            }}
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1 }}>
+              <Box component="span" sx={{ fontSize: 22 }}>{emoji || '🧠'}</Box>
+              <ArrowDropDownIcon sx={{ fontSize: 16, color: 'color-mix(in srgb, var(--color-white) 45%, transparent)' }} />
+            </Box>
+          </Button>
+          <Popover
+            open={emojiOpen}
+            anchorEl={emojiAnchor}
+            onClose={() => setEmojiAnchor(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+            slotProps={{
+              paper: {
+                sx: { background: 'linear-gradient(135deg, var(--color-navy-050) 0%, var(--color-navy-200) 48%, var(--color-navy) 100%)', borderRadius: '14px', p: 1.25, boxShadow: '0 16px 48px rgba(0,0,0,0.5)' },
+              },
+            }}
+          >
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 40px)', gap: '6px', width: 'max-content' }}>
+              {STUDY_EMOJIS.map((e) => (
+                <Box
+                  key={e}
+                  onClick={() => { if (!creating) { setEmoji(e); setEmojiAnchor(null); } }}
+                  sx={{
+                    width: 40, height: 40, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 22, cursor: 'pointer', userSelect: 'none',
+                    background: emoji === e ? 'color-mix(in srgb, var(--color-teal) 22%, transparent)' : 'color-mix(in srgb, var(--color-white) 5%, transparent)',
+                    border: emoji === e ? '2px solid var(--color-teal)' : '2px solid transparent',
+                    transition: 'background .12s, border-color .12s',
+                    '&:hover': { background: 'color-mix(in srgb, var(--color-white) 12%, transparent)' },
+                  }}
+                >
+                  {e}
+                </Box>
+              ))}
+            </Box>
+          </Popover>
           <TextField
             fullWidth
             autoFocus
