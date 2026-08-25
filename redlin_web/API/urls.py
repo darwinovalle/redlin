@@ -3,7 +3,7 @@ from django.urls import path, include
 from .views_auth import login, register, refresh_token, whoami, activity, set_timezone
 from .views_documents import UserViewSet, DocumentViewSet, get_user_documents
 from .views_learning import SummaryViewSet, FlashcardViewSet, MCQViewSet, ClozeViewSet, FeynmanViewSet
-from .views_settings import llm_settings
+from .views_settings import llm_settings, llm_settings_check
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -23,5 +23,6 @@ urlpatterns = [
     path('auth/activity/', activity, name='auth-activity'),
     path('auth/timezone/', set_timezone, name='auth-timezone'),
     path('settings/llm/', llm_settings, name='llm-settings'),
+    path('settings/llm/check/', llm_settings_check, name='llm-settings-check'),
     path('', include(router.urls)),
 ]

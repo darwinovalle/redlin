@@ -31,7 +31,10 @@ class GeminiResponseMock:
 # --------------------------------------------------------------------------- #
 SERVER_GEMINI_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.5-flash")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma4:31b-cloud")
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://host.docker.internal:11434")
+OLLAMA_LOCAL_HOST = os.getenv("OLLAMA_HOST", "http://host.docker.internal:11434")
+# OpenAI-compatible Ollama Cloud endpoint. Do NOT use api.ollama.com/v1 — it
+# 301-redirects and the SDK's POST→GET follow-up gets rejected with 405.
+OLLAMA_CLOUD_BASE_URL = os.getenv("OLLAMA_CLOUD_BASE_URL", "https://ollama.com/v1")
 ANTHROPIC_MAX_TOKENS = int(os.getenv("ANTHROPIC_MAX_TOKENS", "8192"))
 
 DEFAULT_MODELS = {
@@ -44,6 +47,7 @@ DEFAULT_MODELS = {
 }
 
 DEFAULT_BASE_URLS = {
+    "ollama": OLLAMA_CLOUD_BASE_URL,
     "nvidia_nim": "https://integrate.api.nvidia.com/v1/",
     "openrouter": "https://openrouter.ai/api/v1/",
 }
@@ -73,11 +77,16 @@ def resolve_llm_settings(user_id: int | None = None) -> LLMConfig:
 
             row = UserLLMSettings.objects.filter(user_id=user_id).first()
             if row is not None and row.encrypted_api_key:
+                provider_base_url = (
+                    DEFAULT_BASE_URLS["ollama"]
+                    if row.provider == "ollama"
+                    else (row.base_url or DEFAULT_BASE_URLS.get(row.provider))
+                )
                 return LLMConfig(
                     provider=row.provider,
                     api_key=row.api_key,  # in-memory decrypt
                     model=row.model_name or DEFAULT_MODELS.get(row.provider, SERVER_GEMINI_MODEL),
-                    base_url=row.base_url or DEFAULT_BASE_URLS.get(row.provider),
+                    base_url=provider_base_url,
                     is_server_default=False,
                 )
         except Exception as exc:  # pragma: no cover - defensive
@@ -108,12 +117,31 @@ def _call_gemini(prompt: str, config: LLMConfig) -> str:
     return resp.text
 
 
+def _normalize_openai_base_url(url: str | None) -> str | None:
+    """Tolerate a full endpoint URL in the Base URL field.
+
+    Users often paste '.../v1/chat/completions' (copied from a curl example) into
+    the Base URL field; the OpenAI SDK then appends '/chat/completions' again,
+    producing a 404. Normalize down to the bare base.
+    """
+    if not url:
+        return url
+    url = url.rstrip("/")
+    suffix = "/chat/completions"
+    if url.endswith(suffix):
+        url = url[: -len(suffix)]
+    return url
+
+
 def _call_openai(prompt: str, config: LLMConfig) -> str:
     import openai
 
     if not config.api_key:
         raise ValueError(f"Missing API key for provider '{config.provider}'.")
-    client = openai.OpenAI(api_key=config.api_key, base_url=config.base_url)
+    # Fall back to the provider's default base when empty, so an OpenAI-compatible
+    # provider never silently targets api.openai.com with a foreign key.
+    base_url = _normalize_openai_base_url(config.base_url or DEFAULT_BASE_URLS.get(config.provider))
+    client = openai.OpenAI(api_key=config.api_key, base_url=base_url)
     resp = client.chat.completions.create(
         model=config.model,
         messages=[{"role": "user", "content": prompt}],
@@ -136,11 +164,26 @@ def _call_anthropic(prompt: str, config: LLMConfig) -> str:
     return "".join(b.text for b in resp.content if getattr(b, "type", None) == "text")
 
 
-def _call_ollama(prompt: str, config: LLMConfig) -> str:
+def _call_ollama_cloud(prompt: str, config: LLMConfig) -> str:
+    import openai
+
+    if not config.api_key:
+        raise ValueError("Missing API key for provider 'ollama'.")
+    base_url = _normalize_openai_base_url(config.base_url or OLLAMA_CLOUD_BASE_URL)
+    client = openai.OpenAI(api_key=config.api_key, base_url=base_url)
+    resp = client.chat.completions.create(
+        model=config.model or OLLAMA_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    content = resp.choices[0].message.content
+    return content or ""
+
+
+def _call_ollama_local(prompt: str, model: str | None = None) -> str:
     import ollama
 
-    client = ollama.Client(host=config.base_url or OLLAMA_HOST)
-    response = client.generate(model=config.model or OLLAMA_MODEL, prompt=prompt)
+    client = ollama.Client(host=OLLAMA_LOCAL_HOST)
+    response = client.generate(model=model or OLLAMA_MODEL, prompt=prompt)
     return response["response"]
 
 
@@ -150,7 +193,7 @@ PROVIDER_DISPATCH = {
     "openai": _call_openai,
     "nvidia_nim": _call_openai,  # OpenAI-compatible at default base_url
     "openrouter": _call_openai,   # OpenAI-compatible at default base_url
-    "ollama": _call_ollama,
+    "ollama": _call_ollama_cloud,
 }
 
 
@@ -217,7 +260,7 @@ def generate_with_retry(
             if config.is_server_default and config.provider == "gemini":
                 print("[Fallback] Server Gemini failed. Trying Ollama immediately...")
                 try:
-                    return GeminiResponseMock(_call_ollama(prompt, config))
+                    return GeminiResponseMock(_call_ollama_local(prompt))
                 except Exception as ollama_exc:
                     raise RuntimeError("Gemini failed, and Ollama fallback also failed") from ollama_exc
             # Non-rate-limit error on a user provider: retry a couple times with short backoff.

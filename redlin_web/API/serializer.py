@@ -156,6 +156,11 @@ class UserLLMSettingsSerializer(serializers.ModelSerializer):
     def get_configured(self, obj) -> bool:
         return bool(obj.encrypted_api_key)
 
+    def validate_api_key(self, value: str) -> str:
+        # Strip whitespace so a pasted key (trailing newline/space) doesn't get
+        # stored dirty and break every future authenticated call.
+        return value.strip()
+
     def create(self, validated_data):
         api_key = validated_data.pop('api_key', None)
         instance = UserLLMSettings(user=self.context['request'].user, **validated_data)
@@ -173,3 +178,12 @@ class UserLLMSettingsSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+
+class UserLLMSettingsCheckSerializer(serializers.Serializer):
+    provider = serializers.ChoiceField(
+        choices=[choice[0] for choice in UserLLMSettings.PROVIDER_CHOICES],
+        required=False,
+    )
+    api_key = serializers.CharField(required=False, allow_blank=True, trim_whitespace=False)
+    base_url = serializers.CharField(required=False, allow_blank=True)
+    model_name = serializers.CharField(required=False, allow_blank=True)

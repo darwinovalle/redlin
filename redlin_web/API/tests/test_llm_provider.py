@@ -54,6 +54,26 @@ def test_provider_dispatch_mapping():
         assert provider in llm_provider.PROVIDER_DISPATCH
     assert llm_provider.PROVIDER_DISPATCH['nvidia_nim'] is llm_provider._call_openai
     assert llm_provider.PROVIDER_DISPATCH['openrouter'] is llm_provider._call_openai
+    assert llm_provider.PROVIDER_DISPATCH['ollama'] is llm_provider._call_ollama_cloud
+
+
+@pytest.mark.django_db
+def test_resolve_ollama_forces_cloud_base_url(test_user):
+    """Ollama provider always uses the cloud endpoint, ignoring stale local hosts."""
+    UserLLMSettings.objects.create(
+        user=test_user,
+        provider='ollama',
+        base_url='http://host.docker.internal:11434',
+        model_name='gpt-oss:120b',
+    )
+    test_user.llm_settings.api_key = 'ollama-cloud-key'
+    test_user.llm_settings.save()
+
+    cfg = llm_provider.resolve_llm_settings(test_user.id)
+    assert cfg.provider == 'ollama'
+    assert cfg.api_key == 'ollama-cloud-key'
+    assert cfg.model == 'gpt-oss:120b'
+    assert cfg.base_url == llm_provider.OLLAMA_CLOUD_BASE_URL
 
 
 @pytest.mark.django_db
@@ -100,3 +120,14 @@ def test_is_rate_limit_error():
     assert llm_provider._is_rate_limit_error(Exception('429 quota exceeded')) is True
     assert llm_provider._is_rate_limit_error(Exception('Resource has been exhausted')) is True
     assert llm_provider._is_rate_limit_error(Exception('bad request')) is False
+
+
+def test_normalize_openai_base_url():
+    """Full endpoint URLs (pasted from a curl example) collapse to the bare base."""
+    assert llm_provider._normalize_openai_base_url(
+        'https://openrouter.ai/api/v1/chat/completions'
+    ) == 'https://openrouter.ai/api/v1'
+    assert llm_provider._normalize_openai_base_url('https://openrouter.ai/api/v1/') == 'https://openrouter.ai/api/v1'
+    assert llm_provider._normalize_openai_base_url('https://openrouter.ai/api/v1') == 'https://openrouter.ai/api/v1'
+    assert llm_provider._normalize_openai_base_url('') == ''
+    assert llm_provider._normalize_openai_base_url(None) is None

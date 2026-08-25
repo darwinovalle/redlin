@@ -103,3 +103,46 @@ def test_fernet_round_trip(test_user):
     ct = encrypt_api_key('sk-abc123')
     assert ct != 'sk-abc123'
     assert decrypt_api_key(ct) == 'sk-abc123'
+
+
+@pytest.mark.django_db
+def test_check_endpoint_success(authenticated_client, monkeypatch):
+    """POST /settings/llm/check/ returns ok + preview when the provider answers."""
+    url = reverse('llm-settings-check')
+    monkeypatch.setattr(
+        'API.views_settings.PROVIDER_DISPATCH',
+        {'gemini': lambda prompt, config: 'ok'},
+    )
+    resp = authenticated_client.post(url, {'provider': 'gemini', 'api_key': 'sk-test'}, format='json')
+    assert resp.status_code == status.HTTP_200_OK
+    body = resp.json()
+    assert body['ok'] is True
+    assert body['provider'] == 'gemini'
+    assert body['preview'] == 'ok'
+
+
+@pytest.mark.django_db
+def test_check_endpoint_requires_api_key(authenticated_client):
+    """No key stored and none supplied -> 400 instead of hitting a provider."""
+    url = reverse('llm-settings-check')
+    resp = authenticated_client.post(url, {'provider': 'openai'}, format='json')
+    assert resp.status_code == status.HTTP_400_BAD_REQUEST
+    assert resp.json()['ok'] is False
+
+
+@pytest.mark.django_db
+def test_check_endpoint_times_out(authenticated_client, monkeypatch):
+    """A provider that never answers fails fast with 504 instead of hanging."""
+    import time
+
+    url = reverse('llm-settings-check')
+
+    def slow(prompt, config):
+        time.sleep(2)
+        return 'ok'
+
+    monkeypatch.setattr('API.views_settings.PROVIDER_DISPATCH', {'gemini': slow})
+    monkeypatch.setattr('API.views_settings.CHECK_TIMEOUT_SECONDS', 0.05)
+    resp = authenticated_client.post(url, {'provider': 'gemini', 'api_key': 'sk-test'}, format='json')
+    assert resp.status_code == status.HTTP_504_GATEWAY_TIMEOUT
+    assert 'did not respond' in resp.json()['error']

@@ -12,6 +12,13 @@ export const settingsService = {
     const resp = await api.put('/settings/llm/', payload);
     return resp.data;
   },
+
+  // POST /settings/llm/check/ -> live test-call against the provider to validate
+  // the entered credentials/model before saving. Returns { ok, provider, model_name, preview }.
+  checkLLMSettings: async (payload) => {
+    const resp = await api.post('/settings/llm/check/', payload);
+    return resp.data;
+  },
 };
 
 export default settingsService;

@@ -15,7 +15,7 @@ const LLM_PROVIDERS = [
   { value: 'gemini', label: 'Gemini', needsKey: true, allowsBaseUrl: false },
   { value: 'claude', label: 'Claude (Anthropic)', needsKey: true, allowsBaseUrl: false },
   { value: 'openai', label: 'OpenAI', needsKey: true, allowsBaseUrl: false },
-  { value: 'ollama', label: 'Ollama (local)', needsKey: false, allowsBaseUrl: true, baseUrlPlaceholder: 'http://host.docker.internal:11434' },
+  { value: 'ollama', label: 'Ollama (Cloud)', needsKey: true, allowsBaseUrl: false },
   { value: 'nvidia_nim', label: 'Nvidia NIM', needsKey: true, allowsBaseUrl: true, baseUrlPlaceholder: 'https://integrate.api.nvidia.com/v1/' },
   { value: 'openrouter', label: 'OpenRouter', needsKey: true, allowsBaseUrl: true, baseUrlPlaceholder: 'https://openrouter.ai/api/v1/' },
 ];
@@ -83,6 +83,8 @@ export default function ApiSettingsModal({ open, onClose }) {
   const [configured, setConfigured] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState(null);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -96,6 +98,7 @@ export default function ApiSettingsModal({ open, onClose }) {
     setLoading(true);
     setError('');
     setSuccessMsg('');
+    setCheckResult(null);
     settingsService
       .getLLMSettings()
       .then((data) => {
@@ -122,6 +125,7 @@ export default function ApiSettingsModal({ open, onClose }) {
     try {
       const payload = { provider, model_name: modelName };
       if (providerMeta.needsKey) payload.api_key = apiKey;
+      if (provider === 'ollama') payload.base_url = '';
       if (providerMeta.allowsBaseUrl) payload.base_url = baseUrl;
       await settingsService.saveLLMSettings(payload);
       setSuccessMsg('Provider settings saved.');
@@ -133,10 +137,34 @@ export default function ApiSettingsModal({ open, onClose }) {
     }
   };
 
+  /* ------- check status (live provider test call) ------- */
+  const handleCheck = async () => {
+    setChecking(true);
+    setError('');
+    setSuccessMsg('');
+    setCheckResult(null);
+    try {
+      const payload = { provider, model_name: modelName };
+      if (apiKey.trim()) payload.api_key = apiKey;
+      if (provider === 'ollama') payload.base_url = '';
+      if (providerMeta.allowsBaseUrl) payload.base_url = baseUrl;
+      const data = await settingsService.checkLLMSettings(payload);
+      setCheckResult({ ok: true, message: data.message || 'Provider is reachable.', preview: data.preview });
+    } catch (err) {
+      setCheckResult({
+        ok: false,
+        message: err?.response?.data?.error || err?.message || 'Provider check failed.',
+      });
+    } finally {
+      setChecking(false);
+    }
+  };
+
   /* Reset key field when provider changes */
   const handleProviderChange = (e) => {
     setProvider(e.target.value);
     setApiKey('');
+    setCheckResult(null);
   };
 
   /* ------------------------------------------------------------------ */
@@ -233,7 +261,7 @@ export default function ApiSettingsModal({ open, onClose }) {
                   ref={apiKeyRef}
                   type="password"
                   value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
+                  onChange={(e) => { setApiKey(e.target.value); setCheckResult(null); }}
                   placeholder="sk-••••••••••••••••••••••••"
                   sx={{
                     width: '100%',
@@ -269,7 +297,7 @@ export default function ApiSettingsModal({ open, onClose }) {
             <FieldInput
               label="Model Name"
               value={modelName}
-              onChange={(e) => setModelName(e.target.value)}
+              onChange={(e) => { setModelName(e.target.value); setCheckResult(null); }}
               placeholder="gemini-2.0-flash"
               helper="Optional model identifier for the selected provider."
             />
@@ -279,7 +307,7 @@ export default function ApiSettingsModal({ open, onClose }) {
               <FieldInput
                 label="Base URL"
                 value={baseUrl}
-                onChange={(e) => setBaseUrl(e.target.value)}
+                onChange={(e) => { setBaseUrl(e.target.value); setCheckResult(null); }}
                 placeholder={providerMeta.baseUrlPlaceholder || 'https://'}
                 helper="Custom endpoint override — leave empty for default."
               />
@@ -289,6 +317,37 @@ export default function ApiSettingsModal({ open, onClose }) {
             {error && (
               <Box sx={{ mt: 2, mb: 1, p: 1.5, borderRadius: '10px', background: 'color-mix(in srgb, var(--color-danger-soft) 13%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger-soft) 25%, transparent)' }}>
                 <Typography sx={{ color: 'var(--color-danger-soft)', fontSize: 13, fontWeight: 500 }}>{error}</Typography>
+              </Box>
+            )}
+
+            {/* Check-status result */}
+            {checkResult && (
+              <Box
+                sx={{
+                  mt: 2,
+                  mb: 1,
+                  p: 1.5,
+                  borderRadius: '10px',
+                  border: '1px solid',
+                  borderColor: checkResult.ok
+                    ? 'color-mix(in srgb, var(--color-teal) 38%, transparent)'
+                    : 'color-mix(in srgb, var(--color-danger-soft) 25%, transparent)',
+                  background: checkResult.ok
+                    ? 'color-mix(in srgb, var(--color-teal) 10%, transparent)'
+                    : 'color-mix(in srgb, var(--color-danger-soft) 13%, transparent)',
+                }}
+              >
+                <Typography sx={{ color: checkResult.ok ? 'var(--color-teal)' : 'var(--color-danger-soft)', fontSize: 13, fontWeight: 600 }}>
+                  {checkResult.ok ? '✓ Provider is reachable' : '✕ Provider check failed'}
+                </Typography>
+                <Typography sx={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, mt: 0.5 }}>
+                  {checkResult.message}
+                </Typography>
+                {checkResult.ok && checkResult.preview && (
+                  <Box component="div" sx={{ mt: 1, p: 1, borderRadius: '8px', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', fontSize: 12, fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {checkResult.preview}
+                  </Box>
+                )}
               </Box>
             )}
           </Box>
@@ -329,6 +388,25 @@ export default function ApiSettingsModal({ open, onClose }) {
             disabled={saving}
           >
             Close
+          </Button>
+          <Button
+            onClick={handleCheck}
+            disabled={loading || saving || checking}
+            sx={{
+              px: 3,
+              py: 1.15,
+              borderRadius: '999px',
+              background: 'transparent',
+              border: '1px solid color-mix(in srgb, var(--color-teal) 55%, transparent)',
+              color: 'var(--color-teal)',
+              fontWeight: 600,
+              fontSize: 14,
+              textTransform: 'none',
+              '&:hover': { borderColor: 'var(--color-teal)', background: 'color-mix(in srgb, var(--color-teal) 14%, transparent)' },
+            }}
+          >
+            {checking ? <CircularProgress size={16} sx={{ mr: 1, color: '#20C997' }} /> : null}
+            {checking ? 'Checking…' : 'Check status'}
           </Button>
           <Button
             onClick={handleSave}
