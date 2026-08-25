@@ -37,6 +37,8 @@ RedLin is a **self-hostable web app**: you bring your own LLM provider and API k
 
 RedLin takes a learner's **own source material** — a PDF, a CSV of study items, or a YouTube video — and turns it into an interactive, gamified spaced-repetition loop:
 
+<img width="1853" height="1001" alt="Image" src="https://github.com/user-attachments/assets/ef2033ce-aa11-4eee-88b6-91d073b3f500" />
+
 1. **Ingest** — upload or link your material.
 2. **Generate** — AI produces **MCQ**, **Cloze**, and **Feynman** items (plus summaries) from that material.
 3. **Study** — MCQ is auto-graded; Cloze and Feynman are **AI-graded against a rubric**, not string-matched.
