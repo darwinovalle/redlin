@@ -1,4 +1,9 @@
-# RedLin
+<div align="center">
+  
+<img width="60%" height="180" alt="Image" src="https://github.com/user-attachments/assets/c54d0279-cd8c-462a-b7cd-5e69d64aa415" />
+</div>
+
+<br>
 
 **AI-powered spaced-repetition learning platform** — turn your own PDFs, CSVs, and YouTube videos into interactive, gamified study material (MCQ, Cloze, Feynman) that keeps coming back to you until you've truly mastered it.
 
