@@ -26,6 +26,7 @@ const Pricing = lazy(() => import('./pages/Pricing'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Checkout = lazy(() => import('./pages/Checkout'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 {/* Settings moved to ApiSettingsModal */}
 
 
@@ -55,6 +56,7 @@ const RouterContent = () => {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/register" element={<Register />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="*" element={<NotFound />} />
           {/* Protected app shell keeps Sidebar mounted */}
           <Route element={
             <ProtectRoute user={user}>
@@ -80,6 +82,7 @@ const RouterContent = () => {
             <Route path="/dashboard" element={<Dashboard />} />
             {/* /settings is now a modal triggered from the sidebar */}
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </BrowserRouter>
